@@ -44,7 +44,7 @@ app.layout = html.Div([
             # Brand and title in one line
             html.Div([
                 html.Span("AEGIS", style={
-                    'color': '#7b3294',  # Deep purple
+                    'color': '#00796b',  # Teal 700
                     'fontWeight': 'bold',
                     'fontSize': '24px',
                     'marginRight': '10px'
@@ -61,16 +61,16 @@ app.layout = html.Div([
             html.Button("New Chat", id="new-chat-button", style={
                 'marginRight': '10px',
                 'padding': '5px 12px',
-                'backgroundColor': '#f3e7f6',  # Light purple
-                'border': '1px solid #c2a5d0',  # Medium purple
+                'backgroundColor': '#e0f2f1',  # Teal 50
+                'border': '1px solid #b2dfdb',  # Teal 100
                 'borderRadius': '4px',
                 'cursor': 'pointer',
                 'fontSize': '13px',
-                'color': '#7b3294'  # Deep purple
+                'color': '#00796b'  # Teal 700
             }),
             html.Button("Export", id="export-button", style={
                 'padding': '5px 12px',
-                'backgroundColor': '#3f2351',  # Dark purple
+                'backgroundColor': '#004d40',  # Teal 900
                 'border': 'none',
                 'borderRadius': '4px',
                 'cursor': 'pointer',
@@ -83,18 +83,18 @@ app.layout = html.Div([
         'justifyContent': 'space-between',
         'alignItems': 'center',
         'padding': '15px',
-        'backgroundColor': '#f9f6fb',  # Very light purple
+        'backgroundColor': '#e0f2f1',  # Teal 50
         'borderRadius': '8px',
-        'boxShadow': '0 2px 5px rgba(123, 50, 148, 0.15)',  # Purple shadow
+        'boxShadow': '0 2px 5px rgba(0, 121, 107, 0.15)',  # Teal shadow
         'marginBottom': '15px',
-        'borderLeft': '4px solid #7b3294'  # Purple accent border
+        'borderLeft': '4px solid #00796b'  # Teal 700 accent border
     }),
 
     # Chat container - reduced height
     html.Div([
         # Typing indicator
         html.Div("AI is typing...", id="typing-indicator", style={
-            'color': '#7b3294',  # Deep purple
+            'color': '#00796b',  # Teal 700
             'fontSize': '12px',
             'fontStyle': 'italic',
             'padding': '5px 10px',
@@ -106,18 +106,18 @@ app.layout = html.Div([
             'overflowY': 'auto',
             'height': 'calc(100vh - 210px)',  # Reduced height
             'padding': '10px',
-            'backgroundColor': '#f9f6fb'  # Very light purple
+            'backgroundColor': '#f5f5f5'  # Light gray background
         }),
 
         # Hidden scroll helper (output for clientside callback)
         html.Div(id="scroll-helper-output") # Renamed dummy output slightly
     ], style={
-        'backgroundColor': '#f9f6fb',  # Very light purple
+        'backgroundColor': '#f5f5f5',  # Light gray background
         'borderRadius': '8px',
-        'boxShadow': '0 2px 5px rgba(123, 50, 148, 0.15)',  # Purple shadow
+        'boxShadow': '0 2px 5px rgba(0, 121, 107, 0.15)',  # Teal shadow
         'marginBottom': '15px',
         'overflow': 'hidden',  # Prevent contents from overflowing
-        'borderLeft': '4px solid #7b3294'  # Purple accent border
+        'borderLeft': '4px solid #00796b'  # Teal 700 accent border
     }),
 
     # Input area - fixed spacing
@@ -132,16 +132,16 @@ app.layout = html.Div([
                 style={
                     'width': '100%',  # Take full width of container
                     'padding': '10px 15px',
-                    'border': '1px solid #c2a5d0',  # Medium purple border
+                    'border': '1px solid #b2dfdb',  # Teal 100 border
                     'borderRadius': '6px',
                     'fontSize': '14px',
                     'boxSizing': 'border-box',  # Include padding in width calculation
-                    'backgroundColor': '#f9f6fb'  # Very light purple
+                    'backgroundColor': 'white'
                 }
             ),
             html.Div(id="char-counter", style={
                 'fontSize': '11px',
-                'color': '#7b3294',  # Deep purple
+                'color': '#00796b',  # Teal 700
                 'position': 'absolute',
                 'right': '10px',
                 'bottom': '-18px',
@@ -157,7 +157,7 @@ app.layout = html.Div([
         html.Button("Send", id="submit-button", style={
             'width': '65px',  # Fixed width
             'padding': '10px 0',
-            'backgroundColor': '#7b3294',  # Deep purple
+            'backgroundColor': '#00796b',  # Teal 700
             'color': 'white',
             'border': 'none',
             'borderRadius': '6px',
@@ -181,13 +181,13 @@ app.layout = html.Div([
     'maxWidth': '1200px',
     'margin': '0 auto',
     'padding': '10px',
-    'backgroundColor': '#f0ebf4',  # Light purple background
+    'backgroundColor': '#e8f5e9',  # Green 50 - subtle background
     'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     'height': '100vh',  # Full viewport height
     'boxSizing': 'border-box'  # Include padding in height calculation
 })
 
-# --- FORMAT MESSAGES (UPDATED FOR PURPLE THEME) ---
+# --- FORMAT MESSAGES (UPDATED FOR TEAL THEME) ---
 def format_messages(messages):
     """Format conversation messages for display, rendering content as Markdown."""
     chat_display = []
@@ -198,11 +198,11 @@ def format_messages(messages):
             'borderRadius': '8px', 
             'maxWidth': '85%',
             'marginBottom': '10px', 
-            'boxShadow': '0 1px 2px rgba(123, 50, 148, 0.15)',  # Purple shadow
-            'backgroundColor': '#e0d1e8' if is_user else 'white',  # Light purple for user
+            'boxShadow': '0 1px 2px rgba(0, 121, 107, 0.15)',  # Teal shadow
+            'backgroundColor': '#b2dfdb' if is_user else 'white',  # Teal 100 for user
             'marginLeft': 'auto' if is_user else '0',
             'marginRight': '0' if is_user else 'auto',
-            'border': 'none' if is_user else '1px solid #e0d1e8',  # Light purple border
+            'border': 'none' if is_user else '1px solid #e0f2f1',  # Teal 50 border
             'overflowWrap': 'break-word', 
             'wordWrap': 'break-word'
         }
@@ -212,7 +212,7 @@ def format_messages(messages):
                 'fontSize': '11px', 
                 'fontWeight': 'bold', 
                 'marginBottom': '3px',
-                'color': '#7b3294',  # Deep purple
+                'color': '#00796b',  # Teal 700
                 'display': 'none' if is_user else 'block'
             }) if label_text else None,
             dcc.Markdown(msg["content"], style={'fontSize': '14px','lineHeight': '1.4'}),
@@ -223,7 +223,7 @@ def format_messages(messages):
                         'border': 'none', 
                         'background': 'none', 
                         'fontSize': '11px',
-                        'color': '#7b3294',  # Deep purple
+                        'color': '#00796b',  # Teal 700
                         'cursor': 'pointer', 
                         'padding': '2px 5px'
                     }),
@@ -248,7 +248,7 @@ def format_messages(messages):
                 'alignItems': 'center',
                 'marginTop': '5px', 
                 'paddingTop': '5px', 
-                'borderTop': '1px solid #e0d1e8'  # Light purple border
+                'borderTop': '1px solid #e0f2f1'  # Teal 50 border
             })
         ], style=bubble_style)
         chat_display.append(message_element)
@@ -307,7 +307,7 @@ def update_char_counter(value):
     count = len(value)
     threshold_warn = 0.7 * MAX_MESSAGE_LENGTH
     threshold_danger = 0.9 * MAX_MESSAGE_LENGTH
-    color = '#7b3294' if count < threshold_warn else ('orange' if count < threshold_danger else 'red')
+    color = '#00796b' if count < threshold_warn else ('orange' if count < threshold_danger else 'red')
     return f"{count}/{MAX_MESSAGE_LENGTH}", {
         'fontSize': '11px', 'color': color, 'position': 'absolute',
         'right': '10px', 'bottom': '-18px', 'display': 'block'
@@ -325,7 +325,7 @@ def update_typing_indicator(is_disabled, current_style):
     if current_style and current_style.get('display') == new_display:
         return no_update
     return {
-        'color': '#7b3294', 'fontSize': '12px', 'fontStyle': 'italic',
+        'color': '#00796b', 'fontSize': '12px', 'fontStyle': 'italic',
         'padding': '5px 10px', 'display': new_display
     }
 
