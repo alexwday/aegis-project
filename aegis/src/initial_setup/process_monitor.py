@@ -1,4 +1,4 @@
-# python/iris/src/initial_setup/process_monitor.py
+# python/aegis/src/initial_setup/process_monitor.py
 """
 Process Monitoring Module
 

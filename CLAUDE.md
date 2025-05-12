@@ -2,19 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# IRIS Project Guidelines for Claude
+# AEGIS Project Guidelines for Claude
 
 ## Build Commands
 - Install: `pip install -e .`
 - Install dev tools: `pip install -e ".[dev]"`
 - Run notebook: `jupyter notebook notebooks/test_notebook.ipynb`
-- Lint: `black iris/`
-- Type check: `mypy iris/`
+- Lint: `black aegis/`
+- Type check: `mypy aegis/`
 
 ## Testing
 - Run tests: `pytest`
 - Single test: `pytest path/to/test.py::test_function_name`
-- With coverage: `pytest --cov=iris`
+- With coverage: `pytest --cov=aegis`
 
 ## Code Style
 

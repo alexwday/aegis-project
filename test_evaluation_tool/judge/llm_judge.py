@@ -159,7 +159,7 @@ def evaluate_test_result(
                         },
                         "question": {
                             "type": "string",
-                            "description": "The actual question that was asked to IRIS (usually found near the top of the sheet)"
+                            "description": "The actual question that was asked to AEGIS (usually found near the top of the sheet)"
                         },
                         "overall_assessment": {
                             "type": "string",

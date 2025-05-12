@@ -8,7 +8,7 @@ setup(
     name="test_evaluation_tool",
     version="0.1.0",
     description="A tool for evaluating test results with LLM",
-    author="IRIS Project Team",
+    author="AEGIS Project Team",
     packages=find_packages(),
     install_requires=[
         "pandas>=1.3.0",

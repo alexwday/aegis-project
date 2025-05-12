@@ -187,7 +187,7 @@ def _generate_html_content(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IRIS Test Evaluation Report</title>
+    <title>AEGIS Test Evaluation Report</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -435,7 +435,7 @@ def _generate_html_content(
     </script>
 </head>
 <body>
-    <h1>IRIS Test Evaluation Report</h1>
+    <h1>AEGIS Test Evaluation Report</h1>
     
     <div class="report-meta">
         <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>

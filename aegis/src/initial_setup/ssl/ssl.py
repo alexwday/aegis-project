@@ -1,4 +1,4 @@
-# python/iris/src/initial_setup/ssl/ssl.py
+# python/aegis/src/initial_setup/ssl/ssl.py
 """
 SSL Certificate Setup Module
 

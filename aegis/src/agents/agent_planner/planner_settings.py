@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_planner/planner_settings.py
+# python/aegis/src/agents/agent_planner/planner_settings.py
 """
 Planner Agent Settings
 

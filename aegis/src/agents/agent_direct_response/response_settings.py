@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_direct_response/response_settings.py
+# python/aegis/src/agents/agent_direct_response/response_settings.py
 """
 Direct Response Agent Settings
 

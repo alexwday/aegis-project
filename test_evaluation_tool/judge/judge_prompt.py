@@ -9,19 +9,19 @@ test results.
 JUDGE_PROMPT_TEMPLATE = """
 # Test Result Evaluation
 
-You are evaluating test results for IRIS, an AI assistant for finance and reporting. Your main focus should be on determining overall answer accuracy, which is the most important metric.
+You are evaluating test results for AEGIS, an AI assistant for finance and reporting. Your main focus should be on determining overall answer accuracy, which is the most important metric.
 
 You've been provided with a markdown table containing test results from an Excel sheet. Note that reviewers often focus on minor details in their comments while the overall answer was largely correct - be sure to evaluate answer accuracy generously, especially when the reviewer doesn't explicitly state major factual errors.
 
 ## The Test Data Structure
 
-The Excel sheet contains information about a test case for IRIS, formatted as a markdown table with the following structure:
+The Excel sheet contains information about a test case for AEGIS, formatted as a markdown table with the following structure:
 - Column A contains test information, questions, and context
 - Column B contains scores or ratings assigned by reviewers
 - Column C contains reviewer notes and feedback
 
 Key information to find in the table:
-1. The specific question asked to IRIS (usually near the top)
+1. The specific question asked to AEGIS (usually near the top)
 2. Whether IRIS selected the correct database (look for keywords like "database", "DB", etc.)
 3. Whether IRIS selected the correct documents (look for keywords like "document", "file", "source", etc.)
 4. How accurate the answer was (look for reviewer scores and comments)
@@ -30,7 +30,7 @@ Key information to find in the table:
 ## Your Task
 
 As an evaluator, you need to analyze the table to determine:
-1. Question: Extract the specific question that was asked to IRIS (usually near the top of the sheet)
+1. Question: Extract the specific question that was asked to AEGIS (usually near the top of the sheet)
 2. Database Selection: Did IRIS select the correct database? If scored, what was the score?
 3. Document Selection: Did IRIS retrieve the correct documents? If scored, what was the score?
 4. Answer Accuracy: How accurate was IRIS's response? What score was given?
@@ -73,14 +73,14 @@ Also, when reviewer comments focus on minor issues but don't mention major factu
 AGGREGATION_PROMPT_TEMPLATE = """
 # Test Results Aggregation
 
-You are synthesizing the results from test evaluations of IRIS, an AI assistant for finance and reporting. Your task is to create a brief qualitative summary focused ONLY on strengths and areas for improvement.
+You are synthesizing the results from test evaluations of AEGIS, an AI assistant for finance and reporting. Your task is to create a brief qualitative summary focused ONLY on strengths and areas for improvement.
 
 ## Your Task
 
 Based on the evaluations provided, extract common patterns from reviewer comments to identify:
 
 1. Key Strengths (2-3 points):
-   - Review all test cases to identify what IRIS does well
+   - Review all test cases to identify what AEGIS does well
    - Look for positive comments about accuracy, relevance, or helpfulness
    - Find patterns where reviewers consistently praise certain aspects
 
@@ -109,5 +109,5 @@ Format your response as a simple, qualitative summary using this EXACT format:
 - [Optional second issue if consistently mentioned by reviewers]
 ```
 
-Keep to this structure precisely. Do not include any numbers, scores, or percentages. Focus only on qualitative insights from the reviewer comments. Be specific about what IRIS does well and what could be improved.
+Keep to this structure precisely. Do not include any numbers, scores, or percentages. Focus only on qualitative insights from the reviewer comments. Be specific about what AEGIS does well and what could be improved.
 """

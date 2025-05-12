@@ -1,4 +1,4 @@
-# python/iris/src/initial_setup/logging_config.py
+# python/aegis/src/initial_setup/logging_config.py
 """
 Centralized Logging Configuration Module
 

@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_clarifier/clarifier_settings.py
+# python/aegis/src/agents/agent_clarifier/clarifier_settings.py
 """
 Clarifier Agent Settings
 

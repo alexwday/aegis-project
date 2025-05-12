@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_router/router_settings.py
+# python/aegis/src/agents/agent_router/router_settings.py
 """
 Router Agent Settings
 
