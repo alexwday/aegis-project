@@ -44,19 +44,15 @@ app.layout = html.Div([
             # Brand and title in one line
             html.Div([
                 html.Span("AEGIS", style={
-                    'color': '#005A87',
+                    'color': '#7b3294',  # Deep purple
                     'fontWeight': 'bold',
-                    'fontSize': '22px',
+                    'fontSize': '24px',
                     'marginRight': '10px'
                 }),
-                html.Span("Financial Research Assistant", style={
-                    'color': '#333',
-                    'fontSize': '18px'
-                }),
             ]),
-            html.Div("Advanced Expert Guided Information System", style={
-                'color': '#666',
-                'fontSize': '12px',
+            html.Div("Finance Assist for External Research and Insights", style={
+                'color': '#333',
+                'fontSize': '14px',
                 'marginTop': '2px'
             })
         ], style={'flex': '1'}),
@@ -65,19 +61,20 @@ app.layout = html.Div([
             html.Button("New Chat", id="new-chat-button", style={
                 'marginRight': '10px',
                 'padding': '5px 12px',
-                'backgroundColor': '#f8f9fa',
-                'border': '1px solid #ddd',
+                'backgroundColor': '#f3e7f6',  # Light purple
+                'border': '1px solid #c2a5d0',  # Medium purple
                 'borderRadius': '4px',
                 'cursor': 'pointer',
-                'fontSize': '13px'
+                'fontSize': '13px',
+                'color': '#7b3294'  # Deep purple
             }),
             html.Button("Export", id="export-button", style={
                 'padding': '5px 12px',
-                'backgroundColor': 'white',
-                'border': '1px solid #005A87',
+                'backgroundColor': '#3f2351',  # Dark purple
+                'border': 'none',
                 'borderRadius': '4px',
                 'cursor': 'pointer',
-                'color': '#005A87',
+                'color': 'white',
                 'fontSize': '13px'
             })
         ])
@@ -86,17 +83,18 @@ app.layout = html.Div([
         'justifyContent': 'space-between',
         'alignItems': 'center',
         'padding': '15px',
-        'backgroundColor': 'white',
+        'backgroundColor': '#f9f6fb',  # Very light purple
         'borderRadius': '8px',
-        'boxShadow': '0 1px 3px rgba(0,0,0,0.1)',
-        'marginBottom': '15px'
+        'boxShadow': '0 2px 5px rgba(123, 50, 148, 0.15)',  # Purple shadow
+        'marginBottom': '15px',
+        'borderLeft': '4px solid #7b3294'  # Purple accent border
     }),
 
     # Chat container - reduced height
     html.Div([
         # Typing indicator
         html.Div("AI is typing...", id="typing-indicator", style={
-            'color': '#666',
+            'color': '#7b3294',  # Deep purple
             'fontSize': '12px',
             'fontStyle': 'italic',
             'padding': '5px 10px',
@@ -107,17 +105,19 @@ app.layout = html.Div([
         html.Div(id="chat-history", style={
             'overflowY': 'auto',
             'height': 'calc(100vh - 210px)',  # Reduced height
-            'padding': '5px'
+            'padding': '10px',
+            'backgroundColor': '#f9f6fb'  # Very light purple
         }),
 
         # Hidden scroll helper (output for clientside callback)
         html.Div(id="scroll-helper-output") # Renamed dummy output slightly
     ], style={
-        'backgroundColor': 'white',
+        'backgroundColor': '#f9f6fb',  # Very light purple
         'borderRadius': '8px',
-        'boxShadow': '0 1px 3px rgba(0,0,0,0.1)',
+        'boxShadow': '0 2px 5px rgba(123, 50, 148, 0.15)',  # Purple shadow
         'marginBottom': '15px',
-        'overflow': 'hidden'  # Prevent contents from overflowing
+        'overflow': 'hidden',  # Prevent contents from overflowing
+        'borderLeft': '4px solid #7b3294'  # Purple accent border
     }),
 
     # Input area - fixed spacing
@@ -131,16 +131,17 @@ app.layout = html.Div([
                 maxLength=MAX_MESSAGE_LENGTH,
                 style={
                     'width': '100%',  # Take full width of container
-                    'padding': '8px 12px',
-                    'border': '1px solid #ddd',
-                    'borderRadius': '4px',
+                    'padding': '10px 15px',
+                    'border': '1px solid #c2a5d0',  # Medium purple border
+                    'borderRadius': '6px',
                     'fontSize': '14px',
-                    'boxSizing': 'border-box'  # Include padding in width calculation
+                    'boxSizing': 'border-box',  # Include padding in width calculation
+                    'backgroundColor': '#f9f6fb'  # Very light purple
                 }
             ),
             html.Div(id="char-counter", style={
                 'fontSize': '11px',
-                'color': '#666',
+                'color': '#7b3294',  # Deep purple
                 'position': 'absolute',
                 'right': '10px',
                 'bottom': '-18px',
@@ -155,11 +156,11 @@ app.layout = html.Div([
         # Fixed width button
         html.Button("Send", id="submit-button", style={
             'width': '65px',  # Fixed width
-            'padding': '8px 0',
-            'backgroundColor': '#005A87',
+            'padding': '10px 0',
+            'backgroundColor': '#7b3294',  # Deep purple
             'color': 'white',
             'border': 'none',
-            'borderRadius': '4px',
+            'borderRadius': '6px',
             'cursor': 'pointer',
             'fontWeight': 'bold',
             'fontSize': '14px'
@@ -180,53 +181,74 @@ app.layout = html.Div([
     'maxWidth': '1200px',
     'margin': '0 auto',
     'padding': '10px',
-    'backgroundColor': '#f0f5f8',
+    'backgroundColor': '#f0ebf4',  # Light purple background
     'fontFamily': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     'height': '100vh',  # Full viewport height
     'boxSizing': 'border-box'  # Include padding in height calculation
 })
 
-# --- FORMAT MESSAGES (No change here) ---
+# --- FORMAT MESSAGES (UPDATED FOR PURPLE THEME) ---
 def format_messages(messages):
     """Format conversation messages for display, rendering content as Markdown."""
     chat_display = []
     for idx, msg in enumerate(messages):
         is_user = msg["role"] == "user"
         bubble_style = {
-            'padding': '10px 15px', 'borderRadius': '8px', 'maxWidth': '85%',
-            'marginBottom': '10px', 'boxShadow': '0 1px 2px rgba(0,0,0,0.1)',
-            'backgroundColor': '#E6F2F8' if is_user else 'white',
+            'padding': '10px 15px', 
+            'borderRadius': '8px', 
+            'maxWidth': '85%',
+            'marginBottom': '10px', 
+            'boxShadow': '0 1px 2px rgba(123, 50, 148, 0.15)',  # Purple shadow
+            'backgroundColor': '#e0d1e8' if is_user else 'white',  # Light purple for user
             'marginLeft': 'auto' if is_user else '0',
             'marginRight': '0' if is_user else 'auto',
-            'border': 'none' if is_user else '1px solid #eee',
-            'overflowWrap': 'break-word', 'wordWrap': 'break-word'
+            'border': 'none' if is_user else '1px solid #e0d1e8',  # Light purple border
+            'overflowWrap': 'break-word', 
+            'wordWrap': 'break-word'
         }
         label_text = "AI" if not is_user else None
         message_element = html.Div([
             html.Div(label_text, style={
-                'fontSize': '11px', 'fontWeight': 'bold', 'marginBottom': '3px',
-                'color': '#333', 'display': 'none' if is_user else 'block'
+                'fontSize': '11px', 
+                'fontWeight': 'bold', 
+                'marginBottom': '3px',
+                'color': '#7b3294',  # Deep purple
+                'display': 'none' if is_user else 'block'
             }) if label_text else None,
             dcc.Markdown(msg["content"], style={'fontSize': '14px','lineHeight': '1.4'}),
             html.Div([
                 html.Span(msg["timestamp"], style={'fontSize': '11px','color': '#777'}),
                 html.Div([
                     html.Button("Copy", id={"type": "copy-button", "index": idx}, n_clicks=0, style={
-                        'border': 'none', 'background': 'none', 'fontSize': '11px',
-                        'color': '#005A87', 'cursor': 'pointer', 'padding': '2px 5px'
+                        'border': 'none', 
+                        'background': 'none', 
+                        'fontSize': '11px',
+                        'color': '#7b3294',  # Deep purple
+                        'cursor': 'pointer', 
+                        'padding': '2px 5px'
                     }),
                     html.Button("👍", id={"type": "upvote-button", "index": idx}, n_clicks=0, style={
-                        'border': 'none', 'background': 'none', 'fontSize': '11px',
-                        'cursor': 'pointer', 'padding': '2px 3px'
+                        'border': 'none', 
+                        'background': 'none', 
+                        'fontSize': '11px',
+                        'cursor': 'pointer', 
+                        'padding': '2px 3px'
                     }),
                     html.Button("👎", id={"type": "downvote-button", "index": idx}, n_clicks=0, style={
-                        'border': 'none', 'background': 'none', 'fontSize': '11px',
-                        'cursor': 'pointer', 'padding': '2px 3px'
+                        'border': 'none', 
+                        'background': 'none', 
+                        'fontSize': '11px',
+                        'cursor': 'pointer', 
+                        'padding': '2px 3px'
                     })
                 ], style={'display': 'flex'})
             ], style={
-                'display': 'flex', 'justifyContent': 'space-between', 'alignItems': 'center',
-                'marginTop': '5px', 'paddingTop': '5px', 'borderTop': '1px solid #eee'
+                'display': 'flex', 
+                'justifyContent': 'space-between', 
+                'alignItems': 'center',
+                'marginTop': '5px', 
+                'paddingTop': '5px', 
+                'borderTop': '1px solid #e0d1e8'  # Light purple border
             })
         ], style=bubble_style)
         chat_display.append(message_element)
@@ -285,7 +307,7 @@ def update_char_counter(value):
     count = len(value)
     threshold_warn = 0.7 * MAX_MESSAGE_LENGTH
     threshold_danger = 0.9 * MAX_MESSAGE_LENGTH
-    color = '#666' if count < threshold_warn else ('orange' if count < threshold_danger else 'red')
+    color = '#7b3294' if count < threshold_warn else ('orange' if count < threshold_danger else 'red')
     return f"{count}/{MAX_MESSAGE_LENGTH}", {
         'fontSize': '11px', 'color': color, 'position': 'absolute',
         'right': '10px', 'bottom': '-18px', 'display': 'block'
@@ -303,7 +325,7 @@ def update_typing_indicator(is_disabled, current_style):
     if current_style and current_style.get('display') == new_display:
         return no_update
     return {
-        'color': '#666', 'fontSize': '12px', 'fontStyle': 'italic',
+        'color': '#7b3294', 'fontSize': '12px', 'fontStyle': 'italic',
         'padding': '5px 10px', 'display': new_display
     }
 
