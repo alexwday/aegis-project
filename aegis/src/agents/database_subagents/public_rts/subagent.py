@@ -44,4 +44,3 @@ def query_database_sync(
             },
             ["rts-doc-001", "rts-doc-002"]
         )
-EOF < /dev/null

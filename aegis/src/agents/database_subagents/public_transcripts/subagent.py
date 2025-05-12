@@ -44,4 +44,3 @@ def query_database_sync(
             },
             ["transcript-doc-001", "transcript-doc-002"]
         )
-EOF < /dev/null
