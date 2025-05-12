@@ -28,7 +28,7 @@ def query_database_sync(
     """
     # Update process monitor if provided
     if process_monitor and query_stage_name:
-        process_monitor.update_stage(query_stage_name, 100, "Completed")
+        process_monitor.add_stage_details(query_stage_name, progress=100, status="Completed")
     
     # Return placeholder response based on query scope
     if scope == "metadata":
