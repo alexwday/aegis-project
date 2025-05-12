@@ -80,4 +80,3 @@ def get_available_databases():
 
 
 logger.debug("Database statement module initialized")
-EOF < /dev/null
