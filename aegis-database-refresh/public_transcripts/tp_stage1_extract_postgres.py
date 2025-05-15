@@ -451,15 +451,25 @@ def get_oauth_token():
         ca_bundle_path = None
         if CA_BUNDLE_FILENAME:
             try:
-                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
+                # Look for CA bundle in the NAS base path or output folder
+                # Try base path first
+                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_BASE_INPUT_PATH}/{CA_BUNDLE_FILENAME}"
+                if not smbclient.path.exists(smb_ca_path):
+                    # Try output path
+                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
+                    if not smbclient.path.exists(smb_ca_path):
+                        # Finally try root path
+                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
+                
+                # If any path exists, download the cert
                 if smbclient.path.exists(smb_ca_path):
                     with tempfile.NamedTemporaryFile(suffix='.cer', delete=False) as temp_ca_file:
                         ca_bundle_path = temp_ca_file.name
                         with smbclient.open_file(smb_ca_path, mode='rb') as f_ca:
                             temp_ca_file.write(f_ca.read())
-                    logger.info(f"CA bundle downloaded to temporary file: {ca_bundle_path}")
+                    logger.info(f"CA bundle downloaded from {smb_ca_path} to temporary file: {ca_bundle_path}")
                 else:
-                    logger.warning(f"CA bundle not found at: {smb_ca_path}")
+                    logger.warning(f"CA bundle not found at any expected paths")
             except Exception as e:
                 logger.warning(f"Failed to download CA bundle: {e}")
 
