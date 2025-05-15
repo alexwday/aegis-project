@@ -745,8 +745,7 @@ if __name__ == "__main__":
     logger.info("[2] Constructing NAS output path...")
     nas_output_dir_relative = os.path.join(
         NAS_OUTPUT_FOLDER_PATH, 
-        DOCUMENT_SOURCE,
-        datetime.now().strftime("%Y%m%d_%H%M%S")
+        DOCUMENT_SOURCE
     ).replace('\\', '/')
     
     nas_output_dir_smb_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{nas_output_dir_relative}"
