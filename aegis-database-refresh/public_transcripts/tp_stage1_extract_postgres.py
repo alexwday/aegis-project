@@ -223,16 +223,20 @@ def get_quarters_to_process() -> List[Tuple[int, int]]:
                     continue
                 quarters_to_process.append((year, quarter))
     else:
-        # Process current quarter and previous quarter
+        # Process current quarter and two previous quarters
         quarters_to_process.append((current_fiscal_year, current_fiscal_quarter))
         
-        # Calculate previous quarter
-        prev_year, prev_quarter = current_fiscal_year, current_fiscal_quarter - 1
-        if prev_quarter < 1:
-            prev_quarter = 4
-            prev_year -= 1
-        
-        quarters_to_process.append((prev_year, prev_quarter))
+        # Add two previous quarters
+        for i in range(1, 3):
+            prev_quarter = current_fiscal_quarter - i
+            prev_year = current_fiscal_year
+            
+            # Handle quarter wrapping
+            if prev_quarter <= 0:
+                prev_quarter += 4
+                prev_year -= 1
+                
+            quarters_to_process.append((prev_year, prev_quarter))
     
     logger.info(f"Selected quarters to process: {quarters_to_process}")
     return quarters_to_process
