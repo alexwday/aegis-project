@@ -115,6 +115,8 @@ GPT_CONFIG = {
 
 # --- CA Bundle for SSL ---
 CA_BUNDLE_FILENAME = 'rbc-ca-bundle.cer'
+# Path to the CA Bundle on the NAS (relative to share root)
+CA_BUNDLE_NAS_PATH = 'certs'  # Change this to your actual certs folder path
 
 # ==============================================================================
 # --- Fiscal Calendar Functions ---
@@ -488,15 +490,17 @@ def setup_openai_client():
         # Download CA bundle if needed
         if CA_BUNDLE_FILENAME:
             try:
-                # Look for CA bundle in the NAS base path or output folder
-                # Try base path first
-                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_BASE_INPUT_PATH}/{CA_BUNDLE_FILENAME}"
+                # Try the dedicated CA bundle path first
+                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_NAS_PATH}/{CA_BUNDLE_FILENAME}"
                 if not smbclient.path.exists(smb_ca_path):
-                    # Try output path
-                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
+                    # Try base path
+                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_BASE_INPUT_PATH}/{CA_BUNDLE_FILENAME}"
                     if not smbclient.path.exists(smb_ca_path):
-                        # Finally try root path
-                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
+                        # Try output path
+                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
+                        if not smbclient.path.exists(smb_ca_path):
+                            # Finally try root path
+                            smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
                 
                 # If any path exists, download the cert
                 if smbclient.path.exists(smb_ca_path):
