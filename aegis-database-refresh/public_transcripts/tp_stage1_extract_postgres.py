@@ -447,48 +447,13 @@ def get_oauth_token():
         payload['scope'] = OAUTH_CONFIG['scope']
 
     try:
-        # Create a temporary file for the CA bundle if needed
-        ca_bundle_path = None
-        if CA_BUNDLE_FILENAME:
-            try:
-                # Look for CA bundle in the NAS base path or output folder
-                # Try base path first
-                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_BASE_INPUT_PATH}/{CA_BUNDLE_FILENAME}"
-                if not smbclient.path.exists(smb_ca_path):
-                    # Try output path
-                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
-                    if not smbclient.path.exists(smb_ca_path):
-                        # Finally try root path
-                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
-                
-                # If any path exists, download the cert
-                if smbclient.path.exists(smb_ca_path):
-                    with tempfile.NamedTemporaryFile(suffix='.cer', delete=False) as temp_ca_file:
-                        ca_bundle_path = temp_ca_file.name
-                        with smbclient.open_file(smb_ca_path, mode='rb') as f_ca:
-                            temp_ca_file.write(f_ca.read())
-                    logger.info(f"CA bundle downloaded from {smb_ca_path} to temporary file: {ca_bundle_path}")
-                else:
-                    logger.warning(f"CA bundle not found at any expected paths")
-            except Exception as e:
-                logger.warning(f"Failed to download CA bundle: {e}")
-
-        # Make the POST request, using CA bundle if available
-        if ca_bundle_path:
-            response = requests.post(token_url, data=payload, verify=ca_bundle_path)
-        else:
-            response = requests.post(token_url, data=payload)
+        # Make the POST request
+        # Note: requests will automatically use REQUESTS_CA_BUNDLE env var if set
+        response = requests.post(token_url, data=payload)
             
         response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
         token_data = response.json()
         access_token = token_data.get('access_token')
-        
-        # Clean up the temporary CA file if it was created
-        if ca_bundle_path:
-            try:
-                os.remove(ca_bundle_path)
-            except Exception as e:
-                logger.warning(f"Failed to remove temporary CA bundle file: {e}")
                 
         if not access_token:
             logger.error("'access_token' not found in OAuth response.")
@@ -515,7 +480,42 @@ def setup_openai_client():
     Returns:
         Optional[OpenAI]: Configured OpenAI client or None on failure
     """
+    original_requests_ca_bundle = os.environ.get('REQUESTS_CA_BUNDLE')
+    original_ssl_cert_file = os.environ.get('SSL_CERT_FILE')
+    temp_cert_file_path = None
+    
     try:
+        # Download CA bundle if needed
+        if CA_BUNDLE_FILENAME:
+            try:
+                # Look for CA bundle in the NAS base path or output folder
+                # Try base path first
+                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_BASE_INPUT_PATH}/{CA_BUNDLE_FILENAME}"
+                if not smbclient.path.exists(smb_ca_path):
+                    # Try output path
+                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
+                    if not smbclient.path.exists(smb_ca_path):
+                        # Finally try root path
+                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
+                
+                # If any path exists, download the cert
+                if smbclient.path.exists(smb_ca_path):
+                    with tempfile.NamedTemporaryFile(suffix='.cer', delete=False) as temp_ca_file:
+                        temp_cert_file_path = temp_ca_file.name
+                        with smbclient.open_file(smb_ca_path, mode='rb') as f_ca:
+                            temp_ca_file.write(f_ca.read())
+                    logger.info(f"CA bundle downloaded from {smb_ca_path} to temporary file: {temp_cert_file_path}")
+                    
+                    # Set environment variables for SSL verification
+                    os.environ['REQUESTS_CA_BUNDLE'] = temp_cert_file_path
+                    os.environ['SSL_CERT_FILE'] = temp_cert_file_path
+                    logger.info(f"Set REQUESTS_CA_BUNDLE environment variable to: {temp_cert_file_path}")
+                    logger.info(f"Set SSL_CERT_FILE environment variable to: {temp_cert_file_path}")
+                else:
+                    logger.warning(f"CA bundle not found at any expected paths")
+            except Exception as e:
+                logger.warning(f"Failed to download CA bundle: {e}")
+        
         # Get OAuth token
         access_token = get_oauth_token()
         if not access_token:
@@ -532,6 +532,31 @@ def setup_openai_client():
     except Exception as e:
         logger.error(f"Error setting up OpenAI client: {e}")
         return None
+    finally:
+        # Clean up the temporary certificate file
+        if temp_cert_file_path and os.path.exists(temp_cert_file_path):
+            try:
+                os.remove(temp_cert_file_path)
+                logger.info(f"Removed temporary CA bundle file: {temp_cert_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to remove temporary CA bundle file: {e}")
+        
+        # Restore original environment variables
+        if original_requests_ca_bundle is None:
+            if 'REQUESTS_CA_BUNDLE' in os.environ:
+                del os.environ['REQUESTS_CA_BUNDLE']
+                logger.info("Unset REQUESTS_CA_BUNDLE environment variable")
+        else:
+            os.environ['REQUESTS_CA_BUNDLE'] = original_requests_ca_bundle
+            logger.info(f"Restored original REQUESTS_CA_BUNDLE environment variable")
+            
+        if original_ssl_cert_file is None:
+            if 'SSL_CERT_FILE' in os.environ:
+                del os.environ['SSL_CERT_FILE']
+                logger.info("Unset SSL_CERT_FILE environment variable")
+        else:
+            os.environ['SSL_CERT_FILE'] = original_ssl_cert_file
+            logger.info(f"Restored original SSL_CERT_FILE environment variable")
 
 def identify_bank_with_gpt(pdf_text: str, allowed_banks: List[str], api_client: OpenAI) -> Optional[str]:
     """
