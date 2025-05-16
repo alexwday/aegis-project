@@ -301,7 +301,7 @@ Important:
 - Identify speakers from context (e.g., "John Smith:", "[CEO]", etc.)
 - If speaker changes mid-paragraph, split appropriately
 - If no speaker is identifiable, use "Unknown"
-""".replace("{", "{{").replace("}", "}}").replace("{{{{", "{").replace("}}}}", "}").replace("{{chunk}}", "{chunk}")
+"""
         
         try:
             response = client.chat.completions.create(
