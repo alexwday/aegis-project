@@ -70,15 +70,13 @@ DOCUMENT_LANGUAGE = 'en'
 OAUTH_CONFIG = {
     "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
     "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "scope": "api://YourResource/.default"
+    "client_secret": "YOUR_CLIENT_SECRET"
 }
 
 # --- GPT API Configuration ---
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o",
-    "api_version": "2024-02-01"
+    "model_name": "gpt-4o"
 }
 
 # --- CA Bundle for SSL ---
@@ -189,8 +187,7 @@ def get_oauth_token() -> Optional[str]:
             data={
                 "grant_type": "client_credentials",
                 "client_id": OAUTH_CONFIG["client_id"],
-                "client_secret": OAUTH_CONFIG["client_secret"],
-                "scope": OAUTH_CONFIG["scope"]
+                "client_secret": OAUTH_CONFIG["client_secret"]
             }
         )
         response.raise_for_status()
@@ -223,8 +220,7 @@ def setup_openai_client() -> Optional[OpenAI]:
         api_key=token,
         base_url=GPT_CONFIG["base_url"],
         default_headers={
-            "Authorization": f"Bearer {token}",
-            "api-version": GPT_CONFIG["api_version"]
+            "Authorization": f"Bearer {token}"
         },
         http_client=None  # Will be configured with CA bundle
     )

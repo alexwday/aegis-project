@@ -52,16 +52,14 @@ DOCUMENT_TYPE = 'POLICY_DOCUMENT' # Example: Replace with appropriate type
 OAUTH_CONFIG = {
     "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
     "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "scope": "api://YourResource/.default"
+    "client_secret": "YOUR_CLIENT_SECRET"
 }
 
 # --- Custom GPT Configuration ---
 # GPT API configuration parameters
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "your-gpt-model-deployment-name",
-    "api_version": "2024-02-01"
+    "model_name": "your-gpt-model-deployment-name"
 }
 
 # --- New System Prompt Template ---
@@ -300,9 +298,6 @@ def get_oauth_token():
         'client_secret': OAUTH_CONFIG['client_secret'],
         'grant_type': 'client_credentials'
     }
-    # Add scope if defined and not empty
-    if OAUTH_CONFIG.get('scope'):
-        payload['scope'] = OAUTH_CONFIG['scope']
 
     try:
         # Note: requests library automatically uses REQUESTS_CA_BUNDLE if set
