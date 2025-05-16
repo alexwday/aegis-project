@@ -301,7 +301,7 @@ Important:
 - Identify speakers from context (e.g., "John Smith:", "[CEO]", etc.)
 - If speaker changes mid-paragraph, split appropriately
 - If no speaker is identifiable, use "Unknown"
-"""
+""".replace("{", "{{").replace("}", "}}").replace("{{{{", "{").replace("}}}}", "}").replace("{{chunk}}", "{chunk}")
         
         try:
             response = client.chat.completions.create(
@@ -399,7 +399,7 @@ Respond with JSON:
     "reasoning": "Brief explanation of your decision",
     "related_chunks": [list of previous chunk IDs that are semantically related],
     "additional_context": [
-        {{"context": "Relevant context from previous discussion", "source": sentence_id}}
+        {{"context": "Relevant context from previous discussion", "source": "sentence_id_value"}}
     ]
 }}
 """
