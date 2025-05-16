@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Stage 3: Generate Transcript Chunks using LLM (Optimized)
+Stage 3: Generate Transcript Chunks using LLM
 
 This script processes transcript files from Stage 2.
 For each transcript, it:
-1. Uses regex patterns to parse transcript into structured sentences with speakers
+1. Uses LLM to parse the transcript into structured sentences with speakers
 2. Uses LLM to determine semantic chunk boundaries
 3. Groups chunks into sections
 4. Creates structured output for database insertion
 
 Features:
 - TEST_MODE configuration to process only one transcript
-- Regex-based sentence parsing (no LLM for parsing)
-- LLM with tool definitions for semantic operations
+- LLM-only extraction (no regex patterns)
 - Sliding window approach for chunking
 - Batch embedding generation
 """
@@ -25,7 +24,6 @@ import tempfile
 import requests
 import smbclient
 import logging
-import re
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from openai import OpenAI
@@ -110,103 +108,6 @@ SECTION_TYPES = [
     "Closing Remarks",
     "Other"
 ]
-
-# --- Tool Definitions ---
-CHUNKING_DECISION_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "chunking_decision",
-        "description": "Decide whether to add a sentence to the current chunk or start a new chunk",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "add_to_chunk": {
-                    "type": "boolean",
-                    "description": "Whether to add the sentence to the current chunk"
-                },
-                "reasoning": {
-                    "type": "string",
-                    "description": "Brief explanation of the decision"
-                },
-                "related_chunks": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "IDs of previous chunks that are semantically related"
-                },
-                "additional_context": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "context": {"type": "string"},
-                            "source": {"type": "string"}
-                        }
-                    },
-                    "description": "Additional context from previous discussion"
-                }
-            },
-            "required": ["add_to_chunk", "reasoning", "related_chunks", "additional_context"]
-        }
-    }
-}
-
-CHUNK_METADATA_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "extract_chunk_metadata",
-        "description": "Extract metadata from a transcript chunk",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "chunk_speaker": {
-                    "type": "string",
-                    "description": "Primary speaker in the chunk"
-                },
-                "chunk_tags": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "3-5 keywords/phrases"
-                },
-                "chunk_topics": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "2-3 thematic topics"
-                }
-            },
-            "required": ["chunk_speaker", "chunk_tags", "chunk_topics"]
-        }
-    }
-}
-
-SECTION_BOUNDARY_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "section_boundary_decision",
-        "description": "Determine if a chunk should start a new section",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "start_new_section": {
-                    "type": "boolean",
-                    "description": "Whether the chunk should start a new section"
-                },
-                "section_type": {
-                    "type": "string",
-                    "description": "Type of the section from the available types"
-                },
-                "section_name": {
-                    "type": "string",
-                    "description": "Specific descriptive name for this section"
-                },
-                "reasoning": {
-                    "type": "string",
-                    "description": "Brief explanation of the decision"
-                }
-            },
-            "required": ["start_new_section", "section_type", "section_name", "reasoning"]
-        }
-    }
-}
 
 # ==============================================================================
 # --- Helper Functions ---
@@ -335,93 +236,106 @@ def setup_openai_client() -> Optional[OpenAI]:
     return client
 
 # ==============================================================================
-# --- Regex-based Parsing Functions ---
+# --- LLM-based Parsing Functions ---
 # ==============================================================================
 
-def parse_transcript_to_sentences(content: str) -> List[Dict]:
-    """Parse transcript into sentences with speaker identification using regex."""
-    sentences = []
+def parse_transcript_to_sentences(client: OpenAI, content: str) -> List[Dict]:
+    """Use LLM to parse transcript into sentences with speaker identification."""
+    
+    # Split content into manageable chunks for LLM processing
+    max_content_length = 8000  # Approximate token limit
+    content_chunks = []
+    
+    if len(content) > max_content_length:
+        # Split at paragraph boundaries
+        paragraphs = content.split('\n\n')
+        current_chunk = ""
+        
+        for para in paragraphs:
+            if len(current_chunk) + len(para) > max_content_length:
+                if current_chunk:
+                    content_chunks.append(current_chunk)
+                current_chunk = para
+            else:
+                current_chunk += "\n\n" + para if current_chunk else para
+        
+        if current_chunk:
+            content_chunks.append(current_chunk)
+    else:
+        content_chunks = [content]
+    
+    all_sentences = []
     sentence_id = 1
     
-    # Common patterns for speaker identification
-    speaker_patterns = [
-        r'^([A-Z][a-zA-Z\s]+?):\s*(.+)',  # "John Smith: ..."
-        r'^\[([^\]]+)\]\s*(.+)',           # "[CEO] ..."
-        r'^<([^>]+)>\s*(.+)',              # "<Analyst> ..."
-        r'^([A-Z][a-zA-Z\s]+)\s*-\s*(.+)'  # "John Smith - ..."
+    for chunk_idx, chunk in enumerate(content_chunks):
+        prompt = f"""
+You are parsing an earnings call transcript. Extract individual sentences with their speakers.
+
+Transcript content:
+{chunk}
+
+Parse this transcript and identify:
+1. Individual sentences (complete thoughts, even if split across lines)
+2. The speaker for each sentence (identify from context, speaker labels, or patterns)
+3. Maintain the exact text of each sentence
+
+Return JSON in this format:
+{{
+    "sentences": [
+        {{
+            "sentence_id": 1,
+            "text": "Exact sentence text",
+            "speaker": "Speaker Name",
+            "speaker_title": "Optional Title"
+        }}
     ]
-    
-    # Split content into lines
-    lines = content.split('\n')
-    current_speaker = "Unknown"
-    current_text = ""
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+}}
+
+Important:
+- Each sentence should be a complete thought
+- Preserve the exact wording
+- Identify speakers from context (e.g., "John Smith:", "[CEO]", etc.)
+- If speaker changes mid-paragraph, split appropriately
+- If no speaker is identifiable, use "Unknown"
+"""
         
-        # Check for speaker change
-        speaker_found = False
-        for pattern in speaker_patterns:
-            match = re.match(pattern, line)
-            if match:
-                # Save previous sentence if exists
-                if current_text:
-                    sentences.append({
-                        "sentence_id": sentence_id,
-                        "text": current_text.strip(),
-                        "position": sentence_id,
-                        "speaker": current_speaker,
-                        "speaker_title": ""
-                    })
-                    sentence_id += 1
+        try:
+            response = client.chat.completions.create(
+                model=GPT_CONFIG["model_name"],
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            
+            result = json.loads(response.choices[0].message.content)
+            
+            # Add to overall sentence list with continuous numbering
+            for sent in result.get("sentences", []):
+                all_sentences.append({
+                    "sentence_id": sentence_id,
+                    "text": sent["text"],
+                    "position": sentence_id,
+                    "speaker": sent.get("speaker", "Unknown"),
+                    "speaker_title": sent.get("speaker_title", "")
+                })
+                sentence_id += 1
                 
-                # Update speaker and start new text
-                current_speaker = match.group(1).strip()
-                current_text = match.group(2).strip()
-                speaker_found = True
-                break
-        
-        if not speaker_found:
-            # Continue with current speaker
-            if current_text:
-                current_text += " " + line
-            else:
-                current_text = line
-        
-        # Split into sentences using punctuation
-        if current_text and re.search(r'[.!?]$', current_text):
-            # Use NLTK sentence tokenizer if available, otherwise simple split
-            sentence_parts = re.split(r'(?<=[.!?])\s+', current_text)
-            
-            for i, part in enumerate(sentence_parts):
-                if part.strip():
-                    sentences.append({
-                        "sentence_id": sentence_id,
-                        "text": part.strip(),
-                        "position": sentence_id,
-                        "speaker": current_speaker,
-                        "speaker_title": ""
-                    })
-                    sentence_id += 1
-            
-            current_text = ""
+        except Exception as e:
+            logger.error(f"Error parsing chunk {chunk_idx}: {e}")
+            # Fallback: treat the whole chunk as one sentence
+            all_sentences.append({
+                "sentence_id": sentence_id,
+                "text": chunk.strip(),
+                "position": sentence_id,
+                "speaker": "Unknown",
+                "speaker_title": ""
+            })
+            sentence_id += 1
     
-    # Don't forget the last sentence
-    if current_text:
-        sentences.append({
-            "sentence_id": sentence_id,
-            "text": current_text.strip(),
-            "position": sentence_id,
-            "speaker": current_speaker,
-            "speaker_title": ""
-        })
-    
-    return sentences
+    return all_sentences
 
 # ==============================================================================
-# --- LLM-based Chunking Functions ---
+# --- Chunking Functions ---
 # ==============================================================================
 
 def should_add_to_chunk(
@@ -474,19 +388,27 @@ Consider:
 2. Speaker changes - Is there a change in speaker that indicates a new section?
 3. Semantic completeness - Would adding this sentence make the chunk too long or unfocused?
 4. Natural boundaries - Does this sentence start a new question, answer, or topic?
+
+Respond with JSON:
+{{
+    "add_to_chunk": true/false,
+    "reasoning": "Brief explanation of your decision",
+    "related_chunks": [list of previous chunk IDs that are semantically related],
+    "additional_context": [
+        {{"context": "Relevant context from previous discussion", "source": "sentence_id_value"}}
+    ]
+}}
 """
     
     try:
         response = client.chat.completions.create(
             model=GPT_CONFIG["model_name"],
             messages=[{"role": "user", "content": prompt}],
-            tools=[CHUNKING_DECISION_TOOL],
-            tool_choice={"type": "function", "function": {"name": "chunking_decision"}},
-            temperature=0.3
+            temperature=0.3,
+            response_format={"type": "json_object"}
         )
         
-        tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
         logger.error(f"Error in LLM chunking decision: {e}")
         # Default to adding to current chunk if error
@@ -512,19 +434,24 @@ Extract the following metadata:
 1. Primary speaker (if multiple, the main one)
 2. Key tags (3-5 keywords/phrases)
 3. Main topics (2-3 thematic topics)
+
+Respond with JSON:
+{{
+    "chunk_speaker": "Primary speaker name",
+    "chunk_tags": ["tag1", "tag2", "tag3"],
+    "chunk_topics": ["topic1", "topic2"]
+}}
 """
     
     try:
         response = client.chat.completions.create(
             model=GPT_CONFIG["model_name"],
             messages=[{"role": "user", "content": prompt}],
-            tools=[CHUNK_METADATA_TOOL],
-            tool_choice={"type": "function", "function": {"name": "extract_chunk_metadata"}},
-            temperature=0.3
+            temperature=0.3,
+            response_format={"type": "json_object"}
         )
         
-        tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
         logger.error(f"Error generating chunk metadata: {e}")
         return {
@@ -652,7 +579,7 @@ def should_start_new_section(
     current_section_chunks: List[Dict],
     next_chunk: Dict,
     previous_sections: List[Dict]
-) -> Dict:
+) -> Tuple[bool, str, str]:
     """Determine if chunk should start a new section."""
     
     context = {
@@ -690,27 +617,33 @@ Consider:
 2. Transition phrases (e.g., "Now let's turn to...", "Moving on to Q&A...")
 3. Speaker changes that indicate new segments
 4. Natural sections of an earnings call
+
+Respond with JSON:
+{{
+    "start_new_section": true/false,
+    "section_type": "One of the available section types",
+    "section_name": "Specific descriptive name for this section",
+    "reasoning": "Brief explanation"
+}}
 """
     
     try:
         response = client.chat.completions.create(
             model=GPT_CONFIG["model_name"],
             messages=[{"role": "user", "content": prompt}],
-            tools=[SECTION_BOUNDARY_TOOL],
-            tool_choice={"type": "function", "function": {"name": "section_boundary_decision"}},
-            temperature=0.3
+            temperature=0.3,
+            response_format={"type": "json_object"}
         )
         
-        tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
+        result = json.loads(response.choices[0].message.content)
+        return (
+            result["start_new_section"],
+            result["section_type"],
+            result["section_name"]
+        )
     except Exception as e:
         logger.error(f"Error in section boundary detection: {e}")
-        return {
-            "start_new_section": False,
-            "section_type": "Other",
-            "section_name": "Unnamed Section",
-            "reasoning": "Error in processing"
-        }
+        return False, "Other", "Unnamed Section"
 
 def generate_section_summary(client: OpenAI, chunks: List[Dict], section_type: str, section_name: str) -> str:
     """Generate a summary for a section."""
@@ -757,14 +690,14 @@ def group_chunks_into_sections(client: OpenAI, chunks: List[Dict], metadata: Dic
         if not current_section_chunks:
             current_section_chunks.append(chunk)
         else:
-            result = should_start_new_section(
+            should_start_new, new_type, new_name = should_start_new_section(
                 client,
                 current_section_chunks,
                 chunk,
                 sections
             )
             
-            if result["start_new_section"]:
+            if should_start_new:
                 # Finalize current section
                 section = {
                     "section_id": f"{metadata['transcript_id']}_S{section_counter:03d}",
@@ -780,8 +713,8 @@ def group_chunks_into_sections(client: OpenAI, chunks: List[Dict], metadata: Dic
                 # Start new section
                 section_counter += 1
                 current_section_chunks = [chunk]
-                current_section_type = result["section_type"]
-                current_section_name = result["section_name"]
+                current_section_type = new_type
+                current_section_name = new_name
             else:
                 current_section_chunks.append(chunk)
     
@@ -819,7 +752,7 @@ def group_chunks_into_sections(client: OpenAI, chunks: List[Dict], metadata: Dic
 def main():
     """Main processing function."""
     logger.info("=" * 60)
-    logger.info("Stage 3: Generate Transcript Chunks (Optimized)")
+    logger.info("Stage 3: Generate Transcript Chunks")
     logger.info("=" * 60)
     
     # Initialize SMB client
@@ -903,16 +836,16 @@ def main():
             transcript_id = metadata["transcript_id"]
             logger.info(f"Transcript ID: {transcript_id}")
             
-            # Parse transcript into sentences using regex
-            logger.info("Parsing transcript into sentences using regex...")
+            # Extract sentences using LLM
+            logger.info("Using LLM to parse transcript into sentences...")
             
             # Use markdown content if available, otherwise extract from JSON
             if markdown_content:
-                sentences = parse_transcript_to_sentences(markdown_content)
+                sentences = parse_transcript_to_sentences(client, markdown_content)
             else:
                 # Extract content from JSON if markdown not available
                 json_text = json_content.get('content', '')
-                sentences = parse_transcript_to_sentences(json_text)
+                sentences = parse_transcript_to_sentences(client, json_text)
             
             logger.info(f"Found {len(sentences)} sentences")
             
