@@ -4,17 +4,20 @@ Stage 3: Generate Transcript Chunks using LLM (Optimized)
 
 This script processes transcript files from Stage 2.
 For each transcript, it:
-1. Uses regex patterns to parse transcript into structured sentences with speakers
+1. Uses regex patterns to parse transcript into structured sentences (without speaker identification)
 2. Uses LLM to determine semantic chunk boundaries
 3. Groups chunks into sections
 4. Creates structured output for database insertion
+5. Extracts metadata (including speaker) using surrounding chunks as context
 
 Features:
 - TEST_MODE configuration to process only one transcript
-- Regex-based sentence parsing (no LLM for parsing)
+- Regex-based sentence parsing (no speaker identification)
 - LLM with tool definitions for semantic operations
 - Sliding window approach for chunking
 - Batch embedding generation
+- Metadata extraction using surrounding chunks
+- CO-STAR format prompts with XML tags
 """
 
 import os
@@ -93,6 +96,11 @@ FUTURE_SENTENCES_CONTEXT = 19
 # Maximum tokens per chunk (approximate)
 MAX_CHUNK_TOKENS = 500
 
+# --- Metadata Context Configuration ---
+# Number of chunks before and after for metadata extraction
+METADATA_CONTEXT_BEFORE = 10
+METADATA_CONTEXT_AFTER = 10
+
 # --- Embedding Configuration ---
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSION = 2000
@@ -154,26 +162,43 @@ CHUNK_METADATA_TOOL = {
     "type": "function",
     "function": {
         "name": "extract_chunk_metadata",
-        "description": "Extract metadata from a transcript chunk",
+        "description": "Extract metadata from a transcript chunk using surrounding context",
         "parameters": {
             "type": "object",
             "properties": {
                 "chunk_speaker": {
                     "type": "string",
-                    "description": "Primary speaker in the chunk"
+                    "description": "Primary speaker in the chunk (identified from context)"
                 },
                 "chunk_tags": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "3-5 keywords/phrases"
+                    "description": "3-5 keywords/phrases relevant to the content"
                 },
                 "chunk_topics": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "2-3 thematic topics"
+                    "description": "2-3 thematic topics discussed"
+                },
+                "related_chunks": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "IDs of chunks that are semantically related to this chunk"
+                },
+                "supporting_context": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "context": {"type": "string", "description": "The supporting information"},
+                            "source": {"type": "string", "description": "The chunk ID where this context comes from"}
+                        },
+                        "required": ["context", "source"]
+                    },
+                    "description": "Relevant context from other chunks that supports understanding this chunk"
                 }
             },
-            "required": ["chunk_speaker", "chunk_tags", "chunk_topics"]
+            "required": ["chunk_speaker", "chunk_tags", "chunk_topics", "related_chunks", "supporting_context"]
         }
     }
 }
@@ -339,84 +364,44 @@ def setup_openai_client() -> Optional[OpenAI]:
 # ==============================================================================
 
 def parse_transcript_to_sentences(content: str) -> List[Dict]:
-    """Parse transcript into sentences with speaker identification using regex."""
+    """Parse transcript into sentences WITHOUT speaker identification."""
     sentences = []
     sentence_id = 1
     
-    # Common patterns for speaker identification
-    speaker_patterns = [
-        r'^([A-Z][a-zA-Z\s]+?):\s*(.+)',  # "John Smith: ..."
-        r'^\[([^\]]+)\]\s*(.+)',           # "[CEO] ..."
-        r'^<([^>]+)>\s*(.+)',              # "<Analyst> ..."
-        r'^([A-Z][a-zA-Z\s]+)\s*-\s*(.+)'  # "John Smith - ..."
-    ]
+    # Split content into paragraphs first
+    paragraphs = content.split('\n\n')
     
-    # Split content into lines
-    lines = content.split('\n')
-    current_speaker = "Unknown"
-    current_text = ""
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
+    for paragraph in paragraphs:
+        # Skip empty paragraphs
+        if not paragraph.strip():
             continue
+            
+        # Use regex to split on sentence boundaries while preserving them
+        # This pattern looks for periods, question marks, or exclamation points
+        # followed by a space and a capital letter (or end of string)
+        sentence_pattern = r'(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])$'
         
-        # Check for speaker change
-        speaker_found = False
-        for pattern in speaker_patterns:
-            match = re.match(pattern, line)
-            if match:
-                # Save previous sentence if exists
-                if current_text:
-                    sentences.append({
-                        "sentence_id": sentence_id,
-                        "text": current_text.strip(),
-                        "position": sentence_id,
-                        "speaker": current_speaker,
-                        "speaker_title": ""
-                    })
-                    sentence_id += 1
+        # Split the paragraph into sentences
+        potential_sentences = re.split(sentence_pattern, paragraph.strip())
+        
+        for sentence in potential_sentences:
+            sentence = sentence.strip()
+            
+            # Skip empty sentences
+            if not sentence:
+                continue
                 
-                # Update speaker and start new text
-                current_speaker = match.group(1).strip()
-                current_text = match.group(2).strip()
-                speaker_found = True
-                break
-        
-        if not speaker_found:
-            # Continue with current speaker
-            if current_text:
-                current_text += " " + line
-            else:
-                current_text = line
-        
-        # Split into sentences using punctuation
-        if current_text and re.search(r'[.!?]$', current_text):
-            # Use NLTK sentence tokenizer if available, otherwise simple split
-            sentence_parts = re.split(r'(?<=[.!?])\s+', current_text)
-            
-            for i, part in enumerate(sentence_parts):
-                if part.strip():
-                    sentences.append({
-                        "sentence_id": sentence_id,
-                        "text": part.strip(),
-                        "position": sentence_id,
-                        "speaker": current_speaker,
-                        "speaker_title": ""
-                    })
-                    sentence_id += 1
-            
-            current_text = ""
-    
-    # Don't forget the last sentence
-    if current_text:
-        sentences.append({
-            "sentence_id": sentence_id,
-            "text": current_text.strip(),
-            "position": sentence_id,
-            "speaker": current_speaker,
-            "speaker_title": ""
-        })
+            # Skip very short sentences (likely parsing errors)
+            if len(sentence) < 5:
+                continue
+                
+            # Add the sentence to our list
+            sentences.append({
+                "sentence_id": sentence_id,
+                "text": sentence,
+                "position": sentence_id
+            })
+            sentence_id += 1
     
     return sentences
 
@@ -448,32 +433,55 @@ def should_add_to_chunk(
         },
         "active_sentence": {
             "sentence_id": active_sentence["sentence_id"],
-            "text": active_sentence["text"],
-            "speaker": active_sentence["speaker"]
+            "text": active_sentence["text"]
         },
         "future_sentences": [
             {
                 "sentence_id": s["sentence_id"],
-                "text": s["text"],
-                "speaker": s["speaker"]
+                "text": s["text"]
             }
             for s in future_sentences[:FUTURE_SENTENCES_CONTEXT]
         ]
     }
     
     prompt = f"""
-You are analyzing an earnings call transcript to determine semantic chunk boundaries.
+<context>
+You are analyzing an earnings call transcript to determine semantic chunk boundaries. Your task is to decide whether a sentence should be added to the current chunk or start a new chunk.
+</context>
 
-Context:
+<objective>
+Analyze the provided context and decide if the active sentence should be added to the current chunk or begin a new chunk. This decision should create semantically coherent chunks that maintain topic unity while respecting natural discourse boundaries.
+</objective>
+
+<style>
+Your response should use the chunking_decision tool with clear, concise reasoning that focuses on semantic cohesion, topic continuity, and discourse markers.
+</style>
+
+<tone>
+Be analytical and decisive. Provide clear justification for your decisions based on the content's semantic relationships.
+</tone>
+
+<audience>
+This decision will be used by an automated system to create searchable chunks of the earnings call transcript for financial analysts and researchers.
+</audience>
+
+<response>
+Analyze the following context and make your chunking decision:
+
+<current_context>
 {json.dumps(context, indent=2)}
+</current_context>
 
-Question: Should the active sentence be added to the current chunk, or should it start a new chunk?
-
-Consider:
-1. Topic continuity - Does the sentence continue the same topic?
-2. Speaker changes - Is there a change in speaker that indicates a new section?
+<considerations>
+1. Topic continuity - Does the sentence continue the same topic or introduce a new one?
+2. Natural boundaries - Does this sentence start a new question, answer, or major topic shift?
 3. Semantic completeness - Would adding this sentence make the chunk too long or unfocused?
-4. Natural boundaries - Does this sentence start a new question, answer, or topic?
+4. Context flow - Does the sentence logically belong with the current chunk based on surrounding content?
+5. Discourse markers - Look for transition phrases like "moving on to", "turning to", "next question", etc.
+</considerations>
+
+Use the chunking_decision tool to provide your decision.
+</response>
 """
     
     try:
@@ -497,21 +505,97 @@ Consider:
             "additional_context": []
         }
 
-def generate_chunk_metadata(client: OpenAI, chunk: Dict) -> Dict:
-    """Generate metadata for a chunk using LLM."""
+def generate_chunk_metadata(
+    client: OpenAI, 
+    chunk: Dict, 
+    previous_chunks: List[Dict], 
+    future_chunks: List[Dict]
+) -> Dict:
+    """Generate metadata for a chunk using surrounding chunks as context."""
+    
+    # Prepare context from surrounding chunks
+    context_chunks = {
+        "target_chunk": {
+            "chunk_id": chunk["chunk_id"],
+            "content": chunk["content"]
+        },
+        "previous_chunks": [
+            {
+                "chunk_id": c["chunk_id"],
+                "content": c["content"][:500] + "..." if len(c["content"]) > 500 else c["content"]
+            }
+            for c in previous_chunks[-METADATA_CONTEXT_BEFORE:]
+        ],
+        "future_chunks": [
+            {
+                "chunk_id": c["chunk_id"],
+                "content": c["content"][:500] + "..." if len(c["content"]) > 500 else c["content"]
+            }
+            for c in future_chunks[:METADATA_CONTEXT_AFTER]
+        ]
+    }
     
     prompt = f"""
-Analyze this earnings call transcript chunk and extract metadata.
+<context>
+You are analyzing an earnings call transcript chunk to extract comprehensive metadata. The transcript has been divided into semantic chunks, and you need to identify key information about each chunk using surrounding context.
+</context>
 
-Chunk content:
-{chunk["content"]}
+<objective>
+Extract detailed metadata from the target chunk, including speaker identification, key topics, related content, and supporting context from surrounding chunks. Use the surrounding chunks to identify information that may not be explicit in the target chunk itself.
+</objective>
 
-Speaker information: {chunk.get("speakers", [])}
+<style>
+Be thorough and precise in your metadata extraction. Use the surrounding context to infer missing information, especially speaker identity. Provide specific, actionable metadata that will enable effective search and retrieval.
+</style>
 
-Extract the following metadata:
-1. Primary speaker (if multiple, the main one)
-2. Key tags (3-5 keywords/phrases)
-3. Main topics (2-3 thematic topics)
+<tone>
+Be analytical and comprehensive. Focus on extracting high-quality metadata that captures the essence of the content and its relationships to other parts of the transcript.
+</tone>
+
+<audience>
+This metadata will be used by financial analysts and researchers to search and analyze earnings call content. The metadata should enable precise retrieval and understanding of context.
+</audience>
+
+<response>
+Analyze the following chunk and its surrounding context:
+
+<chunk_context>
+{json.dumps(context_chunks, indent=2)}
+</chunk_context>
+
+<extraction_requirements>
+1. Speaker Identification:
+   - Look for speaker introductions in previous chunks
+   - Check for speaker names at the beginning of statements
+   - Identify role/title indicators (CEO, CFO, Analyst, etc.)
+   - Use context clues from Q&A patterns
+
+2. Key Tags (3-5 keywords/phrases):
+   - Financial metrics mentioned
+   - Business segments discussed
+   - Strategic initiatives
+   - Market conditions
+   - Specific products or services
+
+3. Main Topics (2-3 thematic areas):
+   - Broad themes being discussed
+   - Major business areas covered
+   - Strategic focus areas
+
+4. Related Chunks:
+   - Identify chunks discussing similar topics
+   - Find chunks with the same speaker
+   - Locate chunks that provide context or follow-up
+
+5. Supporting Context:
+   - Extract relevant information from other chunks that helps understand this chunk
+   - Include speaker introductions from earlier chunks
+   - Add context about questions being answered
+   - Reference specific metrics or statements from related chunks
+</extraction_requirements>
+
+Use the extract_chunk_metadata tool to provide comprehensive metadata for the target chunk.
+</response>
 """
     
     try:
@@ -524,13 +608,20 @@ Extract the following metadata:
         )
         
         tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
+        metadata = json.loads(tool_call.function.arguments)
+        
+        # Merge with existing chunk data
+        chunk.update(metadata)
+        return metadata
+        
     except Exception as e:
         logger.error(f"Error generating chunk metadata: {e}")
         return {
-            "chunk_speaker": chunk.get("speakers", ["Unknown"])[0] if chunk.get("speakers") else "Unknown",
+            "chunk_speaker": "Unknown",
             "chunk_tags": [],
-            "chunk_topics": []
+            "chunk_topics": [],
+            "related_chunks": [],
+            "supporting_context": []
         }
 
 def generate_embeddings_batch(client: OpenAI, texts: List[str]) -> List[List[float]]:
@@ -570,6 +661,7 @@ def process_transcript_to_chunks(
     current_chunk = None
     chunk_counter = 1
     
+    # First pass: Create chunks based on semantic boundaries
     for i, sentence in enumerate(sentences):
         if current_chunk is None:
             # Start first chunk
@@ -577,7 +669,6 @@ def process_transcript_to_chunks(
                 "chunk_id": f"{metadata['transcript_id']}_C{chunk_counter:03d}",
                 "sentences": [sentence["sentence_id"]],
                 "content": sentence["text"],
-                "speakers": [sentence["speaker"]] if sentence["speaker"] != "Unknown" else [],
                 "related_chunks": [],
                 "additional_context": []
             }
@@ -598,17 +689,12 @@ def process_transcript_to_chunks(
                 # Add to current chunk
                 current_chunk["sentences"].append(sentence["sentence_id"])
                 current_chunk["content"] += " " + sentence["text"]
-                if sentence["speaker"] != "Unknown" and sentence["speaker"] not in current_chunk["speakers"]:
-                    current_chunk["speakers"].append(sentence["speaker"])
                 
                 # Add any related chunks or context
                 current_chunk["related_chunks"].extend(decision.get("related_chunks", []))
                 current_chunk["additional_context"].extend(decision.get("additional_context", []))
             else:
-                # Finalize current chunk
-                chunk_metadata = generate_chunk_metadata(client, current_chunk)
-                current_chunk.update(chunk_metadata)
-                current_chunk.update(metadata)  # Add transcript metadata
+                # Finalize current chunk and start new one
                 chunks.append(current_chunk)
                 
                 # Start new chunk
@@ -617,24 +703,33 @@ def process_transcript_to_chunks(
                     "chunk_id": f"{metadata['transcript_id']}_C{chunk_counter:03d}",
                     "sentences": [sentence["sentence_id"]],
                     "content": sentence["text"],
-                    "speakers": [sentence["speaker"]] if sentence["speaker"] != "Unknown" else [],
                     "related_chunks": decision.get("related_chunks", []),
                     "additional_context": decision.get("additional_context", [])
                 }
     
     # Don't forget the last chunk
     if current_chunk and current_chunk["sentences"]:
-        chunk_metadata = generate_chunk_metadata(client, current_chunk)
-        current_chunk.update(chunk_metadata)
-        current_chunk.update(metadata)
         chunks.append(current_chunk)
     
-    # Generate embeddings for all chunks in batch
+    # Second pass: Generate metadata for each chunk using surrounding context
+    logger.info(f"Generating metadata for {len(chunks)} chunks...")
+    for i, chunk in enumerate(chunks):
+        # Get surrounding chunks for context
+        previous_chunks = chunks[max(0, i-METADATA_CONTEXT_BEFORE):i]
+        future_chunks = chunks[i+1:min(len(chunks), i+1+METADATA_CONTEXT_AFTER)]
+        
+        # Generate metadata using surrounding context
+        generate_chunk_metadata(client, chunk, previous_chunks, future_chunks)
+        
+        # Add transcript metadata
+        chunk.update(metadata)
+    
+    # Third pass: Generate embeddings for all chunks in batch
     logger.info(f"Generating embeddings for {len(chunks)} chunks...")
     chunk_texts = [chunk["content"] for chunk in chunks]
     embeddings = generate_embeddings_batch(client, chunk_texts)
     
-    # Add embeddings to chunks
+    # Add embeddings and additional fields to chunks
     for i, chunk in enumerate(chunks):
         chunk["embedding"] = embeddings[i]
         # Add additional fields required for database
@@ -676,20 +771,67 @@ def should_start_new_section(
     }
     
     prompt = f"""
-You are analyzing an earnings call transcript to identify section boundaries.
+<context>
+You are analyzing an earnings call transcript to identify section boundaries. Earnings calls typically follow a structured format with distinct sections that need to be identified for proper organization and retrieval.
+</context>
 
-Context:
+<objective>
+Determine whether the next chunk should start a new section in the transcript. If so, identify the appropriate section type and provide a descriptive name for the section.
+</objective>
+
+<style>
+Be decisive and clear in your section boundary detection. Focus on major topical shifts and structural markers that indicate new sections in earnings calls.
+</style>
+
+<tone>
+Be analytical and structured. Your decisions should reflect the formal structure of earnings call presentations.
+</tone>
+
+<audience>
+Financial analysts and researchers who need to navigate earnings call transcripts efficiently by section.
+</audience>
+
+<response>
+Analyze the following context to determine section boundaries:
+
+<section_context>
 {json.dumps(context, indent=2)}
+</section_context>
 
-Available section types: {SECTION_TYPES}
+<available_section_types>
+{SECTION_TYPES}
+</available_section_types>
 
-Question: Should the next chunk start a new section?
+<decision_criteria>
+1. Major topic shifts:
+   - Moving from results to guidance
+   - Transitioning to Q&A
+   - Shifting between business segments
 
-Consider:
-1. Major topic shifts
-2. Transition phrases (e.g., "Now let's turn to...", "Moving on to Q&A...")
-3. Speaker changes that indicate new segments
-4. Natural sections of an earnings call
+2. Transition phrases:
+   - "Now let's turn to..."
+   - "Moving on to..."
+   - "I'll now open the floor for questions"
+   - "This concludes our prepared remarks"
+
+3. Speaker patterns:
+   - CEO/CFO handoffs
+   - Operator introducing Q&A
+   - Analyst questions beginning
+
+4. Content markers:
+   - Financial results summary
+   - Segment performance details
+   - Forward-looking statements
+   - Risk discussions
+
+5. Structural patterns:
+   - Introduction → Results → Outlook → Q&A → Closing
+   - Follow typical earnings call flow
+</decision_criteria>
+
+Use the section_boundary_decision tool to provide your decision.
+</response>
 """
     
     try:
@@ -718,16 +860,47 @@ def generate_section_summary(client: OpenAI, chunks: List[Dict], section_type: s
     combined_content = " ".join([c["content"] for c in chunks])
     
     prompt = f"""
-Generate a concise summary for this section of an earnings call transcript.
+<context>
+You are summarizing a section of an earnings call transcript. Each section contains important financial information, strategic updates, or analyst discussions that need to be captured concisely.
+</context>
 
+<objective>
+Create a 2-3 sentence summary that captures the key points and main takeaways from this section. Focus on specific information that would be most valuable to financial analysts and investors.
+</objective>
+
+<style>
+Be concise and fact-focused. Prioritize concrete information like numbers, percentages, guidance figures, and specific strategic announcements over general statements.
+</style>
+
+<tone>
+Professional and informative. Write in a style appropriate for financial analysis and reporting.
+</tone>
+
+<audience>
+Financial analysts, investors, and researchers who need quick access to the key information from each section of the earnings call.
+</audience>
+
+<response>
+Summarize the following section:
+
+<section_details>
 Section Type: {section_type}
 Section Name: {section_name}
 
-Content (first 2000 chars):
+Content (first 2000 characters):
 {combined_content[:2000]}...
+</section_details>
 
-Provide a 2-3 sentence summary that captures the key points and main takeaways from this section.
-Focus on specific numbers, guidance, and important statements.
+<summary_requirements>
+1. Include specific numbers when mentioned (revenue, margins, growth rates)
+2. Highlight guidance or forward-looking statements
+3. Note any significant announcements or strategic changes
+4. Capture the main theme or focus of the section
+5. Keep to 2-3 sentences maximum
+</summary_requirements>
+
+Provide your summary below:
+</response>
 """
     
     try:
@@ -903,8 +1076,8 @@ def main():
             transcript_id = metadata["transcript_id"]
             logger.info(f"Transcript ID: {transcript_id}")
             
-            # Parse transcript into sentences using regex
-            logger.info("Parsing transcript into sentences using regex...")
+            # Parse transcript into sentences (without speaker identification)
+            logger.info("Parsing transcript into sentences...")
             
             # Use markdown content if available, otherwise extract from JSON
             if markdown_content:
@@ -932,7 +1105,7 @@ def main():
                 logger.error("Failed to save sentence data")
                 continue
             
-            # Generate chunks
+            # Generate chunks with metadata extraction using surrounding context
             logger.info("Generating semantic chunks...")
             chunks = process_transcript_to_chunks(client, sentences, metadata)
             logger.info(f"Created {len(chunks)} chunks")
