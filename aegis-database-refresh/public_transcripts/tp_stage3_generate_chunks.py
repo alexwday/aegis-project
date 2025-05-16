@@ -766,31 +766,12 @@ def main():
         logger.error("Failed to set up OpenAI client")
         sys.exit(1)
     
-    # Determine input/output paths from stage 1/2
-    # First, find the most recent processing folder
+    # Determine input/output paths matching stage 1/2 structure
+    # Base output directory (same as stage 1 and 2)
     base_output_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{DOCUMENT_SOURCE}"
+    stage1_output_dir_smb = base_output_path
     
-    # For now, we'll assume the user provides the correct path or we find the most recent
-    # In production, this would be passed as an argument
-    import glob
-    try:
-        # List all processing folders
-        smbclient.ClientConfig(username=NAS_PARAMS["user"], password=NAS_PARAMS["password"])
-        processing_folders = smbclient.listdir(base_output_path)
-        processing_folders = [f for f in processing_folders if f.startswith('processing_')]
-        processing_folders.sort(reverse=True)  # Most recent first
-        
-        if not processing_folders:
-            logger.error("No processing folders found")
-            sys.exit(1)
-            
-        latest_folder = processing_folders[0]
-        logger.info(f"Using processing folder: {latest_folder}")
-        
-        stage1_output_dir_smb = f"{base_output_path}/{latest_folder}"
-    except Exception as e:
-        logger.error(f"Error finding processing folder: {e}")
-        sys.exit(1)
+    logger.info(f"Using base output directory: {stage1_output_dir_smb}")
     
     stage2_output_dir_smb = os.path.join(stage1_output_dir_smb, '2A_processed_files').replace('\\', '/')
     stage3_output_dir_smb = os.path.join(stage1_output_dir_smb, '3A_transcript_chunks').replace('\\', '/')
