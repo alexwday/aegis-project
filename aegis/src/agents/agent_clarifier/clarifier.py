@@ -179,7 +179,7 @@ def clarify_research_needs(
 
         # For research statements, format the output to include the structured parameters
         if action == "create_research_statement":
-            # Format intent as research statement
+            # Format intent as research statement with detailed context
             formatted_intent = f"Research intent: {intent}"
 
             # Format parameters with each bank on its own line
@@ -187,8 +187,8 @@ def clarify_research_needs(
                 banks, metrics, years, quarters
             )
 
-            # Combine into final output
-            output = f"{formatted_intent}\n\nParameters:\n{formatted_parameters}"
+            # Combine into final output with clear section headers
+            output = f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}\n\nThis research should use the benchmarking database for financial figures and metrics. The transcripts database should be used to provide management commentary and Q&A insights. The reports to shareholders database can provide additional context and detailed explanations."
 
         # Construct the decision dictionary with the new parameter fields
         decision = {
@@ -218,6 +218,7 @@ def format_research_parameters(
     """
     Format research parameters in the standardized format.
     Each bank gets its own line with associated time periods and metrics.
+    Avoids using brackets which can create unintended markdown hyperlinks.
 
     Args:
         banks (List[str]): List of bank identifiers
@@ -238,6 +239,7 @@ def format_research_parameters(
                     time_periods.append(f"{year}-Q{quarter}")
 
             time_period_str = ", ".join(time_periods)
-            parameters.append(f"{bank}[{time_period_str}]-{metric}")
+            # Use parentheses instead of brackets to avoid creating markdown hyperlinks
+            parameters.append(f"{bank} ({time_period_str}) : {metric}")
 
     return "\n".join(parameters)
