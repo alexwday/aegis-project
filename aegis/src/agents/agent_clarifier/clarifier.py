@@ -68,7 +68,16 @@ def clarify_research_needs(
 
     Returns:
         Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
-            - Clarifier decision dictionary.
+            - Clarifier decision dictionary with fields:
+                - action: 'request_essential_context' or 'create_research_statement'
+                - output: The formatted output (questions or research statement)
+                - intent: The identified user intent (for research statements)
+                - years: List of years identified (for research statements)
+                - quarters: List of quarters identified (for research statements)
+                - banks: List of banks identified (for research statements)
+                - metrics: List of metrics identified (for research statements)
+                - scope: 'research' for all financial queries (for compatibility)
+                - is_continuation: Boolean flag for continuing research (default False)
             - Usage details dictionary for the LLM call, or None if error.
 
     Raises:
@@ -190,6 +199,8 @@ def clarify_research_needs(
             "quarters": quarters,
             "banks": banks,
             "metrics": metrics,
+            "scope": "research",  # Always set to 'research' for financial queries
+            "is_continuation": False,  # Default to False as we don't track continuations
         }
 
         # Return both decision and usage details
