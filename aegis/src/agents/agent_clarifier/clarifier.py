@@ -188,7 +188,7 @@ def clarify_research_needs(
             )
 
             # Combine into final output with clear section headers
-            output = f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}\n\nThis research should use the benchmarking database for financial figures and metrics. The transcripts database should be used to provide management commentary and Q&A insights. The reports to shareholders database can provide additional context and detailed explanations."
+            output = f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}"
 
         # Construct the decision dictionary with the new parameter fields
         decision = {
