@@ -93,6 +93,10 @@ def clarify_research_needs(
         if conversation and "messages" in conversation:
             messages.extend(conversation["messages"])
 
+        # Log the current fiscal period for debugging
+        from ...global_prompts.fiscal_calendar import get_fiscal_period
+        fiscal_year, fiscal_quarter = get_fiscal_period()
+        logger.info(f"Current fiscal period: Year {fiscal_year}, Quarter {fiscal_quarter}")
         logger.info(f"Clarifying research needs using model: {MODEL_NAME}")
         logger.info("Initiating Clarifier API call")
 

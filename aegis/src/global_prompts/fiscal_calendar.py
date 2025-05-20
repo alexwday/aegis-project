@@ -30,8 +30,14 @@ def get_fiscal_period() -> Tuple[int, int]:
     fiscal_year = calendar_year + 1 if current_month >= 11 else calendar_year
 
     # Calculate fiscal quarter (Nov-Jan = Q1, Feb-Apr = Q2, May-Jul = Q3, Aug-Oct = Q4)
-    month_adjusted = (current_month - 10) % 12  # Shift months to align with fiscal year
-    fiscal_quarter = (month_adjusted - 1) // 3 + 1
+    # Map calendar months to fiscal quarters
+    fiscal_quarter_map = {
+        11: 1, 12: 1, 1: 1,  # Q1: Nov-Jan
+        2: 2, 3: 2, 4: 2,    # Q2: Feb-Apr
+        5: 3, 6: 3, 7: 3,    # Q3: May-Jul
+        8: 4, 9: 4, 10: 4    # Q4: Aug-Oct
+    }
+    fiscal_quarter = fiscal_quarter_map[current_month]
 
     return fiscal_year, fiscal_quarter
 
@@ -142,3 +148,31 @@ def get_fiscal_statement() -> str:
         logger.error(f"Error generating fiscal statement: {str(e)}")
         # Fallback statement in case of errors
         return "<FISCAL_CONTEXT>We operate on a fiscal year that runs from November 1st through October 31st.</FISCAL_CONTEXT>"
+        
+        
+def test_fiscal_period_calculation():
+    """
+    Test function to verify the fiscal period calculation for different months.
+    This can be run manually to debug fiscal period issues.
+    """
+    from datetime import datetime
+    
+    # Test for each month
+    for month in range(1, 13):
+        test_date = datetime(2025, month, 15)  # Use the 15th of each month
+        current_month = test_date.month
+        calendar_year = test_date.year
+        
+        # Calculate fiscal year
+        fiscal_year = calendar_year + 1 if current_month >= 11 else calendar_year
+        
+        # Map calendar months to fiscal quarters
+        fiscal_quarter_map = {
+            11: 1, 12: 1, 1: 1,  # Q1: Nov-Jan
+            2: 2, 3: 2, 4: 2,    # Q2: Feb-Apr
+            5: 3, 6: 3, 7: 3,    # Q3: May-Jul
+            8: 4, 9: 4, 10: 4    # Q4: Aug-Oct
+        }
+        fiscal_quarter = fiscal_quarter_map[current_month]
+        
+        print(f"Date: {test_date.strftime('%Y-%m-%d')}, Fiscal Year: {fiscal_year}, Fiscal Quarter: Q{fiscal_quarter}")

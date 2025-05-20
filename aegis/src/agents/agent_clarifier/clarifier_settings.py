@@ -223,15 +223,18 @@ Sufficient context exists when:
 5. Relevant METRICS are identifiable (explicitly mentioned or can be reasonably inferred)
 
 <FISCAL_CONTEXT_HANDLING>
-Use the fiscal information in the FISCAL_CONTEXT provided at the beginning of the prompt:
+CRITICAL: You MUST use the fiscal information in the FISCAL_CONTEXT provided at the beginning of the prompt:
 
-1. RELY ON PROVIDED FISCAL CONTEXT:
-   - Use the CURRENT_FISCAL_PERIOD and fiscal year definition provided in the FISCAL_CONTEXT
-   - Do NOT calculate fiscal periods on your own
-   - The fiscal year and quarter in CURRENT_FISCAL_PERIOD is the reference point for all relative time references
+1. RELY EXCLUSIVELY ON PROVIDED FISCAL CONTEXT:
+   - ALWAYS use the CURRENT_FISCAL_PERIOD and fiscal year definition provided in the FISCAL_CONTEXT
+   - Do NOT calculate fiscal periods on your own under any circumstances
+   - The fiscal year and quarter in CURRENT_FISCAL_PERIOD is the ONLY valid reference point for all relative time references
+   - The CURRENT_FISCAL_PERIOD value overrides any examples in this prompt
 
 2. UNDERSTANDING RELATIVE TIME REFERENCES:
-   - "Last quarter" = the quarter immediately before the current quarter in FISCAL_CONTEXT
+   - "Last quarter" = the quarter IMMEDIATELY BEFORE the current quarter in FISCAL_CONTEXT
+     * If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
+     * If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
    - "Same quarter last year" = the quarter with the same number from the previous fiscal year
    - "Past X quarters" = exactly X quarters counting backward from (and including) the current quarter
    - Quarters must be listed in chronological order (earliest to latest)
@@ -247,29 +250,40 @@ Use the fiscal information in the FISCAL_CONTEXT provided at the beginning of th
    - Only include the specific quarters that satisfy the user's query
    - Time periods should always be presented in chronological order
 
-The current fiscal period and fiscal definition will be available in FISCAL_CONTEXT. Use this information rather than making assumptions about the fiscal calendar.
+5. EXAMPLES ARE ILLUSTRATIVE ONLY:
+   - The examples in this prompt assume specific fiscal periods for illustration purposes
+   - You MUST override the examples with the actual CURRENT_FISCAL_PERIOD provided
+   - NEVER use the fiscal periods from examples if they differ from CURRENT_FISCAL_PERIOD
+
+The current fiscal period and fiscal definition in FISCAL_CONTEXT are the absolute authority. You MUST use this information rather than making assumptions about the fiscal calendar or following examples.
 </FISCAL_CONTEXT_HANDLING>
 
 <COMMON_TIME_REFERENCES>
-Common time references and their interpretations (STRICTLY based on the CURRENT_FISCAL_PERIOD in FISCAL_CONTEXT):
+CRITICAL INSTRUCTIONS: Time references MUST be interpreted using the ACTUAL CURRENT_FISCAL_PERIOD from FISCAL_CONTEXT:
 
-- "last quarter" - The quarter IMMEDIATELY BEFORE the current fiscal quarter
-  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
-  * Example: If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
+- "last quarter" = The quarter IMMEDIATELY BEFORE the current fiscal quarter
+  * If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
+  * If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
+  * If CURRENT_FISCAL_PERIOD shows Q2, then "last quarter" is Q1 of the same fiscal year
+  * If CURRENT_FISCAL_PERIOD shows Q4, then "last quarter" is Q3 of the same fiscal year
   
-- "same quarter last year" - The same numbered quarter from the previous fiscal year
-  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "same quarter last year" is Q3 of previous fiscal year
+- "same quarter last year" = The same numbered quarter from the previous fiscal year
+  * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "same quarter last year" is Q3 of 2024
+  * If CURRENT_FISCAL_PERIOD shows Q1 of 2025, then "same quarter last year" is Q1 of 2024
   
-- "year-over-year" - Comparing the same quarter from different fiscal years
-  * Example: If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "year-over-year" compares Q3 2024 vs Q3 2025
+- "year-over-year" = Comparing the same quarter from different fiscal years
+  * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "year-over-year" compares Q3 2024 vs Q3 2025
+  * If CURRENT_FISCAL_PERIOD shows Q2 of 2025, then "year-over-year" compares Q2 2024 vs Q2 2025
   
-- "quarter-over-quarter" - Comparing consecutive quarters
-  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "quarter-over-quarter" compares Q2 vs Q3
+- "quarter-over-quarter" = Comparing consecutive quarters
+  * If CURRENT_FISCAL_PERIOD shows Q3, then "quarter-over-quarter" compares Q2 vs Q3
+  * If CURRENT_FISCAL_PERIOD shows Q1, then "quarter-over-quarter" compares Q4 (previous year) vs Q1
   
-- "past X quarters" - The X most recent quarters, including the current quarter, counted backward
-  * Example: If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "past 3 quarters" means [Q1, Q2, Q3] of 2025
+- "past X quarters" = The X most recent quarters, including the current quarter, counted backward
+  * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "past 3 quarters" means [Q1, Q2, Q3] of 2025
+  * If CURRENT_FISCAL_PERIOD shows Q1 of 2025, then "past 3 quarters" means [Q3, Q4] of 2024 and [Q1] of 2025
 
-CRITICAL: Never use fixed quarter values. ALWAYS derive the appropriate quarters from the CURRENT_FISCAL_PERIOD value in FISCAL_CONTEXT.
+THESE RULES ARE ABSOLUTE: You MUST use the CURRENT_FISCAL_PERIOD from FISCAL_CONTEXT to determine all relative time references. The examples above demonstrate the logic but are NOT to be used directly. You MUST derive the appropriate quarters from the ACTUAL CURRENT_FISCAL_PERIOD provided, regardless of what any example shows.
 </COMMON_TIME_REFERENCES>
 
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
@@ -278,44 +292,53 @@ CRITICAL: Never use fixed quarter values. ALWAYS derive the appropriate quarters
 
 <CLARIFICATION_EXAMPLES>
 <SUFFICIENT_CONTEXT_EXAMPLES>
-1. "What was BMO's net income in Q2 2024?"
-   ACTION: create_research_statement
-   INTENT: "retrieve BMO's net income for Q2 2024"
-   YEARS: [2024]
-   QUARTERS: [2]
-   BANKS: ["BMO"]
-   METRICS: ["Net Income"]
-   OUTPUT: "Research intent: Retrieve BMO's net income for Q2 2024\n\nParameters:\nBMO (2024-Q2) : Net Income"
+IMPORTANT: These examples are for ILLUSTRATION PURPOSES ONLY. The actual quarters you use in your responses must be based on the CURRENT_FISCAL_PERIOD provided in FISCAL_CONTEXT, not these examples.
 
-2. "Compare RBC and TD's revenue for last quarter." (current period is 2025-Q2)
-   ACTION: create_research_statement
-   INTENT: "compare RBC and TD's revenue for Q1 2025"
-   YEARS: [2025]
-   QUARTERS: [1]
-   BANKS: ["RBC", "TD"]
-   METRICS: ["Revenue"]
-   OUTPUT: "Research intent: Compare RBC and TD's revenue for Q1 2025\n\nParameters:\nRBC (2025-Q1) : Revenue\n\nTD (2025-Q1) : Revenue"
-   EXPLANATION: "Last quarter" refers to the quarter before the current one (2025-Q2), which is 2025-Q1
+EXAMPLE 1: Direct quarter reference
+Query: "What was BMO's net income in Q2 2024?"
+ACTION: create_research_statement
+INTENT: "retrieve BMO's net income for Q2 2024"
+YEARS: [2024]
+QUARTERS: [2]
+BANKS: ["BMO"]
+METRICS: ["Net Income"]
+OUTPUT: "Research intent: Retrieve BMO's net income for Q2 2024\n\nParameters:\nBMO (2024-Q2) : Net Income"
+EXPLANATION: This example has an explicit quarter reference that doesn't depend on the current fiscal period.
 
-3. "How has Scotiabank's efficiency ratio changed over the past 4 quarters?" (current period is 2025-Q2)
-   ACTION: create_research_statement
-   INTENT: "analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)"
-   YEARS: [2024, 2025]
-   QUARTERS: [3, 4, 1, 2]
-   BANKS: ["Scotiabank"]
-   METRICS: ["Efficiency Ratio"]
-   OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)\n\nParameters:\nScotiabank (2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2) : Efficiency Ratio"
-   EXPLANATION: Starting with current quarter 2025-Q2, counted back 4 quarters: 2025-Q2, 2025-Q1, 2024-Q4, 2024-Q3
+EXAMPLE 2: Relative quarter reference (ILLUSTRATIVE - assumes current period Q2 2025)
+Query: "Compare RBC and TD's revenue for last quarter."
+ACTION: create_research_statement
+INTENT: "compare RBC and TD's revenue for Q1 2025"
+YEARS: [2025]
+QUARTERS: [1]
+BANKS: ["RBC", "TD"]
+METRICS: ["Revenue"]
+OUTPUT: "Research intent: Compare RBC and TD's revenue for Q1 2025\n\nParameters:\nRBC (2025-Q1) : Revenue\n\nTD (2025-Q1) : Revenue"
+EXPLANATION: This example assumes current period is Q2 2025, so "last quarter" is Q1 2025. YOUR ACTUAL RESULT MUST USE THE CURRENT_FISCAL_PERIOD FROM FISCAL_CONTEXT, NOT THIS EXAMPLE.
 
-4. "What was BMO and RBC's net income last quarter compared to the year before?" (current period is 2025-Q2)
-   ACTION: create_research_statement
-   INTENT: "compare BMO and RBC's net income between Q1 2025 and Q1 2024"
-   YEARS: [2024, 2025]
-   QUARTERS: [1]
-   BANKS: ["BMO", "RBC"]
-   METRICS: ["Net Income"]
-   OUTPUT: "Research intent: Compare BMO and RBC's net income between Q1 2025 and Q1 2024\n\nParameters:\nBMO (2024-Q1, 2025-Q1) : Net Income\n\nRBC (2024-Q1, 2025-Q1) : Net Income"
-   EXPLANATION: "Last quarter" is 2025-Q1, and "the year before" refers to the same quarter in the previous year (2024-Q1)
+EXAMPLE 3: Multiple quarter range (ILLUSTRATIVE - assumes current period Q2 2025)
+Query: "How has Scotiabank's efficiency ratio changed over the past 4 quarters?"
+ACTION: create_research_statement
+INTENT: "analyze Scotiabank's efficiency ratio trend over the past 4 quarters"
+YEARS: [2024, 2025]
+QUARTERS: [3, 4, 1, 2]
+BANKS: ["Scotiabank"]
+METRICS: ["Efficiency Ratio"]
+OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)\n\nParameters:\nScotiabank (2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2) : Efficiency Ratio"
+EXPLANATION: This example assumes current period is Q2 2025 and counts back 4 quarters. YOUR RESPONSE MUST COUNT BACK FROM THE ACTUAL CURRENT_FISCAL_PERIOD PROVIDED.
+
+EXAMPLE 4: Year-over-year comparison (ILLUSTRATIVE - assumes current period Q2 2025)
+Query: "What was BMO and RBC's net income last quarter compared to the year before?"
+ACTION: create_research_statement
+INTENT: "compare BMO and RBC's net income between Q1 2025 and Q1 2024"
+YEARS: [2024, 2025]
+QUARTERS: [1]
+BANKS: ["BMO", "RBC"]
+METRICS: ["Net Income"]
+OUTPUT: "Research intent: Compare BMO and RBC's net income between Q1 2025 and Q1 2024\n\nParameters:\nBMO (2024-Q1, 2025-Q1) : Net Income\n\nRBC (2024-Q1, 2025-Q1) : Net Income"
+EXPLANATION: This example assumes current period is Q2 2025, making "last quarter" Q1 2025, and "year before" Q1 2024. YOUR RESPONSE MUST BE BASED ON THE ACTUAL CURRENT_FISCAL_PERIOD.
+
+REMINDER: In all cases involving relative time references, you MUST calculate based on the CURRENT_FISCAL_PERIOD in FISCAL_CONTEXT, not these examples.
 </SUFFICIENT_CONTEXT_EXAMPLES>
 
 <INSUFFICIENT_CONTEXT_EXAMPLES>
@@ -378,6 +401,8 @@ Your response must be ONLY a tool call to `make_clarifier_decision` with the fol
 - `banks`: Array of identified banks (Required if action is "create_research_statement").
 - `metrics`: Array of identified metrics (Required if action is "create_research_statement").
 
+CRITICAL: For ALL relative time references (like "last quarter", "past X quarters", etc.), you MUST interpret them based on the CURRENT_FISCAL_PERIOD in FISCAL_CONTEXT. Do NOT rely on examples or assumptions.
+
 Example (Creating Research Statement):
 ```json
 {
@@ -390,6 +415,7 @@ Example (Creating Research Statement):
   "metrics": ["Net Income"]
 }
 ```
+Note: This example is ILLUSTRATIVE ONLY. The actual quarters must be based on CURRENT_FISCAL_PERIOD.
 
 Example (Requesting Context):
 ```json
@@ -400,6 +426,8 @@ Example (Requesting Context):
 ```
 
 No additional text or explanation should be included outside the tool call.
+
+IMPORTANT REMINDER: Always derive relative time references from the ACTUAL CURRENT_FISCAL_PERIOD, not from examples.
 </RESPONSE_FORMAT>
 """
 
