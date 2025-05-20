@@ -237,6 +237,9 @@ CRITICAL: You MUST use the fiscal information in the FISCAL_CONTEXT provided at 
      * If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
    - "Same quarter last year" = the quarter with the same number from the previous fiscal year
    - "Past X quarters" = exactly X quarters counting backward from (and including) the current quarter
+   - "Last X quarters" or "Over the last X quarters" = exactly X quarters IMMEDIATELY PRECEDING the current quarter (does NOT include the current quarter)
+     * This is different from "past X quarters" - "last X quarters" excludes the current quarter
+     * Example: If current quarter is Q3, "last 2 quarters" means Q1 and Q2, NOT Q3 and Q4 of previous year
    - Quarters must be listed in chronological order (earliest to latest)
 
 3. FISCAL QUARTER RELATIONSHIPS:
@@ -283,6 +286,12 @@ CRITICAL INSTRUCTIONS: Time references MUST be interpreted using the ACTUAL CURR
   * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "past 3 quarters" means [Q1, Q2, Q3] of 2025
   * If CURRENT_FISCAL_PERIOD shows Q1 of 2025, then "past 3 quarters" means [Q3, Q4] of 2024 and [Q1] of 2025
 
+- "last X quarters" or "over the last X quarters" = The X quarters IMMEDIATELY PRECEDING the current quarter (does NOT include the current quarter)
+  * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "last 2 quarters" means [Q1, Q2] of 2025
+  * If CURRENT_FISCAL_PERIOD shows Q1 of 2025, then "last 2 quarters" means [Q3, Q4] of 2024
+  * If CURRENT_FISCAL_PERIOD shows Q2 of 2025, then "last 2 quarters" means [Q4] of 2024 and [Q1] of 2025
+  * If CURRENT_FISCAL_PERIOD shows Q4 of 2025, then "last 2 quarters" means [Q2, Q3] of 2025
+
 THESE RULES ARE ABSOLUTE: You MUST use the CURRENT_FISCAL_PERIOD from FISCAL_CONTEXT to determine all relative time references. The examples above demonstrate the logic but are NOT to be used directly. You MUST derive the appropriate quarters from the ACTUAL CURRENT_FISCAL_PERIOD provided, regardless of what any example shows.
 </COMMON_TIME_REFERENCES>
 
@@ -325,7 +334,18 @@ QUARTERS: [3, 4, 1, 2]
 BANKS: ["Scotiabank"]
 METRICS: ["Efficiency Ratio"]
 OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)\n\nParameters:\nScotiabank (2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2) : Efficiency Ratio"
-EXPLANATION: This example assumes current period is Q2 2025 and counts back 4 quarters. YOUR RESPONSE MUST COUNT BACK FROM THE ACTUAL CURRENT_FISCAL_PERIOD PROVIDED.
+EXPLANATION: This example assumes current period is Q2 2025 and counts back 4 quarters including current quarter. YOUR RESPONSE MUST COUNT BACK FROM THE ACTUAL CURRENT_FISCAL_PERIOD PROVIDED.
+
+EXAMPLE 3B: "Last X quarters" reference (ILLUSTRATIVE - assumes current period Q3 2025)
+Query: "What was RBC's revenue over the last 2 quarters? Compare year over year."
+ACTION: create_research_statement
+INTENT: "compare RBC's revenue for Q1 and Q2 of 2025 to Q1 and Q2 of 2024"
+YEARS: [2024, 2025]
+QUARTERS: [1, 2]
+BANKS: ["RBC"]
+METRICS: ["Revenue"]
+OUTPUT: "Research intent: Compare RBC's revenue for Q1 and Q2 of 2025 to Q1 and Q2 of 2024\n\nParameters:\nRBC (2024-Q1, 2024-Q2, 2025-Q1, 2025-Q2) : Revenue"
+EXPLANATION: This example assumes current period is Q3 2025. "Last 2 quarters" refers to the 2 quarters BEFORE the current quarter (Q1 and Q2 of 2025), NOT including the current quarter. "Year over year" means comparing to the same quarters in the previous year. YOUR RESPONSE MUST BE BASED ON THE ACTUAL CURRENT_FISCAL_PERIOD.
 
 EXAMPLE 4: Year-over-year comparison (ILLUSTRATIVE - assumes current period Q2 2025)
 Query: "What was BMO and RBC's net income last quarter compared to the year before?"
