@@ -222,31 +222,54 @@ Sufficient context exists when:
 4. Relevant BANKS are identifiable (explicitly mentioned or can be reasonably inferred)
 5. Relevant METRICS are identifiable (explicitly mentioned or can be reasonably inferred)
 
-IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
-- Use the current fiscal year and quarter from the FISCAL_CONTEXT as the default reference point
-- The fiscal year runs from November 1st to October 31st
-- The fiscal quarters in sequential order are: 
-  * Q1 (Nov, Dec, Jan)
-  * Q2 (Feb, Mar, Apr)
-  * Q3 (May, Jun, Jul)
-  * Q4 (Aug, Sep, Oct)
+<FISCAL_PERIOD_INSTRUCTIONS>
+When identifying years and quarters for a query, follow these strict guidelines:
 
-- For "trend over past X quarters" or similar queries:
-  * ONLY include exactly X quarters, counting backward chronologically from the current quarter
-  * ALWAYS include quarters in chronological order (earliest to latest)
-  * NEVER include more quarters than specifically requested
-  * Example: If current quarter is 2025-Q2, "past 4 quarters" means EXACTLY these 4 quarters in this order: [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
+1. CURRENT PERIOD REFERENCE:
+   - You MUST use the CURRENT_FISCAL_PERIOD in the FISCAL_CONTEXT as your reference point
+   - This is the starting point for all relative time references
 
-- When returning time periods, always list them in chronological order (earliest to latest)
+2. FISCAL CALENDAR STRUCTURE:
+   - Fiscal year runs from November 1st to October 31st
+   - Fiscal quarters in sequential order:
+     * Q1: November, December, January
+     * Q2: February, March, April
+     * Q3: May, June, July
+     * Q4: August, September, October
 
-- For specific time references:
-  * "last quarter" means the immediately preceding fiscal quarter 
-  * "same quarter last year" means the equivalent quarter from the previous fiscal year
-  * "year-over-year" means comparing the same quarter from different years
-  * Example: If current quarter is 2025-Q2:
-    - "last quarter" is 2025-Q1
-    - "same quarter last year" is 2024-Q2
-    - "year-over-year for the past two quarters" means comparing [2024-Q1 vs 2025-Q1] and [2024-Q2 vs 2025-Q2]
+3. HANDLING "PAST X QUARTERS" QUERIES:
+   - ALWAYS count backward from the current quarter (inclusive of current quarter)
+   - ALWAYS include EXACTLY X quarters, no more and no less
+   - ONLY include quarters in chronological order (earliest to latest)
+   - Example calculation method for "past 4 quarters" if current is 2025-Q2:
+     a. Current quarter = 2025-Q2
+     b. Previous quarter = 2025-Q1
+     c. Two quarters ago = 2024-Q4
+     d. Three quarters ago = 2024-Q3
+     e. Result = [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
+
+4. COMPLETE WORKING EXAMPLES:
+   - Current = 2025-Q2 → "past 4 quarters" = [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
+   - Current = 2025-Q3 → "past 4 quarters" = [2024-Q4, 2025-Q1, 2025-Q2, 2025-Q3]
+   - Current = 2025-Q1 → "past 4 quarters" = [2024-Q2, 2024-Q3, 2024-Q4, 2025-Q1]
+   - Current = 2025-Q4 → "past 4 quarters" = [2025-Q1, 2025-Q2, 2025-Q3, 2025-Q4]
+   - Current = 2025-Q2 → "past 2 quarters" = [2025-Q1, 2025-Q2]
+   - Current = 2025-Q1 → "past 6 quarters" = [2023-Q4, 2024-Q1, 2024-Q2, 2024-Q3, 2024-Q4, 2025-Q1]
+</FISCAL_PERIOD_INSTRUCTIONS>
+
+5. SPECIFIC TIME REFERENCE EXAMPLES:
+   - "last quarter" = the immediately preceding fiscal quarter 
+   - "same quarter last year" = equivalent quarter from previous fiscal year
+   - "year-over-year" = comparing same quarter from different years
+   - "quarter-over-quarter" = comparing consecutive quarters
+
+6. MORE WORKED EXAMPLES (current period is 2025-Q2):
+   - "last quarter" = 2025-Q1
+   - "same quarter last year" = 2024-Q2
+   - "previous 2 quarters" = [2025-Q1, 2025-Q2]
+   - "year-over-year" for current quarter = compare 2024-Q2 vs 2025-Q2
+   - "year-over-year for past two quarters" = compare [2024-Q1 vs 2025-Q1] and [2024-Q2 vs 2025-Q2]
+   - "quarter-over-quarter growth for past 3 quarters" = compare [2024-Q4 vs 2025-Q1] and [2025-Q1 vs 2025-Q2]
 
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
 - If no specific metrics are mentioned but the intent implies certain metrics, use those metrics
@@ -263,7 +286,7 @@ IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
    METRICS: ["Net Income"]
    OUTPUT: "Research intent: Retrieve BMO's net income for Q2 2024\n\nParameters:\nBMO (2024-Q2) : Net Income"
 
-2. "Compare RBC and TD's revenue for last quarter." (assuming current period is 2025-Q2)
+2. "Compare RBC and TD's revenue for last quarter." (current period is 2025-Q2)
    ACTION: create_research_statement
    INTENT: "compare RBC and TD's revenue for Q1 2025"
    YEARS: [2025]
@@ -271,8 +294,9 @@ IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
    BANKS: ["RBC", "TD"]
    METRICS: ["Revenue"]
    OUTPUT: "Research intent: Compare RBC and TD's revenue for Q1 2025\n\nParameters:\nRBC (2025-Q1) : Revenue\n\nTD (2025-Q1) : Revenue"
+   EXPLANATION: "Last quarter" refers to the quarter before the current one (2025-Q2), which is 2025-Q1
 
-3. "How has Scotiabank's efficiency ratio changed over the past 4 quarters?" (assuming current period is 2025-Q2)
+3. "How has Scotiabank's efficiency ratio changed over the past 4 quarters?" (current period is 2025-Q2)
    ACTION: create_research_statement
    INTENT: "analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)"
    YEARS: [2024, 2025]
@@ -280,8 +304,9 @@ IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
    BANKS: ["Scotiabank"]
    METRICS: ["Efficiency Ratio"]
    OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)\n\nParameters:\nScotiabank (2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2) : Efficiency Ratio"
+   EXPLANATION: Starting with current quarter 2025-Q2, counted back 4 quarters: 2025-Q2, 2025-Q1, 2024-Q4, 2024-Q3
 
-4. "What was BMO and RBC's net income last quarter compared to the year before?" (assuming current period is 2025-Q2)
+4. "What was BMO and RBC's net income last quarter compared to the year before?" (current period is 2025-Q2)
    ACTION: create_research_statement
    INTENT: "compare BMO and RBC's net income between Q1 2025 and Q1 2024"
    YEARS: [2024, 2025]
@@ -289,6 +314,7 @@ IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
    BANKS: ["BMO", "RBC"]
    METRICS: ["Net Income"]
    OUTPUT: "Research intent: Compare BMO and RBC's net income between Q1 2025 and Q1 2024\n\nParameters:\nBMO (2024-Q1, 2025-Q1) : Net Income\n\nRBC (2024-Q1, 2025-Q1) : Net Income"
+   EXPLANATION: "Last quarter" is 2025-Q1, and "the year before" refers to the same quarter in the previous year (2024-Q1)
 </SUFFICIENT_CONTEXT_EXAMPLES>
 
 <INSUFFICIENT_CONTEXT_EXAMPLES>
