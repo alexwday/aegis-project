@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_clarifier/clarifier.py
+# python/aegis/src/agents/agent_clarifier/clarifier.py
 """
 Clarifier Agent Module
 
@@ -7,7 +7,7 @@ if essential context is missing and must be requested from the user.
 
 Functions:
     clarify_research_needs: Determines if essential context is needed
-                            or if research can proceed
+                           or if research can proceed
 
 Dependencies:
     - json
@@ -17,7 +17,7 @@ Dependencies:
 
 import json
 import logging
-from typing import Tuple, Dict, Optional, Any # Added Tuple, Dict, Optional, Any
+from typing import Tuple, Dict, Optional, Any, List
 
 from ...chat_model.model_settings import get_model_config
 from ...llm_connectors.rbc_openai import call_llm
@@ -41,12 +41,24 @@ COMPLETION_TOKEN_COST = model_config["completion_token_cost"]
 
 class ClarifierError(Exception):
     """Base exception class for clarifier-related errors."""
+
     pass
 
 
-def clarify_research_needs(conversation, token) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+def clarify_research_needs(
+    conversation, token
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
     """
     Determine if essential context is needed or create a research statement.
+
+    Analyzes the conversation to identify:
+    - User intent (what they are asking for in full context)
+    - Years mentioned or inferred
+    - Quarters mentioned or inferred
+    - Banks mentioned or inferred
+
+    For research statements, formats the output with each bank's parameters
+    on its own line for clear presentation.
 
     Args:
         conversation (dict): Conversation with 'messages' key
@@ -62,7 +74,7 @@ def clarify_research_needs(conversation, token) -> Tuple[Dict[str, Any], Optiona
     Raises:
         ClarifierError: If there is an error in the clarification process.
     """
-    usage_details = None # Initialize usage details
+    usage_details = None  # Initialize usage details
     try:
         # Prepare system message with clarifier prompt
         system_message = {"role": "system", "content": SYSTEM_PROMPT}
@@ -93,15 +105,21 @@ def clarify_research_needs(conversation, token) -> Tuple[Dict[str, Any], Optiona
         )
 
         # Check if response object itself is valid before accessing attributes
-        if not response or not hasattr(response, 'choices') or not response.choices:
-             raise ClarifierError("Invalid or empty response received from LLM")
+        if not response or not hasattr(response, "choices") or not response.choices:
+            raise ClarifierError("Invalid or empty response received from LLM")
 
         # Extract the tool call from the response
         message = response.choices[0].message
         if not message or not message.tool_calls:
-            content_returned = message.content if message and message.content else "No content"
-            logger.warning(f"Expected tool call but received content: {content_returned[:100]}...")
-            raise ClarifierError("No tool call received in response, content returned instead.")
+            content_returned = (
+                message.content if message and message.content else "No content"
+            )
+            logger.warning(
+                f"Expected tool call but received content: {content_returned[:100]}..."
+            )
+            raise ClarifierError(
+                "No tool call received in response, content returned instead."
+            )
 
         tool_call = message.tool_calls[0]
 
@@ -120,8 +138,13 @@ def clarify_research_needs(conversation, token) -> Tuple[Dict[str, Any], Optiona
         # Extract decision fields
         action = arguments.get("action")
         output = arguments.get("output")
-        scope = arguments.get("scope")  # Extract the new scope field
-        is_continuation = arguments.get("is_continuation", False)
+
+        # New fields specific to the research parameters
+        intent = arguments.get("intent")
+        years = arguments.get("years", [])
+        quarters = arguments.get("quarters", [])
+        banks = arguments.get("banks", [])
+        metrics = arguments.get("metrics", [])
 
         if not action:
             raise ClarifierError("Missing 'action' in tool arguments")
@@ -129,41 +152,81 @@ def clarify_research_needs(conversation, token) -> Tuple[Dict[str, Any], Optiona
         if not output:
             raise ClarifierError("Missing 'output' in tool arguments")
 
-        # Validate scope: required only when creating a research statement
+        # Validate required fields for create_research_statement
         if action == "create_research_statement":
-            if not scope:
-                raise ClarifierError(
-                    "Missing 'scope' in tool arguments when action is 'create_research_statement'"
-                )
-            if scope not in ["metadata", "research"]:
-                raise ClarifierError(
-                    f"Invalid 'scope' value: {scope}. Must be 'metadata' or 'research'."
-                )
-        elif scope:
-            # Scope should not be provided if action is request_essential_context
-            logger.warning(
-                f"Scope '{scope}' provided but action is '{action}'. Scope will be ignored."
-            )
-            scope = None  # Ensure scope is None if not applicable
+            if not intent:
+                logger.warning("Missing 'intent' in research statement")
+                intent = "Unspecified research intent"
+
+            # Log the identified parameters
+            logger.info(f"Identified intent: {intent}")
+            logger.info(f"Identified years: {years}")
+            logger.info(f"Identified quarters: {quarters}")
+            logger.info(f"Identified banks: {banks}")
+            logger.info(f"Identified metrics: {metrics}")
 
         # Log the clarifier decision
         logger.info(f"Clarifier decision: {action}")
-        if action == "create_research_statement":
-            logger.info(f"Determined scope: {scope}")
-        logger.info(f"Is continuation: {is_continuation}")
 
-        # Construct the decision dictionary
+        # For research statements, format the output to include the structured parameters
+        if action == "create_research_statement":
+            # Format intent as research statement
+            formatted_intent = f"Research intent: {intent}"
+
+            # Format parameters with each bank on its own line
+            formatted_parameters = format_research_parameters(
+                banks, metrics, years, quarters
+            )
+
+            # Combine into final output
+            output = f"{formatted_intent}\n\nParameters:\n{formatted_parameters}"
+
+        # Construct the decision dictionary with the new parameter fields
         decision = {
             "action": action,
             "output": output,
-            "scope": scope,
-            "is_continuation": is_continuation,
+            "intent": intent,
+            "years": years,
+            "quarters": quarters,
+            "banks": banks,
+            "metrics": metrics,
         }
 
         # Return both decision and usage details
         return decision, usage_details
 
     except Exception as e:
-        logger.error(f"Error clarifying research needs: {str(e)}", exc_info=True) # Add exc_info
+        logger.error(f"Error clarifying research needs: {str(e)}", exc_info=True)
         # Re-raise to signal failure upstream
         raise ClarifierError(f"Failed to clarify research needs: {str(e)}") from e
+
+
+def format_research_parameters(
+    banks: List[str], metrics: List[str], years: List[int], quarters: List[int]
+) -> str:
+    """
+    Format research parameters in the standardized format.
+    Each bank gets its own line with associated time periods and metrics.
+
+    Args:
+        banks (List[str]): List of bank identifiers
+        metrics (List[str]): List of financial metrics
+        years (List[int]): List of years
+        quarters (List[int]): List of quarters
+
+    Returns:
+        str: Formatted parameters string with each bank on its own line
+    """
+    parameters = []
+
+    for bank in banks:
+        for metric in metrics:
+            time_periods = []
+            for year in years:
+                for quarter in quarters:
+                    time_periods.append(f"{year}-Q{quarter}")
+
+            time_period_str = ", ".join(time_periods)
+            parameters.append(f"{bank}[{time_period_str}]-{metric}")
+
+    return "\n".join(parameters)
