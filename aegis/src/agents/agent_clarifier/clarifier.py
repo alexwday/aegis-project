@@ -238,11 +238,25 @@ def format_research_parameters(
     for bank in banks:
         bank_lines = []
         for metric in metrics:
+            # Create time periods in chronological order
             time_periods = []
+
+            # First, collect valid time periods
+            year_quarter_pairs = []
             for year in years:
                 for quarter in quarters:
-                    time_periods.append(f"{year}-Q{quarter}")
+                    # Only include valid fiscal quarters (1-4)
+                    if 1 <= quarter <= 4:
+                        year_quarter_pairs.append((year, quarter))
 
+            # Sort chronologically by year then quarter
+            year_quarter_pairs.sort()
+
+            # Format each time period
+            for year, quarter in year_quarter_pairs:
+                time_periods.append(f"{year}-Q{quarter}")
+
+            # Join with commas
             time_period_str = ", ".join(time_periods)
             # Use parentheses instead of brackets to avoid creating markdown hyperlinks
             bank_lines.append(f"{bank} ({time_period_str}) : {metric}")

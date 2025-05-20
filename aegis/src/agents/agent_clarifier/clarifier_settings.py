@@ -224,12 +224,30 @@ Sufficient context exists when:
 
 IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
 - Use the current fiscal year and quarter from the FISCAL_CONTEXT as the default reference point
-- When handling time-based queries, consider that the fiscal year runs from November 1st to October 31st
-- The fiscal quarters are: Q1 (Nov-Jan), Q2 (Feb-Apr), Q3 (May-Jul), and Q4 (Aug-Oct)
-- For "trend over past X quarters" or similar queries, count backward from the current fiscal quarter
-- For example, if current quarter is 2025-Q2, "past 4 quarters" would be: 2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2
-- If comparing to a "previous period" or "last period", use the equivalent period from the prior year
-- For example, if current quarter is 2025-Q2, "last quarter" is 2025-Q1, but "same quarter last year" is 2024-Q2
+- The fiscal year runs from November 1st to October 31st
+- The fiscal quarters in sequential order are: 
+  * Q1 (Nov, Dec, Jan)
+  * Q2 (Feb, Mar, Apr)
+  * Q3 (May, Jun, Jul)
+  * Q4 (Aug, Sep, Oct)
+
+- For "trend over past X quarters" or similar queries:
+  * ONLY include exactly X quarters, counting backward chronologically from the current quarter
+  * ALWAYS include quarters in chronological order (earliest to latest)
+  * NEVER include more quarters than specifically requested
+  * Example: If current quarter is 2025-Q2, "past 4 quarters" means EXACTLY these 4 quarters in this order: [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
+
+- When returning time periods, always list them in chronological order (earliest to latest)
+
+- For specific time references:
+  * "last quarter" means the immediately preceding fiscal quarter 
+  * "same quarter last year" means the equivalent quarter from the previous fiscal year
+  * "year-over-year" means comparing the same quarter from different years
+  * Example: If current quarter is 2025-Q2:
+    - "last quarter" is 2025-Q1
+    - "same quarter last year" is 2024-Q2
+    - "year-over-year for the past two quarters" means comparing [2024-Q1 vs 2025-Q1] and [2024-Q2 vs 2025-Q2]
+
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
 - If no specific metrics are mentioned but the intent implies certain metrics, use those metrics
 </CONTEXT_SUFFICIENCY_CRITERIA>
