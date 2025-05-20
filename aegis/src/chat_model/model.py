@@ -311,6 +311,10 @@ def _model_generator(
                 logger.info("Essential context needed, returning context questions")
                 questions = clarifier_decision["output"].strip()
                 yield "Before proceeding with research, please clarify:\n\n" + questions
+            elif clarifier_decision["action"] == "confirm_time_references":
+                logger.info("Time reference confirmation needed, returning confirmation request")
+                confirmation_request = clarifier_decision["output"].strip()
+                yield "Before proceeding with research, please confirm:\n\n" + confirmation_request
             else:
                 research_statement = clarifier_decision.get("output", "")
                 scope = clarifier_decision.get("scope")
