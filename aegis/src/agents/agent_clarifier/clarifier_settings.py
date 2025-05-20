@@ -251,15 +251,25 @@ The current fiscal period and fiscal definition will be available in FISCAL_CONT
 </FISCAL_CONTEXT_HANDLING>
 
 <COMMON_TIME_REFERENCES>
-Common time references and their interpretations (always based on the CURRENT_FISCAL_PERIOD):
+Common time references and their interpretations (STRICTLY based on the CURRENT_FISCAL_PERIOD in FISCAL_CONTEXT):
 
-- "last quarter" - The fiscal quarter immediately preceding the current quarter
+- "last quarter" - The quarter IMMEDIATELY BEFORE the current fiscal quarter
+  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
+  * Example: If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
+  
 - "same quarter last year" - The same numbered quarter from the previous fiscal year
+  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "same quarter last year" is Q3 of previous fiscal year
+  
 - "year-over-year" - Comparing the same quarter from different fiscal years
+  * Example: If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "year-over-year" compares Q3 2024 vs Q3 2025
+  
 - "quarter-over-quarter" - Comparing consecutive quarters
-- "past X quarters" - The X most recent quarters, including the current quarter
+  * Example: If CURRENT_FISCAL_PERIOD shows Q3, then "quarter-over-quarter" compares Q2 vs Q3
+  
+- "past X quarters" - The X most recent quarters, including the current quarter, counted backward
+  * Example: If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "past 3 quarters" means [Q1, Q2, Q3] of 2025
 
-Remember that all interpretations are relative to the CURRENT_FISCAL_PERIOD provided in the FISCAL_CONTEXT.
+CRITICAL: Never use fixed quarter values. ALWAYS derive the appropriate quarters from the CURRENT_FISCAL_PERIOD value in FISCAL_CONTEXT.
 </COMMON_TIME_REFERENCES>
 
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
