@@ -17,7 +17,7 @@ import logging
 
 from ...global_prompts.project_statement import get_project_statement
 from ...global_prompts.database_statement import get_database_statement
-from ...global_prompts.fiscal_calendar import get_fiscal_period
+from ...global_prompts.fiscal_calendar import get_fiscal_period, get_fiscal_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
 
 # Get module logger (no configuration here - using centralized config)
@@ -222,11 +222,14 @@ Sufficient context exists when:
 4. Relevant BANKS are identifiable (explicitly mentioned or can be reasonably inferred)
 5. Relevant METRICS are identifiable (explicitly mentioned or can be reasonably inferred)
 
-IMPORTANT DEFAULT ASSUMPTIONS:
-- If no specific year is mentioned, assume the current fiscal year
-- If comparing to a previous period, also include that period in the arrays
-- If no specific quarter is mentioned, assume the current fiscal quarter
-- If comparing to "previous" or "last" period, infer the appropriate comparison periods
+IMPORTANT DEFAULT ASSUMPTIONS AND FISCAL PERIOD HANDLING:
+- Use the current fiscal year and quarter from the FISCAL_CONTEXT as the default reference point
+- When handling time-based queries, consider that the fiscal year runs from November 1st to October 31st
+- The fiscal quarters are: Q1 (Nov-Jan), Q2 (Feb-Apr), Q3 (May-Jul), and Q4 (Aug-Oct)
+- For "trend over past X quarters" or similar queries, count backward from the current fiscal quarter
+- For example, if current quarter is 2025-Q2, "past 4 quarters" would be: 2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2
+- If comparing to a "previous period" or "last period", use the equivalent period from the prior year
+- For example, if current quarter is 2025-Q2, "last quarter" is 2025-Q1, but "same quarter last year" is 2024-Q2
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
 - If no specific metrics are mentioned but the intent implies certain metrics, use those metrics
 </CONTEXT_SUFFICIENCY_CRITERIA>
@@ -240,34 +243,34 @@ IMPORTANT DEFAULT ASSUMPTIONS:
    QUARTERS: [2]
    BANKS: ["BMO"]
    METRICS: ["Net Income"]
-   OUTPUT: "Research intent: Retrieve BMO's net income for Q2 2024\n\nParameters:\nBMO[2024-Q2]-Net Income"
+   OUTPUT: "Research intent: Retrieve BMO's net income for Q2 2024\n\nParameters:\nBMO (2024-Q2) : Net Income"
 
-2. "Compare RBC and TD's revenue for last quarter."
+2. "Compare RBC and TD's revenue for last quarter." (assuming current period is 2025-Q2)
    ACTION: create_research_statement
    INTENT: "compare RBC and TD's revenue for Q1 2025"
    YEARS: [2025]
    QUARTERS: [1]
    BANKS: ["RBC", "TD"]
    METRICS: ["Revenue"]
-   OUTPUT: "Research intent: Compare RBC and TD's revenue for Q1 2025\n\nParameters:\nRBC[2025-Q1]-Revenue\nTD[2025-Q1]-Revenue"
+   OUTPUT: "Research intent: Compare RBC and TD's revenue for Q1 2025\n\nParameters:\nRBC (2025-Q1) : Revenue\n\nTD (2025-Q1) : Revenue"
 
-3. "How has Scotiabank's efficiency ratio changed over the past 4 quarters?"
+3. "How has Scotiabank's efficiency ratio changed over the past 4 quarters?" (assuming current period is 2025-Q2)
    ACTION: create_research_statement
-   INTENT: "analyze Scotiabank's efficiency ratio trend over the past 4 quarters"
+   INTENT: "analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)"
    YEARS: [2024, 2025]
-   QUARTERS: [2, 3, 4, 1]
+   QUARTERS: [3, 4, 1, 2]
    BANKS: ["Scotiabank"]
    METRICS: ["Efficiency Ratio"]
-   OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters\n\nParameters:\nScotiabank[2024-Q2, 2024-Q3, 2024-Q4, 2025-Q1]-Efficiency Ratio"
+   OUTPUT: "Research intent: Analyze Scotiabank's efficiency ratio trend over the past 4 quarters (2024-Q3 through 2025-Q2)\n\nParameters:\nScotiabank (2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2) : Efficiency Ratio"
 
-4. "What was BMO and RBC's net income last quarter compared to the year before?"
+4. "What was BMO and RBC's net income last quarter compared to the year before?" (assuming current period is 2025-Q2)
    ACTION: create_research_statement
    INTENT: "compare BMO and RBC's net income between Q1 2025 and Q1 2024"
    YEARS: [2024, 2025]
    QUARTERS: [1]
    BANKS: ["BMO", "RBC"]
    METRICS: ["Net Income"]
-   OUTPUT: "Research intent: Compare BMO and RBC's net income between Q1 2025 and Q1 2024\n\nParameters:\nBMO[2024-Q1, 2025-Q1]-Net Income\nRBC[2024-Q1, 2025-Q1]-Net Income"
+   OUTPUT: "Research intent: Compare BMO and RBC's net income between Q1 2025 and Q1 2024\n\nParameters:\nBMO (2024-Q1, 2025-Q1) : Net Income\n\nRBC (2024-Q1, 2025-Q1) : Net Income"
 </SUFFICIENT_CONTEXT_EXAMPLES>
 
 <INSUFFICIENT_CONTEXT_EXAMPLES>
@@ -360,6 +363,7 @@ No additional text or explanation should be included outside the tool call.
 def construct_system_prompt():
     # Get all the required statements
     project_statement = get_project_statement()
+    fiscal_statement = get_fiscal_statement()
     fiscal_year, fiscal_quarter = get_fiscal_period()
     database_statement = get_database_statement()
     restrictions_statement = get_restrictions_statement()
@@ -368,6 +372,7 @@ def construct_system_prompt():
     prompt_parts = [
         "<CONTEXT>",
         project_statement,
+        fiscal_statement,
         f"<CURRENT_FISCAL_PERIOD>Current fiscal year: {fiscal_year}, Current fiscal quarter: {fiscal_quarter}</CURRENT_FISCAL_PERIOD>",
         database_statement,
         restrictions_statement,

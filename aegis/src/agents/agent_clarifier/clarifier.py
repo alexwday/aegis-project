@@ -188,7 +188,9 @@ def clarify_research_needs(
             )
 
             # Combine into final output with clear section headers
-            output = f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}"
+            output = (
+                f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}"
+            )
 
         # Construct the decision dictionary with the new parameter fields
         decision = {
@@ -219,6 +221,7 @@ def format_research_parameters(
     Format research parameters in the standardized format.
     Each bank gets its own line with associated time periods and metrics.
     Avoids using brackets which can create unintended markdown hyperlinks.
+    Adds double line breaks between banks for better readability.
 
     Args:
         banks (List[str]): List of bank identifiers
@@ -229,9 +232,11 @@ def format_research_parameters(
     Returns:
         str: Formatted parameters string with each bank on its own line
     """
-    parameters = []
+    # Group parameters by bank
+    bank_parameters = {}
 
     for bank in banks:
+        bank_lines = []
         for metric in metrics:
             time_periods = []
             for year in years:
@@ -240,6 +245,14 @@ def format_research_parameters(
 
             time_period_str = ", ".join(time_periods)
             # Use parentheses instead of brackets to avoid creating markdown hyperlinks
-            parameters.append(f"{bank} ({time_period_str}) : {metric}")
+            bank_lines.append(f"{bank} ({time_period_str}) : {metric}")
 
-    return "\n".join(parameters)
+        bank_parameters[bank] = bank_lines
+
+    # Join all parameters with appropriate spacing
+    result = []
+    for bank, lines in bank_parameters.items():
+        result.append("\n".join(lines))
+
+    # Double line break between banks
+    return "\n\n".join(result)
