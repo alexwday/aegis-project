@@ -195,19 +195,28 @@ def clarify_research_needs(
             output = (
                 f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}"
             )
+        # For time reference confirmations, leave the output as provided by the model
+        elif action == "confirm_time_references":
+            # The output will already be formatted as needed
+            logger.info("Requesting confirmation of time references")
 
-        # Construct the decision dictionary with the new parameter fields
+        # Construct the decision dictionary with the appropriate fields based on action
         decision = {
             "action": action,
             "output": output,
-            "intent": intent,
-            "years": years,
-            "quarters": quarters,
-            "banks": banks,
-            "metrics": metrics,
             "scope": "research",  # Always set to 'research' for financial queries
             "is_continuation": False,  # Default to False as we don't track continuations
         }
+        
+        # Only include research parameters for create_research_statement action
+        if action == "create_research_statement":
+            decision.update({
+                "intent": intent,
+                "years": years,
+                "quarters": quarters,
+                "banks": banks,
+                "metrics": metrics,
+            })
 
         # Return both decision and usage details
         return decision, usage_details
