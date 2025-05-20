@@ -222,54 +222,45 @@ Sufficient context exists when:
 4. Relevant BANKS are identifiable (explicitly mentioned or can be reasonably inferred)
 5. Relevant METRICS are identifiable (explicitly mentioned or can be reasonably inferred)
 
-<FISCAL_PERIOD_INSTRUCTIONS>
-When identifying years and quarters for a query, follow these strict guidelines:
+<FISCAL_CONTEXT_HANDLING>
+Use the fiscal information in the FISCAL_CONTEXT provided at the beginning of the prompt:
 
-1. CURRENT PERIOD REFERENCE:
-   - You MUST use the CURRENT_FISCAL_PERIOD in the FISCAL_CONTEXT as your reference point
-   - This is the starting point for all relative time references
+1. RELY ON PROVIDED FISCAL CONTEXT:
+   - Use the CURRENT_FISCAL_PERIOD and fiscal year definition provided in the FISCAL_CONTEXT
+   - Do NOT calculate fiscal periods on your own
+   - The fiscal year and quarter in CURRENT_FISCAL_PERIOD is the reference point for all relative time references
 
-2. FISCAL CALENDAR STRUCTURE:
-   - Fiscal year runs from November 1st to October 31st
-   - Fiscal quarters in sequential order:
-     * Q1: November, December, January
-     * Q2: February, March, April
-     * Q3: May, June, July
-     * Q4: August, September, October
+2. UNDERSTANDING RELATIVE TIME REFERENCES:
+   - "Last quarter" = the quarter immediately before the current quarter in FISCAL_CONTEXT
+   - "Same quarter last year" = the quarter with the same number from the previous fiscal year
+   - "Past X quarters" = exactly X quarters counting backward from (and including) the current quarter
+   - Quarters must be listed in chronological order (earliest to latest)
 
-3. HANDLING "PAST X QUARTERS" QUERIES:
-   - ALWAYS count backward from the current quarter (inclusive of current quarter)
-   - ALWAYS include EXACTLY X quarters, no more and no less
-   - ONLY include quarters in chronological order (earliest to latest)
-   - Example calculation method for "past 4 quarters" if current is 2025-Q2:
-     a. Current quarter = 2025-Q2
-     b. Previous quarter = 2025-Q1
-     c. Two quarters ago = 2024-Q4
-     d. Three quarters ago = 2024-Q3
-     e. Result = [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
+3. FISCAL QUARTER RELATIONSHIPS:
+   - After Q4 comes Q1 of the next fiscal year
+   - Before Q1 comes Q4 of the previous fiscal year
+   - Always ensure quarters are valid fiscal quarters (Q1-Q4)
+   - Ensure time periods follow fiscal calendar definition in FISCAL_CONTEXT
 
-4. COMPLETE WORKING EXAMPLES:
-   - Current = 2025-Q2 → "past 4 quarters" = [2024-Q3, 2024-Q4, 2025-Q1, 2025-Q2]
-   - Current = 2025-Q3 → "past 4 quarters" = [2024-Q4, 2025-Q1, 2025-Q2, 2025-Q3]
-   - Current = 2025-Q1 → "past 4 quarters" = [2024-Q2, 2024-Q3, 2024-Q4, 2025-Q1]
-   - Current = 2025-Q4 → "past 4 quarters" = [2025-Q1, 2025-Q2, 2025-Q3, 2025-Q4]
-   - Current = 2025-Q2 → "past 2 quarters" = [2025-Q1, 2025-Q2]
-   - Current = 2025-Q1 → "past 6 quarters" = [2023-Q4, 2024-Q1, 2024-Q2, 2024-Q3, 2024-Q4, 2025-Q1]
-</FISCAL_PERIOD_INSTRUCTIONS>
+4. INCLUDE ONLY REQUESTED PERIODS:
+   - For "past X quarters" include EXACTLY X quarters, no more and no less
+   - Only include the specific quarters that satisfy the user's query
+   - Time periods should always be presented in chronological order
 
-5. SPECIFIC TIME REFERENCE EXAMPLES:
-   - "last quarter" = the immediately preceding fiscal quarter 
-   - "same quarter last year" = equivalent quarter from previous fiscal year
-   - "year-over-year" = comparing same quarter from different years
-   - "quarter-over-quarter" = comparing consecutive quarters
+The current fiscal period and fiscal definition will be available in FISCAL_CONTEXT. Use this information rather than making assumptions about the fiscal calendar.
+</FISCAL_CONTEXT_HANDLING>
 
-6. MORE WORKED EXAMPLES (current period is 2025-Q2):
-   - "last quarter" = 2025-Q1
-   - "same quarter last year" = 2024-Q2
-   - "previous 2 quarters" = [2025-Q1, 2025-Q2]
-   - "year-over-year" for current quarter = compare 2024-Q2 vs 2025-Q2
-   - "year-over-year for past two quarters" = compare [2024-Q1 vs 2025-Q1] and [2024-Q2 vs 2025-Q2]
-   - "quarter-over-quarter growth for past 3 quarters" = compare [2024-Q4 vs 2025-Q1] and [2025-Q1 vs 2025-Q2]
+<COMMON_TIME_REFERENCES>
+Common time references and their interpretations (always based on the CURRENT_FISCAL_PERIOD):
+
+- "last quarter" - The fiscal quarter immediately preceding the current quarter
+- "same quarter last year" - The same numbered quarter from the previous fiscal year
+- "year-over-year" - Comparing the same quarter from different fiscal years
+- "quarter-over-quarter" - Comparing consecutive quarters
+- "past X quarters" - The X most recent quarters, including the current quarter
+
+Remember that all interpretations are relative to the CURRENT_FISCAL_PERIOD provided in the FISCAL_CONTEXT.
+</COMMON_TIME_REFERENCES>
 
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
 - If no specific metrics are mentioned but the intent implies certain metrics, use those metrics
