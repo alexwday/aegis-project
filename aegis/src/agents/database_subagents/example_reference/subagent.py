@@ -58,6 +58,7 @@ SYNTHESIS_TOOL_SCHEMA = {
 # For now, we'll use placeholder functions to simulate the database interactions
 # In a real implementation, these would connect to actual databases
 
+
 def format_catalog_for_llm(catalog_records: List[Dict[str, Any]]) -> str:
     """
     Format the catalog records into a string optimized for LLM comprehension.
@@ -81,7 +82,7 @@ def format_benchmarking_data_for_llm(datasets: List[Dict[str, Any]]) -> str:
     for dataset in datasets:
         dataset_name = dataset.get("dataset_name", "Untitled Dataset")
         formatted_data += f"# {dataset_name}\n\n"
-        
+
         # Format metadata if available
         metadata = dataset.get("metadata", {})
         if metadata:
@@ -89,7 +90,7 @@ def format_benchmarking_data_for_llm(datasets: List[Dict[str, Any]]) -> str:
             for key, value in metadata.items():
                 formatted_data += f"- **{key}**: {value}\n"
             formatted_data += "\n"
-        
+
         # Format metrics data
         metrics = dataset.get("metrics", [])
         if metrics:
@@ -100,7 +101,7 @@ def format_benchmarking_data_for_llm(datasets: List[Dict[str, Any]]) -> str:
                 formatted_data += f"### {metric_name}\n"
                 if metric_description:
                     formatted_data += f"{metric_description}\n\n"
-                
+
                 # Format bank comparisons
                 comparisons = metric.get("comparisons", [])
                 if comparisons:
@@ -112,9 +113,9 @@ def format_benchmarking_data_for_llm(datasets: List[Dict[str, Any]]) -> str:
                         yoy = comparison.get("yoy_change", "N/A")
                         qoq = comparison.get("qoq_change", "N/A")
                         formatted_data += f"| {bank} | {value} | {yoy} | {qoq} |\n"
-                    
+
                 formatted_data += "\n"
-            
+
         # Format trend data if available
         trends = dataset.get("trends", [])
         if trends:
@@ -125,9 +126,9 @@ def format_benchmarking_data_for_llm(datasets: List[Dict[str, Any]]) -> str:
                 formatted_data += f"### {trend_name}\n"
                 if trend_description:
                     formatted_data += f"{trend_description}\n\n"
-        
+
         formatted_data += "---\n\n"
-        
+
     return formatted_data.strip()
 
 
@@ -140,7 +141,9 @@ def get_completion(
     token: Optional[str] = None,
     database_name: Optional[str] = None,
     **kwargs: Any,  # Accept additional kwargs for tools, tool_choice etc.
-) -> Tuple[Any, Optional[Dict[str, Any]]]:  # Returns (response_content, usage_details) tuple
+) -> Tuple[
+    Any, Optional[Dict[str, Any]]
+]:  # Returns (response_content, usage_details) tuple
     """
     Helper function to get a completion from the LLM synchronously.
     Handles standard completions and tool calls. Returns content and usage details.
@@ -186,7 +189,7 @@ def get_completion(
     try:
         # Direct synchronous call - now returns a tuple (response, usage_details)
         result = call_llm(**call_params)
-        
+
         # Handle the new tuple format: (api_response, usage_details)
         if isinstance(result, tuple) and len(result) == 2:
             response, usage_details = result
@@ -197,7 +200,7 @@ def get_completion(
             response = result
             usage_details = None
             logger.debug("call_llm did not return usage_details")
-            
+
     except Exception as llm_err:
         logger.error(f"call_llm failed: {llm_err}", exc_info=True)
         # Return error string and None for usage details
@@ -230,12 +233,15 @@ def get_completion(
         else:
             logger.error("LLM response object or choices attribute missing/empty.")
             response_value = "Error: Could not retrieve response content."
-        logger.debug("Returning extracted content string and usage details for standard completion.")
+        logger.debug(
+            "Returning extracted content string and usage details for standard completion."
+        )
         # Return the content string and usage details
         return response_value, usage_details
 
 
 # Placeholder database functions
+
 
 def fetch_benchmarking_catalog() -> List[Dict[str, Any]]:
     """
@@ -244,24 +250,24 @@ def fetch_benchmarking_catalog() -> List[Dict[str, Any]]:
     """
     # In a real implementation, this would query the database
     logger.info("Fetching benchmarking catalog (placeholder data)")
-    
+
     # Example catalog data - in reality, this would come from a database query
     return [
         {
             "id": "bench-001",
             "document_name": "Q1 2023 Key Profitability Ratios - Major Banks",
-            "document_description": "Comparative analysis of key profitability ratios (ROE, ROA, Efficiency Ratio) for major Canadian and US banks for Q1 2023, including YoY and QoQ changes."
+            "document_description": "Comparative analysis of key profitability ratios (ROE, ROA, Efficiency Ratio) for major Canadian and US banks for Q1 2023, including YoY and QoQ changes.",
         },
         {
             "id": "bench-002",
             "document_name": "Q1 2023 Capital Adequacy Metrics - Major Banks",
-            "document_description": "Comparative analysis of capital adequacy metrics (CET1, Tier 1, Total Capital, Leverage Ratio) for major Canadian and US banks for Q1 2023, including YoY and QoQ changes."
+            "document_description": "Comparative analysis of capital adequacy metrics (CET1, Tier 1, Total Capital, Leverage Ratio) for major Canadian and US banks for Q1 2023, including YoY and QoQ changes.",
         },
         {
             "id": "bench-003",
             "document_name": "Q1 2023 Asset Quality Indicators - Major Banks",
-            "document_description": "Comparative analysis of asset quality indicators (NPL Ratio, Provision Coverage, Credit Costs) for major Canadian and US banks for Q1 2023, with trend analysis."
-        }
+            "document_description": "Comparative analysis of asset quality indicators (NPL Ratio, Provision Coverage, Credit Costs) for major Canadian and US banks for Q1 2023, with trend analysis.",
+        },
     ]
 
 
@@ -272,144 +278,326 @@ def fetch_benchmarking_data(dataset_ids: List[str]) -> List[Dict[str, Any]]:
     """
     # In a real implementation, this would query the database
     logger.info(f"Fetching benchmarking data for IDs: {dataset_ids} (placeholder data)")
-    
+
     # Example document content - in reality, this would come from a database query
     datasets = []
-    
+
     for dataset_id in dataset_ids:
         if dataset_id == "bench-001":
-            datasets.append({
-                "dataset_name": "Q1 2023 Key Profitability Ratios - Major Banks",
-                "metadata": {
-                    "time_period": "Q1 2023",
-                    "data_source": "Quarterly financial statements and earnings releases",
-                    "last_updated": "April 15, 2023"
-                },
-                "metrics": [
-                    {
-                        "metric_name": "Return on Equity (ROE)",
-                        "description": "Annualized net income as a percentage of average common shareholders' equity. Indicates how efficiently a bank generates profits from shareholders' equity.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "15.3%", "yoy_change": "-0.7%", "qoq_change": "+0.2%"},
-                            {"bank": "TD Bank", "value": "14.1%", "yoy_change": "-1.2%", "qoq_change": "-0.3%"},
-                            {"bank": "CIBC", "value": "13.8%", "yoy_change": "-0.9%", "qoq_change": "+0.1%"},
-                            {"bank": "JPMorgan", "value": "16.2%", "yoy_change": "+0.8%", "qoq_change": "+0.4%"},
-                            {"bank": "Bank of America", "value": "11.9%", "yoy_change": "-0.5%", "qoq_change": "+0.2%"}
-                        ]
+            datasets.append(
+                {
+                    "dataset_name": "Q1 2023 Key Profitability Ratios - Major Banks",
+                    "metadata": {
+                        "time_period": "Q1 2023",
+                        "data_source": "Quarterly financial statements and earnings releases",
+                        "last_updated": "April 15, 2023",
                     },
-                    {
-                        "metric_name": "Return on Assets (ROA)",
-                        "description": "Annualized net income as a percentage of average total assets. Measures how efficiently a bank uses its assets to generate profits.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "0.89%", "yoy_change": "-0.05%", "qoq_change": "+0.01%"},
-                            {"bank": "TD Bank", "value": "0.82%", "yoy_change": "-0.07%", "qoq_change": "-0.02%"},
-                            {"bank": "CIBC", "value": "0.78%", "yoy_change": "-0.04%", "qoq_change": "0.00%"},
-                            {"bank": "JPMorgan", "value": "1.05%", "yoy_change": "+0.06%", "qoq_change": "+0.03%"},
-                            {"bank": "Bank of America", "value": "0.75%", "yoy_change": "-0.03%", "qoq_change": "+0.01%"}
-                        ]
-                    },
-                    {
-                        "metric_name": "Efficiency Ratio",
-                        "description": "Non-interest expenses as a percentage of total revenue. Lower values indicate better operational efficiency.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "52.3%", "yoy_change": "+0.8%", "qoq_change": "-0.4%"},
-                            {"bank": "TD Bank", "value": "54.1%", "yoy_change": "+1.2%", "qoq_change": "+0.3%"},
-                            {"bank": "CIBC", "value": "55.9%", "yoy_change": "+0.7%", "qoq_change": "-0.2%"},
-                            {"bank": "JPMorgan", "value": "51.8%", "yoy_change": "-1.1%", "qoq_change": "-0.6%"},
-                            {"bank": "Bank of America", "value": "57.4%", "yoy_change": "+0.3%", "qoq_change": "-0.1%"}
-                        ]
-                    }
-                ],
-                "trends": [
-                    {
-                        "trend_name": "Profitability Pressure",
-                        "description": "Most Canadian banks are experiencing year-over-year declines in ROE and ROA, primarily due to economic uncertainty, higher loan loss provisions, and competitive pressures. US banks, particularly JPMorgan, have shown more resilience in maintaining profitability ratios."
-                    }
-                ]
-            })
+                    "metrics": [
+                        {
+                            "metric_name": "Return on Equity (ROE)",
+                            "description": "Annualized net income as a percentage of average common shareholders' equity. Indicates how efficiently a bank generates profits from shareholders' equity.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "15.3%",
+                                    "yoy_change": "-0.7%",
+                                    "qoq_change": "+0.2%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "14.1%",
+                                    "yoy_change": "-1.2%",
+                                    "qoq_change": "-0.3%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "13.8%",
+                                    "yoy_change": "-0.9%",
+                                    "qoq_change": "+0.1%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "16.2%",
+                                    "yoy_change": "+0.8%",
+                                    "qoq_change": "+0.4%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "11.9%",
+                                    "yoy_change": "-0.5%",
+                                    "qoq_change": "+0.2%",
+                                },
+                            ],
+                        },
+                        {
+                            "metric_name": "Return on Assets (ROA)",
+                            "description": "Annualized net income as a percentage of average total assets. Measures how efficiently a bank uses its assets to generate profits.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "0.89%",
+                                    "yoy_change": "-0.05%",
+                                    "qoq_change": "+0.01%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "0.82%",
+                                    "yoy_change": "-0.07%",
+                                    "qoq_change": "-0.02%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "0.78%",
+                                    "yoy_change": "-0.04%",
+                                    "qoq_change": "0.00%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "1.05%",
+                                    "yoy_change": "+0.06%",
+                                    "qoq_change": "+0.03%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "0.75%",
+                                    "yoy_change": "-0.03%",
+                                    "qoq_change": "+0.01%",
+                                },
+                            ],
+                        },
+                        {
+                            "metric_name": "Efficiency Ratio",
+                            "description": "Non-interest expenses as a percentage of total revenue. Lower values indicate better operational efficiency.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "52.3%",
+                                    "yoy_change": "+0.8%",
+                                    "qoq_change": "-0.4%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "54.1%",
+                                    "yoy_change": "+1.2%",
+                                    "qoq_change": "+0.3%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "55.9%",
+                                    "yoy_change": "+0.7%",
+                                    "qoq_change": "-0.2%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "51.8%",
+                                    "yoy_change": "-1.1%",
+                                    "qoq_change": "-0.6%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "57.4%",
+                                    "yoy_change": "+0.3%",
+                                    "qoq_change": "-0.1%",
+                                },
+                            ],
+                        },
+                    ],
+                    "trends": [
+                        {
+                            "trend_name": "Profitability Pressure",
+                            "description": "Most Canadian banks are experiencing year-over-year declines in ROE and ROA, primarily due to economic uncertainty, higher loan loss provisions, and competitive pressures. US banks, particularly JPMorgan, have shown more resilience in maintaining profitability ratios.",
+                        }
+                    ],
+                }
+            )
         elif dataset_id == "bench-002":
-            datasets.append({
-                "dataset_name": "Q1 2023 Capital Adequacy Metrics - Major Banks",
-                "metadata": {
-                    "time_period": "Q1 2023",
-                    "data_source": "Quarterly financial statements and regulatory filings",
-                    "last_updated": "April 15, 2023"
-                },
-                "metrics": [
-                    {
-                        "metric_name": "Common Equity Tier 1 (CET1) Ratio",
-                        "description": "Common equity as a percentage of risk-weighted assets. Primary measure of a bank's financial strength from a regulatory perspective.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "13.1%", "yoy_change": "+0.4%", "qoq_change": "+0.1%"},
-                            {"bank": "TD Bank", "value": "13.5%", "yoy_change": "+0.6%", "qoq_change": "+0.2%"},
-                            {"bank": "CIBC", "value": "12.2%", "yoy_change": "+0.3%", "qoq_change": "+0.1%"},
-                            {"bank": "JPMorgan", "value": "13.0%", "yoy_change": "+0.5%", "qoq_change": "+0.2%"},
-                            {"bank": "Bank of America", "value": "11.8%", "yoy_change": "+0.2%", "qoq_change": "0.0%"}
-                        ]
+            datasets.append(
+                {
+                    "dataset_name": "Q1 2023 Capital Adequacy Metrics - Major Banks",
+                    "metadata": {
+                        "time_period": "Q1 2023",
+                        "data_source": "Quarterly financial statements and regulatory filings",
+                        "last_updated": "April 15, 2023",
                     },
-                    {
-                        "metric_name": "Leverage Ratio",
-                        "description": "Tier 1 capital as a percentage of total exposure. Non-risk-based measure to complement risk-based capital requirements.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "4.8%", "yoy_change": "+0.1%", "qoq_change": "0.0%"},
-                            {"bank": "TD Bank", "value": "4.6%", "yoy_change": "+0.2%", "qoq_change": "+0.1%"},
-                            {"bank": "CIBC", "value": "4.4%", "yoy_change": "+0.1%", "qoq_change": "0.0%"},
-                            {"bank": "JPMorgan", "value": "5.2%", "yoy_change": "+0.3%", "qoq_change": "+0.1%"},
-                            {"bank": "Bank of America", "value": "4.9%", "yoy_change": "+0.2%", "qoq_change": "+0.1%"}
-                        ]
-                    }
-                ],
-                "trends": [
-                    {
-                        "trend_name": "Capital Accumulation",
-                        "description": "All major banks have increased their CET1 ratios year-over-year, reflecting conservative capital management in anticipation of uncertain economic conditions and potential regulatory changes. Canadian banks maintain strong capital positions relative to global peers."
-                    }
-                ]
-            })
+                    "metrics": [
+                        {
+                            "metric_name": "Common Equity Tier 1 (CET1) Ratio",
+                            "description": "Common equity as a percentage of risk-weighted assets. Primary measure of a bank's financial strength from a regulatory perspective.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "13.1%",
+                                    "yoy_change": "+0.4%",
+                                    "qoq_change": "+0.1%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "13.5%",
+                                    "yoy_change": "+0.6%",
+                                    "qoq_change": "+0.2%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "12.2%",
+                                    "yoy_change": "+0.3%",
+                                    "qoq_change": "+0.1%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "13.0%",
+                                    "yoy_change": "+0.5%",
+                                    "qoq_change": "+0.2%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "11.8%",
+                                    "yoy_change": "+0.2%",
+                                    "qoq_change": "0.0%",
+                                },
+                            ],
+                        },
+                        {
+                            "metric_name": "Leverage Ratio",
+                            "description": "Tier 1 capital as a percentage of total exposure. Non-risk-based measure to complement risk-based capital requirements.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "4.8%",
+                                    "yoy_change": "+0.1%",
+                                    "qoq_change": "0.0%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "4.6%",
+                                    "yoy_change": "+0.2%",
+                                    "qoq_change": "+0.1%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "4.4%",
+                                    "yoy_change": "+0.1%",
+                                    "qoq_change": "0.0%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "5.2%",
+                                    "yoy_change": "+0.3%",
+                                    "qoq_change": "+0.1%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "4.9%",
+                                    "yoy_change": "+0.2%",
+                                    "qoq_change": "+0.1%",
+                                },
+                            ],
+                        },
+                    ],
+                    "trends": [
+                        {
+                            "trend_name": "Capital Accumulation",
+                            "description": "All major banks have increased their CET1 ratios year-over-year, reflecting conservative capital management in anticipation of uncertain economic conditions and potential regulatory changes. Canadian banks maintain strong capital positions relative to global peers.",
+                        }
+                    ],
+                }
+            )
         elif dataset_id == "bench-003":
-            datasets.append({
-                "dataset_name": "Q1 2023 Asset Quality Indicators - Major Banks",
-                "metadata": {
-                    "time_period": "Q1 2023",
-                    "data_source": "Quarterly financial statements and credit quality disclosures",
-                    "last_updated": "April 15, 2023"
-                },
-                "metrics": [
-                    {
-                        "metric_name": "Non-Performing Loans (NPL) Ratio",
-                        "description": "Non-performing loans as a percentage of total loans. Lower values indicate better asset quality.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "0.23%", "yoy_change": "+0.05%", "qoq_change": "+0.02%"},
-                            {"bank": "TD Bank", "value": "0.25%", "yoy_change": "+0.06%", "qoq_change": "+0.03%"},
-                            {"bank": "CIBC", "value": "0.28%", "yoy_change": "+0.08%", "qoq_change": "+0.04%"},
-                            {"bank": "JPMorgan", "value": "0.52%", "yoy_change": "+0.11%", "qoq_change": "+0.05%"},
-                            {"bank": "Bank of America", "value": "0.48%", "yoy_change": "+0.09%", "qoq_change": "+0.04%"}
-                        ]
+            datasets.append(
+                {
+                    "dataset_name": "Q1 2023 Asset Quality Indicators - Major Banks",
+                    "metadata": {
+                        "time_period": "Q1 2023",
+                        "data_source": "Quarterly financial statements and credit quality disclosures",
+                        "last_updated": "April 15, 2023",
                     },
-                    {
-                        "metric_name": "Provision Coverage Ratio",
-                        "description": "Loan loss provisions as a percentage of non-performing loans. Higher values indicate more conservative provisioning.",
-                        "comparisons": [
-                            {"bank": "RBC", "value": "185%", "yoy_change": "-15%", "qoq_change": "-5%"},
-                            {"bank": "TD Bank", "value": "192%", "yoy_change": "-8%", "qoq_change": "-3%"},
-                            {"bank": "CIBC", "value": "176%", "yoy_change": "-12%", "qoq_change": "-4%"},
-                            {"bank": "JPMorgan", "value": "198%", "yoy_change": "-10%", "qoq_change": "-4%"},
-                            {"bank": "Bank of America", "value": "181%", "yoy_change": "-14%", "qoq_change": "-6%"}
-                        ]
-                    }
-                ],
-                "trends": [
-                    {
-                        "trend_name": "Emerging Credit Quality Concerns",
-                        "description": "All major banks are experiencing a slight deterioration in NPL ratios and have reduced their provision coverage ratios year-over-year. This suggests emerging concerns about asset quality, though levels remain historically low. Canadian banks maintain stronger asset quality metrics compared to their US counterparts."
-                    }
-                ]
-            })
-    
+                    "metrics": [
+                        {
+                            "metric_name": "Non-Performing Loans (NPL) Ratio",
+                            "description": "Non-performing loans as a percentage of total loans. Lower values indicate better asset quality.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "0.23%",
+                                    "yoy_change": "+0.05%",
+                                    "qoq_change": "+0.02%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "0.25%",
+                                    "yoy_change": "+0.06%",
+                                    "qoq_change": "+0.03%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "0.28%",
+                                    "yoy_change": "+0.08%",
+                                    "qoq_change": "+0.04%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "0.52%",
+                                    "yoy_change": "+0.11%",
+                                    "qoq_change": "+0.05%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "0.48%",
+                                    "yoy_change": "+0.09%",
+                                    "qoq_change": "+0.04%",
+                                },
+                            ],
+                        },
+                        {
+                            "metric_name": "Provision Coverage Ratio",
+                            "description": "Loan loss provisions as a percentage of non-performing loans. Higher values indicate more conservative provisioning.",
+                            "comparisons": [
+                                {
+                                    "bank": "RBC",
+                                    "value": "185%",
+                                    "yoy_change": "-15%",
+                                    "qoq_change": "-5%",
+                                },
+                                {
+                                    "bank": "TD Bank",
+                                    "value": "192%",
+                                    "yoy_change": "-8%",
+                                    "qoq_change": "-3%",
+                                },
+                                {
+                                    "bank": "CIBC",
+                                    "value": "176%",
+                                    "yoy_change": "-12%",
+                                    "qoq_change": "-4%",
+                                },
+                                {
+                                    "bank": "JPMorgan",
+                                    "value": "198%",
+                                    "yoy_change": "-10%",
+                                    "qoq_change": "-4%",
+                                },
+                                {
+                                    "bank": "Bank of America",
+                                    "value": "181%",
+                                    "yoy_change": "-14%",
+                                    "qoq_change": "-6%",
+                                },
+                            ],
+                        },
+                    ],
+                    "trends": [
+                        {
+                            "trend_name": "Emerging Credit Quality Concerns",
+                            "description": "All major banks are experiencing a slight deterioration in NPL ratios and have reduced their provision coverage ratios year-over-year. This suggests emerging concerns about asset quality, though levels remain historically low. Canadian banks maintain stronger asset quality metrics compared to their US counterparts.",
+                        }
+                    ],
+                }
+            )
+
     return datasets
 
 
 # Core functionality
+
 
 def select_relevant_datasets(
     query: str,
@@ -417,7 +605,7 @@ def select_relevant_datasets(
     token: Optional[str] = None,
     database_name: str = "public_benchmarking",
     process_monitor=None,
-    stage_name: Optional[str] = None
+    stage_name: Optional[str] = None,
 ) -> List[str]:
     """
     Use an LLM to select the most relevant benchmarking datasets.
@@ -444,11 +632,15 @@ def select_relevant_datasets(
             logger.debug(f"Dataset selection usage: {selection_usage}")
             # Update process monitor if available
             if process_monitor and stage_name:
-                process_monitor.add_llm_call_details_to_stage(stage_name, selection_usage)
+                process_monitor.add_llm_call_details_to_stage(
+                    stage_name, selection_usage
+                )
                 process_monitor.add_stage_details(stage_name, task="dataset_selection")
 
         # Check if get_completion returned an error string
-        if isinstance(selection_response_str, str) and selection_response_str.startswith("Error:"):
+        if isinstance(
+            selection_response_str, str
+        ) and selection_response_str.startswith("Error:"):
             logger.error(
                 f"get_completion failed during dataset selection: {selection_response_str}"
             )
@@ -492,7 +684,7 @@ def synthesize_response_and_status(
     token: Optional[str] = None,
     database_name: str = "public_benchmarking",
     process_monitor=None,
-    stage_name: Optional[str] = None
+    stage_name: Optional[str] = None,
 ) -> ResearchResponse:
     """
     Use an LLM tool call to synthesize a detailed research response and status summary.
@@ -515,13 +707,11 @@ def synthesize_response_and_status(
             "status_summary": default_no_info_status,
         }
 
-    formatted_datasets = format_benchmarking_data_for_llm(datasets) 
+    formatted_datasets = format_benchmarking_data_for_llm(datasets)
     synthesis_prompt = get_content_synthesis_prompt(query, formatted_datasets)
 
     try:
-        logger.info(
-            f"Initiating Benchmarking Synthesis API call (DB: {database_name})"
-        )
+        logger.info(f"Initiating Benchmarking Synthesis API call (DB: {database_name})")
         # Direct synchronous call - returns a tuple
         synthesis_response_obj, synthesis_usage = get_completion(
             capability="large",
@@ -542,11 +732,15 @@ def synthesize_response_and_status(
             logger.debug(f"Research synthesis usage: {synthesis_usage}")
             # Update process monitor if available
             if process_monitor and stage_name:
-                process_monitor.add_llm_call_details_to_stage(stage_name, synthesis_usage)
+                process_monitor.add_llm_call_details_to_stage(
+                    stage_name, synthesis_usage
+                )
                 process_monitor.add_stage_details(stage_name, task="research_synthesis")
 
         # Check if get_completion returned an error string in the response part
-        if isinstance(synthesis_response_obj, str) and synthesis_response_obj.startswith("Error:"):
+        if isinstance(
+            synthesis_response_obj, str
+        ) and synthesis_response_obj.startswith("Error:"):
             logger.error(
                 f"get_completion failed for {database_name} synthesis: {synthesis_response_obj}"
             )
@@ -578,26 +772,34 @@ def synthesize_response_and_status(
                         )
                         status = arguments.get("status_summary", default_error_status)
                         research = arguments.get("detailed_research", default_research)
-                        if not isinstance(status, str): status = default_error_status
-                        if not isinstance(research, str): research = default_research
+                        if not isinstance(status, str):
+                            status = default_error_status
+                        if not isinstance(research, str):
+                            research = default_research
                         return {"status_summary": status, "detailed_research": research}
                     else:
                         logger.error(
                             f"Missing required keys in parsed tool arguments for {database_name}: {arguments}"
                         )
-                        error_result["detailed_research"] = "Error: Tool call arguments missing required keys."
+                        error_result["detailed_research"] = (
+                            "Error: Tool call arguments missing required keys."
+                        )
                         return error_result
                 except json.JSONDecodeError as json_err:
                     logger.error(
                         f"Failed to parse tool arguments JSON for {database_name}: {json_err}. Arguments: {arguments_str}"
                     )
-                    error_result["detailed_research"] = f"Error: Failed to parse tool arguments JSON - {json_err}"
+                    error_result["detailed_research"] = (
+                        f"Error: Failed to parse tool arguments JSON - {json_err}"
+                    )
                     return error_result
             else:
                 logger.error(
                     f"Unexpected tool called for {database_name}: {tool_call.function.name}"
                 )
-                error_result["detailed_research"] = f"Error: Unexpected tool called: {tool_call.function.name}"
+                error_result["detailed_research"] = (
+                    f"Error: Unexpected tool called: {tool_call.function.name}"
+                )
                 return error_result
         else:
             logger.error(
@@ -616,9 +818,13 @@ def synthesize_response_and_status(
                 logger.warning(
                     f"LLM returned content instead of tool call: {content[:200]}..."
                 )
-                error_result["detailed_research"] = f"Error: LLM returned text instead of tool call. Content: {content[:200]}..."
+                error_result["detailed_research"] = (
+                    f"Error: LLM returned text instead of tool call. Content: {content[:200]}..."
+                )
             else:
-                error_result["detailed_research"] = "Error: No tool call or content received from LLM."
+                error_result["detailed_research"] = (
+                    "Error: No tool call or content received from LLM."
+                )
             return error_result
 
     except Exception as e:
@@ -631,49 +837,75 @@ def synthesize_response_and_status(
 
 
 def query_database_sync(
-    query: str, scope: str, token: Optional[str] = None, process_monitor=None, query_stage_name: Optional[str] = None
+    query: str,
+    scope: str,
+    token: Optional[str] = None,
+    process_monitor=None,
+    query_stage_name: Optional[str] = None,
 ) -> SubagentResult:
     """
     Synchronously query the Financial Benchmarking database based on the specified scope.
     """
-    logger.info(f"Querying Financial Benchmarking database (sync): '{query}' with scope: {scope}")
+    logger.info(
+        f"Querying Financial Benchmarking database (sync): '{query}' with scope: {scope}"
+    )
     database_name = "public_benchmarking"
     default_error_status = "❌ Error during query processing."
     selected_dataset_ids: Optional[List[str]] = None
     stage_name = query_stage_name or f"db_query_{database_name}_unknown"
-    
+
     try:
         # 1. Fetch Catalog
         catalog = fetch_benchmarking_catalog()
         logger.info(f"Retrieved {len(catalog)} total benchmarking catalog entries")
         if not catalog:
-            response: DatabaseResponse = [] if scope == "metadata" else {
-                "detailed_research": "No datasets found in the Financial Benchmarking database catalog.",
-                "status_summary": "📄 No benchmarking datasets found in catalog.",
-            }
+            response: DatabaseResponse = (
+                []
+                if scope == "metadata"
+                else {
+                    "detailed_research": "No datasets found in the Financial Benchmarking database catalog.",
+                    "status_summary": "📄 No benchmarking datasets found in catalog.",
+                }
+            )
             return response, None
 
         # 2. Select Relevant Datasets
         selected_dataset_ids = select_relevant_datasets(
             query, catalog, token, database_name, process_monitor, stage_name
         )
-        logger.info(f"LLM selected {len(selected_dataset_ids)} relevant benchmarking dataset IDs: {selected_dataset_ids}")
+        logger.info(
+            f"LLM selected {len(selected_dataset_ids)} relevant benchmarking dataset IDs: {selected_dataset_ids}"
+        )
 
         if not selected_dataset_ids:
-            response: DatabaseResponse = [] if scope == "metadata" else {
-                "detailed_research": "LLM did not select any relevant benchmarking datasets from the catalog based on the query.",
-                "status_summary": "📄 No relevant datasets selected by LLM.",
-            }
+            response: DatabaseResponse = (
+                []
+                if scope == "metadata"
+                else {
+                    "detailed_research": "LLM did not select any relevant benchmarking datasets from the catalog based on the query.",
+                    "status_summary": "📄 No relevant datasets selected by LLM.",
+                }
+            )
             if process_monitor:
-                process_monitor.add_stage_details(stage_name, result_count=0, document_ids=[])
-            return response, [] # Return empty list for dataset IDs
+                process_monitor.add_stage_details(
+                    stage_name, result_count=0, document_ids=[]
+                )
+            return response, []  # Return empty list for dataset IDs
 
         # 3. Process based on scope
         if scope == "metadata":
-            selected_items = [item for item in catalog if item.get("id") in selected_dataset_ids]
-            logger.info(f"Returning {len(selected_items)} selected benchmarking metadata items.")
+            selected_items = [
+                item for item in catalog if item.get("id") in selected_dataset_ids
+            ]
+            logger.info(
+                f"Returning {len(selected_items)} selected benchmarking metadata items."
+            )
             if process_monitor:
-                process_monitor.add_stage_details(stage_name, result_count=len(selected_items), document_ids=selected_dataset_ids)
+                process_monitor.add_stage_details(
+                    stage_name,
+                    result_count=len(selected_items),
+                    document_ids=selected_dataset_ids,
+                )
             return selected_items, selected_dataset_ids
 
         elif scope == "research":
@@ -685,12 +917,21 @@ def query_database_sync(
                     "status_summary": "❌ Error retrieving benchmark data content.",
                 }
                 if process_monitor:
-                    process_monitor.add_stage_details(stage_name, error="Could not retrieve dataset content", document_ids=selected_dataset_ids)
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        error="Could not retrieve dataset content",
+                        document_ids=selected_dataset_ids,
+                    )
                 return response, selected_dataset_ids
 
             # 5. Synthesize Final Response
             research_result = synthesize_response_and_status(
-                query, datasets_with_content, token, database_name, process_monitor, stage_name
+                query,
+                datasets_with_content,
+                token,
+                database_name,
+                process_monitor,
+                stage_name,
             )
 
             # Log final details for the stage
@@ -699,21 +940,31 @@ def query_database_sync(
                     stage_name,
                     result_count=len(datasets_with_content),
                     document_ids=selected_dataset_ids,
-                    status_summary=research_result.get("status_summary", "")
+                    status_summary=research_result.get("status_summary", ""),
                 )
             return research_result, selected_dataset_ids
 
         else:
-            logger.error(f"Invalid scope provided to public_benchmarking subagent: {scope}")
+            logger.error(
+                f"Invalid scope provided to public_benchmarking subagent: {scope}"
+            )
             raise ValueError(f"Invalid scope: {scope}")
 
     except Exception as e:
-        error_msg = f"Error querying Financial Benchmarking database (scope: {scope}): {str(e)}"
+        error_msg = (
+            f"Error querying Financial Benchmarking database (scope: {scope}): {str(e)}"
+        )
         logger.error(error_msg, exc_info=True)
-        response: DatabaseResponse = [] if scope == "metadata" else {
-            "detailed_research": f"**Error processing request for Financial Benchmarking:** {str(e)}",
-            "status_summary": default_error_status,
-        }
+        response: DatabaseResponse = (
+            []
+            if scope == "metadata"
+            else {
+                "detailed_research": f"**Error processing request for Financial Benchmarking:** {str(e)}",
+                "status_summary": default_error_status,
+            }
+        )
         if process_monitor:
-            process_monitor.add_stage_details(stage_name, error=str(e), document_ids=selected_dataset_ids)
+            process_monitor.add_stage_details(
+                stage_name, error=str(e), document_ids=selected_dataset_ids
+            )
         return response, selected_dataset_ids

@@ -17,7 +17,7 @@ Dependencies:
 
 import json
 import logging
-from typing import Tuple, Dict, Optional, Any # Added Tuple, Dict, Optional, Any
+from typing import Tuple, Dict, Optional, Any  # Added Tuple, Dict, Optional, Any
 
 from ...chat_model.model_settings import get_model_config
 from ...llm_connectors.rbc_openai import call_llm
@@ -45,7 +45,9 @@ class RouterError(Exception):
     pass
 
 
-def get_routing_decision(conversation, token) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+def get_routing_decision(
+    conversation, token
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
     """
     Get routing decision from the model using a tool call.
 
@@ -64,7 +66,7 @@ def get_routing_decision(conversation, token) -> Tuple[Dict[str, Any], Optional[
     Raises:
         RouterError: If there is an error in getting the routing decision.
     """
-    usage_details = None # Initialize usage details
+    usage_details = None  # Initialize usage details
     try:
         # Prepare system message with router prompt
         system_message = {"role": "system", "content": SYSTEM_PROMPT}
@@ -95,18 +97,24 @@ def get_routing_decision(conversation, token) -> Tuple[Dict[str, Any], Optional[
         )
 
         # Check if response object itself is valid before accessing attributes
-        if not response or not hasattr(response, 'choices') or not response.choices:
-             raise RouterError("Invalid or empty response received from LLM")
+        if not response or not hasattr(response, "choices") or not response.choices:
+            raise RouterError("Invalid or empty response received from LLM")
 
         # Extract the tool call from the response
         message = response.choices[0].message
         if not message or not message.tool_calls:
             # Handle cases where the model might return content instead of a tool call
-            content_returned = message.content if message and message.content else "No content"
-            logger.warning(f"Expected tool call but received content: {content_returned[:100]}...")
+            content_returned = (
+                message.content if message and message.content else "No content"
+            )
+            logger.warning(
+                f"Expected tool call but received content: {content_returned[:100]}..."
+            )
             # Decide on fallback behavior - perhaps default routing or raise error
             # For now, raise error as tool call is expected
-            raise RouterError("No tool call received in response, content returned instead.")
+            raise RouterError(
+                "No tool call received in response, content returned instead."
+            )
 
         tool_call = message.tool_calls[0]
 
@@ -137,7 +145,9 @@ def get_routing_decision(conversation, token) -> Tuple[Dict[str, Any], Optional[
         return {"function_name": function_name}, usage_details
 
     except Exception as e:
-        logger.error(f"Error getting routing decision: {str(e)}", exc_info=True) # Add exc_info
+        logger.error(
+            f"Error getting routing decision: {str(e)}", exc_info=True
+        )  # Add exc_info
         # Return default decision and None for usage on error
         # Or re-raise, depending on desired handling in model.py
         # Re-raising seems appropriate to signal failure upstream

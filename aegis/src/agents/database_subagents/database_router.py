@@ -28,7 +28,17 @@ from ...global_prompts.database_statement import get_available_databases
 # Removed old token usage imports
 # from ...llm_connectors.rbc_openai import get_token_usage, reset_token_usage
 
-from typing import Any, Dict, Generator, List, Optional, TypeVar, Union, cast, Tuple # Added Tuple
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+    Tuple,
+)  # Added Tuple
 
 # Define response types for database queries
 MetadataResponse = List[Dict[str, Any]]
@@ -54,8 +64,13 @@ logger = logging.getLogger(__name__)
 
 
 def route_query_sync(
-    database: str, query: str, scope: str, token: Optional[str] = None, process_monitor=None, query_stage_name: Optional[str] = None
-) -> SubagentResult: # Updated return type hint, added query_stage_name
+    database: str,
+    query: str,
+    scope: str,
+    token: Optional[str] = None,
+    process_monitor=None,
+    query_stage_name: Optional[str] = None,
+) -> SubagentResult:  # Updated return type hint, added query_stage_name
     """
     Synchronously routes a database query to the appropriate subagent module.
 
@@ -99,15 +114,15 @@ def route_query_sync(
                 "detailed_research": f"Error: {error_msg}",
                 "status_summary": f"❌ Error: Unknown database '{database}'.",
             }
-        
+
         # End the stage with error status if process monitor is provided
         # Use the specific stage_name passed from the worker
         if process_monitor:
             process_monitor.add_stage_details(stage_name, error=error_msg)
             # REMOVED: Stage end (even for errors) is now handled by the caller (_execute_query_worker)
             # process_monitor.end_stage(stage_name, status="error")
-            
-        return error_response, None # Return tuple
+
+        return error_response, None  # Return tuple
 
     try:
         module_path = f".{database}.subagent"
@@ -119,28 +134,28 @@ def route_query_sync(
         if not hasattr(subagent_module, "query_database_sync"):
             error_msg = f"Subagent module for '{database}' missing 'query_database_sync' function."
             logger.error(error_msg)  # Log the error
-            
+
             # End stage with error if process monitor is provided
             # Use the specific stage_name passed from the worker
             if process_monitor:
                 process_monitor.add_stage_details(stage_name, error=error_msg)
                 # REMOVED: Stage end (even for errors) is now handled by the caller (_execute_query_worker)
                 # process_monitor.end_stage(stage_name, status="error")
-                
+
             # Raise attribute error as it's a code structure issue and sync is expected
             raise AttributeError(error_msg)
 
         # Use the synchronous version directly - it now returns a tuple
         query_func = subagent_module.query_database_sync
         logger.debug(f"Calling query_database_sync for {database}")
-        
+
         # Check if the function can accept process_monitor and query_stage_name parameters
         sig = inspect.signature(query_func)
-        call_args = {'query': query, 'scope': scope, 'token': token}
-        if 'process_monitor' in sig.parameters:
-            call_args['process_monitor'] = process_monitor
-        if 'query_stage_name' in sig.parameters:
-            call_args['query_stage_name'] = stage_name # Pass the specific stage name
+        call_args = {"query": query, "scope": scope, "token": token}
+        if "process_monitor" in sig.parameters:
+            call_args["process_monitor"] = process_monitor
+        if "query_stage_name" in sig.parameters:
+            call_args["query_stage_name"] = stage_name  # Pass the specific stage name
 
         # Pass the process monitor and stage name if the function supports them
         result_tuple: SubagentResult = query_func(**call_args)
@@ -151,14 +166,18 @@ def route_query_sync(
         if process_monitor:
             # If the subagent didn't add document IDs to the stage details, add them now
             if result_tuple[1]:  # If doc_ids is not None
-                process_monitor.add_stage_details(stage_name, document_ids=result_tuple[1])
-            
+                process_monitor.add_stage_details(
+                    stage_name, document_ids=result_tuple[1]
+                )
+
             # Add status summary if available in research results
             if scope == "research" and isinstance(result_tuple[0], dict):
                 status_summary = result_tuple[0].get("status_summary", "")
                 if status_summary:
-                    process_monitor.add_stage_details(stage_name, status_summary=status_summary)
-            
+                    process_monitor.add_stage_details(
+                        stage_name, status_summary=status_summary
+                    )
+
             # REMOVED: Stage end is now handled by the caller (_execute_query_worker)
             # process_monitor.end_stage(stage_name, status="completed")
 
@@ -177,15 +196,15 @@ def route_query_sync(
                 "detailed_research": f"Error: {error_msg}",
                 "status_summary": f"❌ Error: Could not execute query for '{database}' due to internal configuration.",
             }
-            
+
         # End the stage with error status if process monitor is provided
         # Use the specific stage_name passed from the worker
         if process_monitor:
             process_monitor.add_stage_details(stage_name, error=error_msg)
             # REMOVED: Stage end (even for errors) is now handled by the caller (_execute_query_worker)
             # process_monitor.end_stage(stage_name, status="error")
-            
-        return error_response, None # Return tuple
+
+        return error_response, None  # Return tuple
 
     except Exception as e:
         # Catch other potential exceptions during subagent execution
@@ -201,12 +220,12 @@ def route_query_sync(
                 "detailed_research": f"Error: {error_msg}",
                 "status_summary": f"❌ Error: Failed during query execution for '{database}'.",
             }
-            
+
         # End the stage with error status if process monitor is provided
         # Use the specific stage_name passed from the worker
         if process_monitor:
             process_monitor.add_stage_details(stage_name, error=error_msg)
             # REMOVED: Stage end (even for errors) is now handled by the caller (_execute_query_worker)
             # process_monitor.end_stage(stage_name, status="error")
-            
-        return error_response, None # Return tuple
+
+        return error_response, None  # Return tuple

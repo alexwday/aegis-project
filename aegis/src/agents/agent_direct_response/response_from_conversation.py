@@ -15,7 +15,7 @@ Dependencies:
 """
 
 import logging
-from typing import Generator, Dict, Any # Added Generator, Dict, Any
+from typing import Generator, Dict, Any  # Added Generator, Dict, Any
 
 from ...chat_model.model_settings import get_model_config
 from ...llm_connectors.rbc_openai import call_llm
@@ -88,11 +88,16 @@ def response_from_conversation(conversation, token) -> Generator[Any, None, None
         # Process the streaming response (which includes usage details at the end)
         for item in response_stream:
             # Check if it's the final usage dictionary
-            if isinstance(item, dict) and 'usage_details' in item:
-                final_usage_details = item # Capture usage details
-                break # Stop iteration after getting usage details
+            if isinstance(item, dict) and "usage_details" in item:
+                final_usage_details = item  # Capture usage details
+                break  # Stop iteration after getting usage details
             # Otherwise, process content chunks
-            elif hasattr(item, 'choices') and item.choices and item.choices[0].delta and item.choices[0].delta.content:
+            elif (
+                hasattr(item, "choices")
+                and item.choices
+                and item.choices[0].delta
+                and item.choices[0].delta.content
+            ):
                 content = item.choices[0].delta.content
                 yield content
             # Handle potential empty chunks or other stream elements if necessary
@@ -107,10 +112,13 @@ def response_from_conversation(conversation, token) -> Generator[Any, None, None
         else:
             # If usage details weren't found (e.g., error in stream wrapper), yield empty/error
             logger.warning("Usage details not found in direct response stream.")
-            yield {'usage_details': {'error': 'Usage data missing from stream'}}
-
+            yield {"usage_details": {"error": "Usage data missing from stream"}}
 
     except Exception as e:
-        logger.error(f"Error generating direct response: {str(e)}", exc_info=True) # Add exc_info
+        logger.error(
+            f"Error generating direct response: {str(e)}", exc_info=True
+        )  # Add exc_info
         # Re-raise to signal failure upstream
-        raise DirectResponseError(f"Failed to generate direct response: {str(e)}") from e
+        raise DirectResponseError(
+            f"Failed to generate direct response: {str(e)}"
+        ) from e

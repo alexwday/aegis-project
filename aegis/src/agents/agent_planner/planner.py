@@ -17,7 +17,7 @@ Dependencies:
 
 import json
 import logging
-from typing import Tuple, Dict, Optional, Any # Added Tuple, Dict, Optional, Any
+from typing import Tuple, Dict, Optional, Any  # Added Tuple, Dict, Optional, Any
 
 from ...chat_model.model_settings import get_model_config
 from ...llm_connectors.rbc_openai import call_llm
@@ -49,7 +49,9 @@ class PlannerError(Exception):
     pass
 
 
-def create_database_selection_plan(research_statement, token, is_continuation=False) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
+def create_database_selection_plan(
+    research_statement, token, is_continuation=False
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
     """
     Create a plan of selected databases based on a research statement.
 
@@ -69,7 +71,7 @@ def create_database_selection_plan(research_statement, token, is_continuation=Fa
     Raises:
         PlannerError: If there is an error in creating the database selection plan.
     """
-    usage_details = None # Initialize usage details
+    usage_details = None  # Initialize usage details
     try:
         # Prepare system message with planner prompt
         system_message = {"role": "system", "content": SYSTEM_PROMPT}
@@ -108,15 +110,21 @@ def create_database_selection_plan(research_statement, token, is_continuation=Fa
         )
 
         # Check if response object itself is valid before accessing attributes
-        if not response or not hasattr(response, 'choices') or not response.choices:
-             raise PlannerError("Invalid or empty response received from LLM")
+        if not response or not hasattr(response, "choices") or not response.choices:
+            raise PlannerError("Invalid or empty response received from LLM")
 
         # Extract the tool call from the response
         message = response.choices[0].message
         if not message or not message.tool_calls:
-            content_returned = message.content if message and message.content else "No content"
-            logger.warning(f"Expected tool call but received content: {content_returned[:100]}...")
-            raise PlannerError("No tool call received in response, content returned instead.")
+            content_returned = (
+                message.content if message and message.content else "No content"
+            )
+            logger.warning(
+                f"Expected tool call but received content: {content_returned[:100]}..."
+            )
+            raise PlannerError(
+                "No tool call received in response, content returned instead."
+            )
 
         tool_call = message.tool_calls[0]
 
@@ -156,6 +164,8 @@ def create_database_selection_plan(research_statement, token, is_continuation=Fa
         return {"databases": validated_databases}, usage_details
 
     except Exception as e:
-        logger.error(f"Error creating database selection plan: {str(e)}", exc_info=True) # Add exc_info
+        logger.error(
+            f"Error creating database selection plan: {str(e)}", exc_info=True
+        )  # Add exc_info
         # Re-raise to signal failure upstream
         raise PlannerError(f"Failed to create database selection plan: {str(e)}") from e

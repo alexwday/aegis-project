@@ -95,8 +95,11 @@ def clarify_research_needs(
 
         # Log the current fiscal period for debugging
         from ...global_prompts.fiscal_calendar import get_fiscal_period
+
         fiscal_year, fiscal_quarter = get_fiscal_period()
-        logger.info(f"Current fiscal period: Year {fiscal_year}, Quarter {fiscal_quarter}")
+        logger.info(
+            f"Current fiscal period: Year {fiscal_year}, Quarter {fiscal_quarter}"
+        )
         logger.info(f"Clarifying research needs using model: {MODEL_NAME}")
         logger.info("Initiating Clarifier API call")
 
@@ -181,20 +184,15 @@ def clarify_research_needs(
         # Log the clarifier decision
         logger.info(f"Clarifier decision: {action}")
 
-        # For research statements, format the output to include the structured parameters
+        # For research statements, format the output as a comprehensive paragraph
         if action == "create_research_statement":
-            # Format intent as research statement with detailed context
-            formatted_intent = f"Research intent: {intent}"
-
-            # Format parameters with each bank on its own line
-            formatted_parameters = format_research_parameters(
+            # Create a comprehensive research statement that includes both intent and parameters
+            detailed_context = format_research_parameters(
                 banks, metrics, years, quarters
             )
 
-            # Combine into final output with clear section headers
-            output = (
-                f"{formatted_intent}\n\n## Financial Parameters\n{formatted_parameters}"
-            )
+            # Combine intent and detailed context into a single, comprehensive paragraph
+            output = f"{intent}. {detailed_context}"
         # For time reference confirmations, leave the output as provided by the model
         elif action == "confirm_time_references":
             # The output will already be formatted as needed
@@ -207,16 +205,18 @@ def clarify_research_needs(
             "scope": "research",  # Always set to 'research' for financial queries
             "is_continuation": False,  # Default to False as we don't track continuations
         }
-        
+
         # Only include research parameters for create_research_statement action
         if action == "create_research_statement":
-            decision.update({
-                "intent": intent,
-                "years": years,
-                "quarters": quarters,
-                "banks": banks,
-                "metrics": metrics,
-            })
+            decision.update(
+                {
+                    "intent": intent,
+                    "years": years,
+                    "quarters": quarters,
+                    "banks": banks,
+                    "metrics": metrics,
+                }
+            )
 
         # Return both decision and usage details
         return decision, usage_details
@@ -231,10 +231,9 @@ def format_research_parameters(
     banks: List[str], metrics: List[str], years: List[int], quarters: List[int]
 ) -> str:
     """
-    Format research parameters in the standardized format.
-    Each bank gets its own line with associated time periods and metrics.
-    Avoids using brackets which can create unintended markdown hyperlinks.
-    Adds double line breaks between banks for better readability.
+    Format research parameters as a clear, concise paragraph that provides full context
+    for the planner agent without excessive repetition. Clearly states all banks, 
+    quarters, years, and metrics being requested in a readable format.
 
     Args:
         banks (List[str]): List of bank identifiers
@@ -243,43 +242,50 @@ def format_research_parameters(
         quarters (List[int]): List of quarters
 
     Returns:
-        str: Formatted parameters string with each bank on its own line
+        str: Formatted paragraph containing complete research context
     """
-    # Group parameters by bank
-    bank_parameters = {}
+    # Sort time periods chronologically
+    year_quarter_pairs = []
+    for year in years:
+        for quarter in quarters:
+            # Only include valid fiscal quarters (1-4)
+            if 1 <= quarter <= 4:
+                year_quarter_pairs.append((year, quarter))
 
-    for bank in banks:
-        bank_lines = []
-        for metric in metrics:
-            # Create time periods in chronological order
-            time_periods = []
+    year_quarter_pairs.sort()
 
-            # First, collect valid time periods
-            year_quarter_pairs = []
-            for year in years:
-                for quarter in quarters:
-                    # Only include valid fiscal quarters (1-4)
-                    if 1 <= quarter <= 4:
-                        year_quarter_pairs.append((year, quarter))
+    # Format time periods for readability
+    time_periods = [f"Q{quarter} {year}" for year, quarter in year_quarter_pairs]
 
-            # Sort chronologically by year then quarter
-            year_quarter_pairs.sort()
+    # Format metrics list
+    if len(metrics) == 1:
+        metrics_text = metrics[0]
+    elif len(metrics) == 2:
+        metrics_text = f"{metrics[0]} and {metrics[1]}"
+    else:
+        metrics_text = ", ".join(metrics[:-1]) + f", and {metrics[-1]}"
 
-            # Format each time period
-            for year, quarter in year_quarter_pairs:
-                time_periods.append(f"{year}-Q{quarter}")
+    # Format banks list
+    if len(banks) == 1:
+        banks_text = banks[0]
+    elif len(banks) == 2:
+        banks_text = f"{banks[0]} and {banks[1]}"
+    else:
+        banks_text = ", ".join(banks[:-1]) + f", and {banks[-1]}"
 
-            # Join with commas
-            time_period_str = ", ".join(time_periods)
-            # Use parentheses instead of brackets to avoid creating markdown hyperlinks
-            bank_lines.append(f"{bank} ({time_period_str}) : {metric}")
+    # Format time periods list
+    if len(time_periods) == 1:
+        time_text = time_periods[0]
+    elif len(time_periods) == 2:
+        time_text = f"{time_periods[0]} and {time_periods[1]}"
+    else:
+        time_text = ", ".join(time_periods[:-1]) + f", and {time_periods[-1]}"
 
-        bank_parameters[bank] = bank_lines
+    # Create a concise but comprehensive paragraph
+    paragraph = f"The research requires {metrics_text} data for {banks_text} across {time_text}."
 
-    # Join all parameters with appropriate spacing
-    result = []
-    for bank, lines in bank_parameters.items():
-        result.append("\n".join(lines))
+    # Only add clarification if there are multiple banks AND multiple time periods to avoid confusion
+    if len(banks) > 1 and len(time_periods) > 1:
+        paragraph += f" This applies to all specified banks across all specified time periods."
 
-    # Double line break between banks
-    return "\n\n".join(result)
+    return paragraph

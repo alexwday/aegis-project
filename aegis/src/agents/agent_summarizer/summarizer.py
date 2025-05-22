@@ -16,11 +16,11 @@ Dependencies:
 
 import logging
 import json
-from typing import Any, Dict, List, Optional, Union, Generator # Keep Generator
+from typing import Any, Dict, List, Optional, Union, Generator  # Keep Generator
 
 from ...chat_model.model_settings import get_model_config
 
-from ...llm_connectors.rbc_openai import call_llm # Remove log_usage_statistics
+from ...llm_connectors.rbc_openai import call_llm  # Remove log_usage_statistics
 from .summarizer_settings import (
     AVAILABLE_DATABASES,
     MAX_TOKENS,
@@ -47,7 +47,7 @@ def generate_streaming_summary(
     scope: str,  # Keep scope for potential future variations
     token: Optional[str],
     original_query_plan: Optional[Dict] = None,
-) -> Generator[Any, None, None]: # Yields str or dict
+) -> Generator[Any, None, None]:  # Yields str or dict
     """
     Generate the final response based on aggregated detailed research.
 
@@ -74,7 +74,7 @@ def generate_streaming_summary(
         SummarizerError: If there is an error generating the response.
     """
     logger.info(f"Generating final summary for scope: {scope}")
-    final_usage_details = None # Initialize
+    final_usage_details = None  # Initialize
 
     # --- Research Scope ---
     if scope == "research":
@@ -157,10 +157,15 @@ def generate_streaming_summary(
 
             # Process the stream, yielding content and capturing final usage details
             for item in llm_stream:
-                if isinstance(item, dict) and 'usage_details' in item:
-                    final_usage_details = item # Capture usage details
-                    break # Stop after getting usage
-                elif hasattr(item, 'choices') and item.choices and item.choices[0].delta and item.choices[0].delta.content:
+                if isinstance(item, dict) and "usage_details" in item:
+                    final_usage_details = item  # Capture usage details
+                    break  # Stop after getting usage
+                elif (
+                    hasattr(item, "choices")
+                    and item.choices
+                    and item.choices[0].delta
+                    and item.choices[0].delta.content
+                ):
                     yield item.choices[0].delta.content
                 # else: logger.debug("Received non-content chunk in summary stream.")
 
@@ -170,7 +175,7 @@ def generate_streaming_summary(
                 yield final_usage_details
             else:
                 logger.warning("Usage details not found in summary stream.")
-                yield {'usage_details': {'error': 'Usage data missing from stream'}}
+                yield {"usage_details": {"error": "Usage data missing from stream"}}
 
         except Exception as e:
             logger.error(
@@ -179,7 +184,9 @@ def generate_streaming_summary(
             # Yield error message before raising
             yield f"\n\n**Error generating research summary:** {str(e)}\n"
             # Re-raise to signal failure upstream
-            raise SummarizerError(f"Failed to generate streaming summary: {str(e)}") from e
+            raise SummarizerError(
+                f"Failed to generate streaming summary: {str(e)}"
+            ) from e
 
     # --- Metadata Scope (Simplified) ---
     elif scope == "metadata":

@@ -65,8 +65,10 @@ def connect_to_db(env: str = "local") -> Optional[psycopg2.extensions.connection
     """
     db_params = get_db_params(env)
     try:
-        logger.info(f"Connecting to database with parameters: host={db_params['host']}, " +
-                   f"port={db_params['port']}, dbname={db_params['dbname']}, user={db_params['user']}")
+        logger.info(
+            f"Connecting to database with parameters: host={db_params['host']}, "
+            + f"port={db_params['port']}, dbname={db_params['dbname']}, user={db_params['user']}"
+        )
         conn = psycopg2.connect(**db_params)
         conn.autocommit = False
         logger.info("Database connection successful")
