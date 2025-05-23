@@ -24,6 +24,7 @@ from ...global_prompts.project_statement import get_project_statement
 from ...global_prompts.database_statement import get_database_statement
 from ...global_prompts.fiscal_calendar import get_fiscal_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
+from ...global_prompts.error_handling import get_error_handling_statement
 
 # Get module logger (no configuration here - using centralized config)
 logger = logging.getLogger(__name__)
@@ -89,10 +90,12 @@ Your response should:
 # Construct the complete system prompt by combining the necessary statements
 def construct_system_prompt():
     # Get all the required statements
-    project_statement = get_project_statement()
+    # Direct response doesn't need database details since it only uses conversation history
+    project_statement = get_project_statement(level='minimal')
     fiscal_statement = get_fiscal_statement()
-    database_statement = get_database_statement()
+    database_statement = get_database_statement(level='minimal')
     restrictions_statement = get_restrictions_statement("direct_response")
+    error_handling = get_error_handling_statement("default")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [
@@ -116,6 +119,7 @@ def construct_system_prompt():
         "</AUDIENCE>",
         f"You are {RESPONSE_ROLE}.",
         RESPONSE_TASK,
+        error_handling,
     ]
 
     # Join with double newlines for readability

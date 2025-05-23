@@ -28,6 +28,7 @@ from ...global_prompts.database_statement import (
 )
 from ...global_prompts.fiscal_calendar import get_fiscal_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
+from ...global_prompts.error_handling import get_error_handling_statement
 
 # Get module logger (no configuration here - using centralized config)
 logger = logging.getLogger(__name__)
@@ -205,10 +206,6 @@ Match response depth to query intent, not just simple/complex binary.
 - Validation: Accurately synthesizes internal reports? Integrates citations? Correct markdown? Streaming?
 </IO_SPECIFICATIONS>
 
-<ERROR_HANDLING>
-- General: Handle unexpected input, ambiguity, missing info, limitations.
-- Summarizer Specific: Missing/incomplete internal reports -> synthesize best possible, note limits. Contradictory reports -> highlight contradictions. Sparse/low quality -> reflect honestly. Synthesize provided internal report info ONLY.
-</ERROR_HANDLING>
 </TASK>
 
 <RESPONSE_FORMAT>
@@ -224,10 +221,12 @@ Match response depth to query intent, not just simple/complex binary.
 # Construct the complete system prompt by combining the necessary statements
 def construct_system_prompt():
     # Get all the required statements
-    project_statement = get_project_statement()
+    # Summarizer only needs minimal context since it works with research results
+    project_statement = get_project_statement(level='minimal')
     fiscal_statement = get_fiscal_statement()
     # database_statement = get_database_statement() # Removed database statement
     restrictions_statement = get_restrictions_statement("summarizer")
+    error_handling = get_error_handling_statement("summarizer")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [
@@ -328,6 +327,7 @@ Regarding the capitalization of internally developed software costs, the interna
         PATTERN_RECOGNITION_INSTRUCTIONS,
         CONFIDENCE_SIGNALING,
         SUMMARIZER_SPECIFIC_GUARDRAILS,
+        error_handling,
     ]
 
     # Join with double newlines for readability

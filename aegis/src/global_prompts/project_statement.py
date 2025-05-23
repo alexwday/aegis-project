@@ -13,9 +13,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_project_statement() -> str:
+def get_project_statement(level: str = 'full') -> str:
     """
     Generate the project context statement with XML-style delimiters.
+
+    Args:
+        level: 'full' (default) or 'minimal'
+            - full: Complete context with capabilities and limitations (~600 tokens)
+            - minimal: One-line description for internal agents (~30 tokens)
 
     Returns:
         str: Formatted project statement
@@ -63,8 +68,20 @@ and extract insights from earnings call transcripts and shareholder reports.
 </SYSTEM_LIMITATIONS>
 </PROJECT_CONTEXT>"""
 
-        return statement
+        # Return appropriate level
+        if level == 'minimal':
+            return get_project_statement_minimal()
+        else:
+            return statement
     except Exception as e:
         logger.error(f"Error generating project statement: {str(e)}")
         # Fallback basic statement in case of errors
         return """<PROJECT_CONTEXT>This project serves RBC's Finance team by implementing an intelligent research and response system for public financial data inquiries using RAG (Retrieval-Augmented Generation).</PROJECT_CONTEXT>"""
+
+
+def get_project_statement_minimal() -> str:
+    """
+    Returns minimal project context for internal routing agents.
+    Reduces token usage by ~95% compared to full version.
+    """
+    return """<PROJECT_CONTEXT>Financial data inquiry system for RBC using public bank data via RAG.</PROJECT_CONTEXT>"""

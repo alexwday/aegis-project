@@ -52,8 +52,31 @@ import json
 import logging
 import time
 import uuid  # Import uuid
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, Generator, Tuple, Callable
+from typing import Any, Dict, List, Optional, Union, Generator, Tuple, Callable, TypedDict
+
+# Type definitions for better type safety
+class RoutingDecision(TypedDict):
+    function_name: str
+    arguments: Optional[Dict[str, Any]]
+
+class UsageDetails(TypedDict):
+    model: str
+    prompt_tokens: int
+    completion_tokens: int
+    cost: float
+    response_time_ms: Optional[int]
+    error: Optional[str]
+    incomplete: Optional[bool]
+
+class DatabaseResult(TypedDict):
+    status_summary: str
+    detailed_research: str
+
+# Configuration constants
+QUERY_DELAY_SECONDS = 1  # Delay between concurrent queries
+DEFAULT_THREAD_POOL_SIZE = None  # None uses default based on CPU count
 
 # ... (Keep existing imports) ...
 from ..global_prompts.database_statement import get_available_databases
@@ -67,8 +90,60 @@ from ..llm_connectors.rbc_openai import (
 from ..agents.database_subagents.database_router import route_query_sync
 
 
+# --- Helper Functions ---
+@contextmanager
+def database_connection(environment: str):
+    """Context manager for database connections with automatic cleanup."""
+    from ..initial_setup.db_config import connect_to_db
+    
+    conn = None
+    logger = logging.getLogger(__name__)
+    try:
+        conn = connect_to_db(environment)
+        if conn:
+            logger.info("Database connection established")
+        yield conn
+    except Exception as e:
+        logger.error(f"Database connection error: {e}", exc_info=True)
+        if conn:
+            try:
+                conn.rollback()
+            except Exception as rb_exc:
+                logger.error(f"Error during DB rollback: {rb_exc}")
+        raise
+    finally:
+        if conn:
+            try:
+                conn.close()
+                logger.info("Database connection closed")
+            except Exception as close_exc:
+                logger.error(f"Error closing DB connection: {close_exc}")
+
+
+def ensure_usage_details(
+    stream_completed: bool, 
+    usage_details: Optional[Dict[str, Any]], 
+    context: str
+) -> Dict[str, Any]:
+    """Ensure usage details are available, creating fallback if needed."""
+    logger = logging.getLogger(__name__)
+    
+    if not stream_completed and usage_details is None:
+        usage_details = {
+            "model": "unknown",
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "cost": 0.0,
+            "response_time_ms": 0,
+            "error": f"{context} stream ended without usage details",
+            "incomplete": True
+        }
+        logger.warning(f"No usage details received from {context} stream - using fallback.")
+    
+    return usage_details
+
+
 # --- Formatting Function (Remains Synchronous) ---
-# Worker function executed by each thread to run a single database query
 def format_usage_summary(
     agent_token_usage: Dict[str, Any], start_time: Optional[str] = None
 ) -> str:
@@ -244,13 +319,10 @@ def _model_generator(
 
     # Import DB connection utility (assuming it exists and named get_db_connection)
     from ..initial_setup.db_config import (
-        connect_to_db,
         ENVIRONMENT,
     )  # Import necessary items
 
     logger = configure_logging()
-    db_conn = None
-    db_cursor = None
 
     try:
         logger.info("Initializing model setup (sync core)...")
@@ -333,18 +405,11 @@ def _model_generator(
                 process_monitor.add_stage_details("direct_response", error=str(stream_error))
                 raise
             finally:
-                if not stream_completed and direct_response_usage_details is None:
-                    # Create a fallback usage entry indicating the issue
-                    direct_response_usage_details = {
-                        "model": "unknown",
-                        "prompt_tokens": 0,
-                        "completion_tokens": 0,
-                        "cost": 0.0,
-                        "response_time_ms": 0,
-                        "error": "Stream ended without usage details",
-                        "incomplete": True
-                    }
-                    logger.warning("No usage details received from direct_response stream - using fallback.")
+                direct_response_usage_details = ensure_usage_details(
+                    stream_completed, 
+                    direct_response_usage_details, 
+                    "direct_response"
+                )
                     
             process_monitor.end_stage("direct_response")
             if direct_response_usage_details:
@@ -446,14 +511,14 @@ def _model_generator(
                     aggregated_detailed_research = {}
                     futures = []
 
-                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_THREAD_POOL_SIZE) as executor:
                         for i, db_name in enumerate(selected_databases):
                             query_text = research_statement
                             db_display_name = available_databases.get(db_name, {}).get(
                                 "name", db_name
                             )
                             if i > 0:
-                                time.sleep(1)
+                                time.sleep(QUERY_DELAY_SECONDS)
                             future = executor.submit(
                                 _execute_query_worker,
                                 db_name,
@@ -536,18 +601,11 @@ def _model_generator(
                                     yield chunk
                                     
                             # Check if we got usage details
-                            if not stream_completed and summary_usage_details is None:
-                                # Create a fallback usage entry
-                                summary_usage_details = {
-                                    "model": "unknown",
-                                    "prompt_tokens": 0,
-                                    "completion_tokens": 0,
-                                    "cost": 0.0,
-                                    "response_time_ms": 0,
-                                    "error": "Summary stream ended without usage details",
-                                    "incomplete": True
-                                }
-                                logger.warning("No usage details received from summary stream - using fallback.")
+                            summary_usage_details = ensure_usage_details(
+                                stream_completed,
+                                summary_usage_details,
+                                "summary"
+                            )
                                 
                             process_monitor.end_stage("summary")
                             if summary_usage_details:
@@ -600,60 +658,44 @@ def _model_generator(
         # --- Database Logging Call ---
         if process_monitor.enabled:
             try:
-                # Use the imported connect_to_db function
                 logger.info(
                     f"Attempting to log process monitor data to database for run {process_monitor.run_uuid}"
                 )
                 logger.info(f"Total stages to log: {len(process_monitor.stages)}")
-                # Show ENVIRONMENT value
                 logger.info(f"Using environment: {ENVIRONMENT}")
 
-                db_conn = connect_to_db(ENVIRONMENT)
-                if db_conn:
-                    logger.info("Database connection established")
-                    # Check if table exists
-                    with db_conn.cursor() as check_cursor:
-                        check_cursor.execute(
+                with database_connection(ENVIRONMENT) as db_conn:
+                    if db_conn:
+                        # Check if table exists
+                        with db_conn.cursor() as check_cursor:
+                            check_cursor.execute(
+                                """
+                                SELECT EXISTS (
+                                   SELECT FROM information_schema.tables 
+                                   WHERE table_schema = 'public'
+                                   AND table_name = 'process_monitor_logs'
+                                );
                             """
-                            SELECT EXISTS (
-                               SELECT FROM information_schema.tables 
-                               WHERE table_schema = 'public'
-                               AND table_name = 'process_monitor_logs'
-                            );
-                        """
-                        )
-                        table_exists = check_cursor.fetchone()[0]
-                        logger.info(
-                            f"process_monitor_logs table exists: {table_exists}"
-                        )
+                            )
+                            table_exists = check_cursor.fetchone()[0]
+                            logger.info(
+                                f"process_monitor_logs table exists: {table_exists}"
+                            )
 
-                    # Try to log to the database
-                    with db_conn.cursor() as db_cursor:
-                        process_monitor.log_to_database(db_cursor)
-                        db_conn.commit()  # Commit transaction
-                    logger.info("Process monitor data logged to database.")
-                else:
-                    logger.error(
-                        f"Failed to get database connection for logging process monitor data. Environment: {ENVIRONMENT}"
-                    )
+                        # Try to log to the database
+                        with db_conn.cursor() as db_cursor:
+                            process_monitor.log_to_database(db_cursor)
+                            db_conn.commit()  # Commit transaction
+                        logger.info("Process monitor data logged to database.")
+                    else:
+                        logger.error(
+                            f"Failed to get database connection for logging process monitor data. Environment: {ENVIRONMENT}"
+                        )
             except Exception as log_exc:
                 logger.error(
                     f"Failed to log process monitor data to database: {log_exc}",
                     exc_info=True,
                 )
-                # Rollback if connection object available
-                if db_conn:
-                    try:
-                        db_conn.rollback()
-                    except Exception as rb_exc:
-                        logger.error(f"Error during DB rollback: {rb_exc}")
-            finally:
-                # Close connection if obtained
-                if db_conn:
-                    try:
-                        db_conn.close()
-                    except Exception as close_exc:
-                        logger.error(f"Error closing DB connection: {close_exc}")
 
 
 # --- Synchronous Wrapper Function ---

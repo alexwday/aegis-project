@@ -25,6 +25,7 @@ from ...global_prompts.project_statement import get_project_statement
 from ...global_prompts.database_statement import get_database_statement
 from ...global_prompts.fiscal_calendar import get_fiscal_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
+from ...global_prompts.error_handling import get_error_handling_statement
 
 # Get module logger (no configuration here - using centralized config)
 logger = logging.getLogger(__name__)
@@ -137,37 +138,15 @@ Query categories and routing decisions:
 
 <ROUTING_EXAMPLES>
 <RESEARCH_EXAMPLES>
-1. "What was TD's net income in Q2 2024?"
-   → Needs specific financial data
-   
-2. "Compare RBC and BMO's efficiency ratios"
-   → Requires data from multiple banks
-   
-3. "What did management say about digital transformation?"
-   → Needs transcript search
-   
-4. "Show revenue trend over last 4 quarters"
-   → Requires time series data
-
-5. "What's Bank of America's ROE?"
-   → Needs specific metric data
+1. "What was TD's net income in Q2 2024?" → Needs specific financial data
+2. "What did management say about digital transformation?" → Needs transcript search
+3. "Show revenue trend over last 4 quarters" → Requires time series data
 </RESEARCH_EXAMPLES>
 
 <DIRECT_RESPONSE_EXAMPLES>
-1. "Based on the data you showed, which bank performed better?"
-   → Analysis of already-retrieved information
-   
-2. "Can you explain what efficiency ratio means?"
-   → Basic concept explanation
-   
-3. "Summarize the key findings from your research"
-   → Reformatting existing results
-   
-4. "What's the formula for calculating ROE?"
-   → General knowledge, no bank-specific data needed
-   
-5. "Put those earnings figures in a table"
-   → Reformatting request
+1. "Based on the data you showed, which bank performed better?" → Analysis of already-retrieved information
+2. "Can you explain what efficiency ratio means?" → Basic concept explanation
+3. "Summarize the key findings from your research" → Reformatting existing results
 </DIRECT_RESPONSE_EXAMPLES>
 </ROUTING_EXAMPLES>
 
@@ -242,45 +221,6 @@ After you:
 </OUTPUT_VALIDATION>
 </IO_SPECIFICATIONS>
 
-<ERROR_HANDLING>
-<UNEXPECTED_INPUT>
-- If you receive input in an unexpected format, extract what information you can
-- Focus on the core intent rather than getting caught up in formatting issues
-- If the input is completely unintelligible, respond with your best interpretation
-</UNEXPECTED_INPUT>
-
-<AMBIGUOUS_REQUESTS>
-- When faced with multiple possible interpretations, choose the most likely one
-- Explicitly acknowledge the ambiguity in your response
-- Proceed with the most reasonable interpretation given the context
-</AMBIGUOUS_REQUESTS>
-
-<MISSING_INFORMATION>
-- When critical information is missing, make reasonable assumptions based on context
-- Clearly state any assumptions you've made
-- Indicate the limitations of your response due to missing information
-</MISSING_INFORMATION>
-
-<SYSTEM_LIMITATIONS>
-- If you encounter limitations in your capabilities, acknowledge them transparently
-- Provide the best possible response within your constraints
-- Never fabricate information to compensate for limitations
-</SYSTEM_LIMITATIONS>
-
-<CONFIDENCE_SIGNALING>
-- HIGH CONFIDENCE: Proceed normally with your decision
-- MEDIUM CONFIDENCE: Proceed but explicitly note areas of uncertainty
-- LOW CONFIDENCE: Acknowledge significant uncertainty and provide caveats
-</CONFIDENCE_SIGNALING>
-
-<ROUTER_SPECIFIC_ERROR_HANDLING>
-- If ambiguous between research/direct, consider: Does this need NEW data? → Research
-- Default to research ONLY when specific data or sources are likely needed
-- Basic financial concepts without bank specifics → Direct Response
-- If query has multiple questions, route based on the primary intent
-- Focus on what information is needed, not just presence of finance terms
-</ROUTER_SPECIFIC_ERROR_HANDLING>
-</ERROR_HANDLING>
 </TASK>
 
 <RESPONSE_FORMAT>
@@ -296,10 +236,12 @@ No additional text or explanation should be included.
 # Construct the complete system prompt by combining the necessary statements
 def construct_system_prompt():
     # Get all the required statements
-    project_statement = get_project_statement()
+    # Router only needs brief database info and minimal project context
+    project_statement = get_project_statement(level='minimal')
     fiscal_statement = get_fiscal_statement()
-    database_statement = get_database_statement()
+    database_statement = get_database_statement(level='brief')
     restrictions_statement = get_restrictions_statement("router")
+    error_handling = get_error_handling_statement("router")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [
@@ -323,6 +265,7 @@ def construct_system_prompt():
         "</AUDIENCE>",
         f"You are {ROUTER_ROLE}.",
         ROUTER_TASK,
+        error_handling,
     ]
 
     # Join with double newlines for readability

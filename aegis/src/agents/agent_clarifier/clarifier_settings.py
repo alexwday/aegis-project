@@ -19,6 +19,7 @@ from ...global_prompts.project_statement import get_project_statement
 from ...global_prompts.database_statement import get_database_statement
 from ...global_prompts.fiscal_calendar import get_fiscal_period, get_fiscal_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
+from ...global_prompts.error_handling import get_error_handling_statement
 
 # Get module logger (no configuration here - using centralized config)
 logger = logging.getLogger(__name__)
@@ -322,11 +323,13 @@ No additional text or explanation should be included outside the tool call.
 # Construct the complete system prompt by combining the necessary statements
 def construct_system_prompt():
     # Get all the required statements
+    # Clarifier needs brief database info but full project context
     project_statement = get_project_statement()
     fiscal_statement = get_fiscal_statement()
     fiscal_year, fiscal_quarter = get_fiscal_period()
-    database_statement = get_database_statement()
+    database_statement = get_database_statement(level='brief')
     restrictions_statement = get_restrictions_statement("clarifier")
+    error_handling = get_error_handling_statement("clarifier")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [

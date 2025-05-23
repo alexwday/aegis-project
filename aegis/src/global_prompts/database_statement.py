@@ -62,10 +62,16 @@ AVAILABLE_DATABASES = {
 }
 
 
-def get_database_statement() -> str:
+def get_database_statement(level: str = 'full') -> str:
     """
     Returns a formatted statement about available databases for use in agent prompts.
     Uses XML-style delimiters for better sectioning.
+
+    Args:
+        level: 'full' (default), 'brief', or 'minimal'
+            - full: Complete database descriptions with usage guidelines (~1,800 tokens)
+            - brief: Database names and one-line descriptions only (~200 tokens)
+            - minimal: Just database IDs for reference (~20 tokens)
 
     Returns:
         str: Formatted statement describing available databases
@@ -101,8 +107,14 @@ The following databases are available for research:
 """
     statement += "</PUBLIC_FINANCIAL_DATABASES>\n"
     statement += "</AVAILABLE_DATABASES>"
-
-    return statement
+    
+    # Return appropriate level
+    if level == 'brief':
+        return get_database_statement_brief()
+    elif level == 'minimal':
+        return get_database_statement_minimal()
+    else:
+        return statement
 
 
 # Export database configuration for other modules
@@ -114,6 +126,36 @@ def get_available_databases():
         dict: Dictionary of available database configurations
     """
     return AVAILABLE_DATABASES
+
+
+def get_database_statement_brief() -> str:
+    """
+    Returns a brief database statement with just names and one-line descriptions.
+    Reduces token usage by ~90% compared to full version.
+    """
+    current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    statement = f"""<AVAILABLE_DATABASES timestamp="{current_timestamp}">
+The following databases are available for research:
+
+"""
+    
+    for db_name, db_info in AVAILABLE_DATABASES.items():
+        # Extract first sentence of description for brevity
+        brief_desc = db_info['description'].split('.')[0] + '.'
+        statement += f"- **{db_name}**: {db_info['name']} - {brief_desc}\n"
+    
+    statement += "\n</AVAILABLE_DATABASES>"
+    return statement
+
+
+def get_database_statement_minimal() -> str:
+    """
+    Returns minimal database identifiers for agents that only need references.
+    Reduces token usage by ~99% compared to full version.
+    """
+    db_list = ", ".join(AVAILABLE_DATABASES.keys())
+    return f"<DATABASES>Available databases: {db_list}</DATABASES>"
 
 
 logger.debug("Database statement module initialized")
