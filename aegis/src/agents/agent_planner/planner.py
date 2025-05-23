@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_planner/planner.py
+# aegis/src/agents/agent_planner/planner.py
 """
 Planner Agent Module
 
@@ -59,7 +59,6 @@ def create_database_selection_plan(
         research_statement (str): The research statement from the clarifier
         token (str): Authentication token for API access
             - In RBC environment: OAuth token
-            - In RBC environment: OAuth token
             - In local environment: API key
         is_continuation (bool, optional): Whether this is a continuation of previous research.
 
@@ -71,6 +70,14 @@ def create_database_selection_plan(
     Raises:
         PlannerError: If there is an error in creating the database selection plan.
     """
+    # Input validation
+    if not isinstance(research_statement, str) or not research_statement.strip():
+        raise PlannerError("Research statement must be a non-empty string")
+    if not isinstance(token, str) or not token.strip():
+        raise PlannerError("Token must be a non-empty string")
+    if not isinstance(is_continuation, bool):
+        raise PlannerError("is_continuation must be a boolean")
+
     usage_details = None  # Initialize usage details
     try:
         # Prepare system message with planner prompt

@@ -45,9 +45,12 @@ Base responses **EXCLUSIVELY** on information from:
 - Retrieved database documents from this system
 - Conversation history *if that history itself contains information clearly sourced from the above*
 
-**ABSOLUTELY NO internal training knowledge, external information, or assumptions beyond this provided context.**
+**ROUTING AND CLASSIFICATION EXCEPTION**: 
+- The Router agent MAY use general knowledge to classify query types and determine appropriate routing
+- The Clarifier agent MAY use general knowledge to understand terminology and identify needed clarifications
+- ALL OTHER AGENTS must strictly follow the no-external-knowledge rule for content generation
 
-This applies to ALL agents, including Direct Response.
+**For content generation (Direct Response, Planner, Summarizer)**: ABSOLUTELY NO internal training knowledge, external information, or assumptions beyond the provided context.
 </CRITICAL_DATA_SOURCING>
 </COMPLIANCE_RESTRICTIONS>"""
 
@@ -70,7 +73,7 @@ def get_quality_guidelines() -> str:
         statement = """<QUALITY_GUIDELINES>
 <STRUCTURE>Structure responses clearly (headings, sections).</STRUCTURE>
 
-<CITATIONS>Cite specific policies/standards/guidelines (e.g., IFRS 15.31, CAPM 3.4.2) when citing provided context.</CITATIONS>
+<CITATIONS>Cite specific sources and time periods (e.g., "RBC Q2 2024 Earnings Transcript, page 15", "TD 2023 Annual Report") when citing provided context.</CITATIONS>
 
 <COMPLEX_TOPICS>For complex topics: Provide concise summary upfront, then details.</COMPLEX_TOPICS>
 
@@ -102,27 +105,27 @@ def get_confidence_signaling() -> str:
 When presenting information, indicate your level of confidence based on the sources and context:
 
 <HIGH_CONFIDENCE>
-Use when: Multiple authoritative sources agree or when citing direct quotes from official standards
+Use when: Multiple authoritative sources agree or when citing direct quotes from earnings transcripts or reports
 Signal with: Direct, unqualified statements
-Example: "IFRS 15 requires revenue to be recognized when performance obligations are satisfied."
+Example: "RBC reported net income of $4.5 billion in Q2 2024, as stated in their earnings transcript."
 </HIGH_CONFIDENCE>
 
 <MEDIUM_CONFIDENCE>
 Use when: Sources provide consistent but not identical information, or when interpretation is involved
 Signal with: Measured language with mild qualifiers
-Example: "Based on the guidance in CAPM and EY materials, it appears that..."
+Example: "Based on the earnings transcripts and shareholder reports, it appears that the bank's strategy focuses on..."
 </MEDIUM_CONFIDENCE>
 
 <LOW_CONFIDENCE>
 Use when: Sources conflict, information is sparse, or significant interpretation is required
 Signal with: Explicit uncertainty markers
-Example: "The available sources provide limited guidance on this specific scenario, but suggest..."
+Example: "The available earnings data provides limited insight on this specific metric, but suggests..."
 </LOW_CONFIDENCE>
 
 <NO_CONFIDENCE>
 Use when: No relevant information is found or the question falls outside the scope of the research
 Signal with: Clear statements of limitation
-Example: "The available sources do not address this specific scenario. This would require consultation with APG."
+Example: "The available financial reports and transcripts do not address this specific scenario. This would require consultation with a financial advisor."
 </NO_CONFIDENCE>
 </CONFIDENCE_SIGNALING>"""
 
@@ -133,10 +136,108 @@ Example: "The available sources do not address this specific scenario. This woul
         return "<CONFIDENCE_SIGNALING>Indicate your level of confidence in responses based on the sources and context.</CONFIDENCE_SIGNALING>"
 
 
-def get_restrictions_statement() -> str:
+def get_financial_accuracy_rules() -> str:
+    """
+    Generate financial accuracy rules for handling numerical data.
+    
+    Returns:
+        str: Formatted financial accuracy rules
+    """
+    try:
+        statement = """<FINANCIAL_ACCURACY_RULES>
+<NUMERICAL_PRECISION>
+- Present financial figures exactly as found in sources
+- Use appropriate units (millions, billions) as in source
+- Preserve decimal places from source documents
+- Never round or approximate without noting it
+- Always specify currency (CAD, USD) when relevant
+</NUMERICAL_PRECISION>
+
+<METRIC_DEFINITIONS>
+- Always define financial metrics on first use
+- Use consistent metric definitions across response
+- Note if different sources use different definitions
+- Common metrics to define: ROE, ROA, NIM, efficiency ratio, CET1
+</METRIC_DEFINITIONS>
+
+<COMPARISON_FAIRNESS>
+- Ensure time periods align when comparing
+- Note any differences in reporting standards
+- Highlight if data points are not directly comparable
+- Specify if comparing fiscal vs calendar periods
+- Account for currency differences in cross-border comparisons
+</COMPARISON_FAIRNESS>
+
+<TIME_PERIOD_CLARITY>
+- Always specify the exact quarter and year (e.g., "Q2 2024")
+- Clarify if referring to fiscal or calendar quarters
+- Note the date of the source document
+- Indicate if data is preliminary or final
+</TIME_PERIOD_CLARITY>
+</FINANCIAL_ACCURACY_RULES>"""
+        
+        return statement
+    except Exception as e:
+        logger.error(f"Error generating financial accuracy rules: {str(e)}")
+        return "<FINANCIAL_ACCURACY_RULES>Present financial data with exact precision and appropriate context.</FINANCIAL_ACCURACY_RULES>"
+
+
+def get_agent_specific_restrictions(agent_type: str) -> str:
+    """
+    Get agent-specific restrictions based on the agent type.
+    
+    Args:
+        agent_type: Type of agent (router, clarifier, direct_response, planner, summarizer)
+    
+    Returns:
+        str: Agent-specific restrictions
+    """
+    try:
+        restrictions = {
+            "router": """<ROUTER_SPECIFIC>
+- MAY use general knowledge for query classification
+- Focus on identifying query intent and appropriate routing
+- No content generation beyond classification rationale
+</ROUTER_SPECIFIC>""",
+            
+            "clarifier": """<CLARIFIER_SPECIFIC>
+- MAY use general knowledge to understand terminology
+- Focus on identifying ambiguities and missing context
+- Generate clarifying questions, not answers
+</CLARIFIER_SPECIFIC>""",
+            
+            "direct_response": """<DIRECT_RESPONSE_SPECIFIC>
+- STRICTLY no external knowledge for content
+- Only basic definitions allowed from conversation history
+- Must cite source for any financial information
+</DIRECT_RESPONSE_SPECIFIC>""",
+            
+            "planner": """<PLANNER_SPECIFIC>
+- STRICTLY no external knowledge for content
+- Focus on search strategy based on query analysis
+- Generate search plans, not answers
+</PLANNER_SPECIFIC>""",
+            
+            "summarizer": """<SUMMARIZER_SPECIFIC>
+- STRICTLY no external knowledge for content
+- Synthesize only from provided search results
+- Must attribute all information to specific sources
+</SUMMARIZER_SPECIFIC>"""
+        }
+        
+        return restrictions.get(agent_type, "")
+    except Exception as e:
+        logger.error(f"Error generating agent-specific restrictions: {str(e)}")
+        return ""
+
+
+def get_restrictions_statement(agent_type: str = None) -> str:
     """
     Generate a combined restrictions and guidelines statement for use in prompts.
-    Includes confidence signaling guidelines.
+    Includes confidence signaling guidelines and optional agent-specific restrictions.
+
+    Args:
+        agent_type: Optional agent type for agent-specific restrictions
 
     Returns:
         str: Formatted restrictions statement combining compliance, quality, and confidence guidelines
@@ -145,6 +246,12 @@ def get_restrictions_statement() -> str:
         compliance = get_compliance_restrictions()
         quality = get_quality_guidelines()
         confidence = get_confidence_signaling()
+        financial_accuracy = get_financial_accuracy_rules()
+        
+        # Add agent-specific restrictions if provided
+        agent_specific = ""
+        if agent_type:
+            agent_specific = f"\n\n{get_agent_specific_restrictions(agent_type)}"
 
         combined_statement = f"""<RESTRICTIONS_AND_GUIDELINES>
 {compliance}
@@ -152,6 +259,8 @@ def get_restrictions_statement() -> str:
 {quality}
 
 {confidence}
+
+{financial_accuracy}{agent_specific}
 </RESTRICTIONS_AND_GUIDELINES>"""
         return combined_statement
     except Exception as e:

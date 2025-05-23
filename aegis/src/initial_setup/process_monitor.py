@@ -431,6 +431,44 @@ class ProcessMonitor:
     # Remove old update_stage_tokens method entirely
     # def update_stage_tokens(...) -> None: ...
 
+    def _validate_llm_call_details(self, call_details: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate and normalize LLM call details.
+        
+        Args:
+            call_details (Dict[str, Any]): Raw call details to validate
+            
+        Returns:
+            Dict[str, Any]: Validated and normalized call details
+        """
+        validated = {}
+        
+        # Ensure all required fields exist with proper types
+        validated["model"] = str(call_details.get("model", "unknown"))
+        validated["prompt_tokens"] = int(call_details.get("prompt_tokens", 0))
+        validated["completion_tokens"] = int(call_details.get("completion_tokens", 0))
+        validated["cost"] = float(call_details.get("cost", 0.0))
+        validated["response_time_ms"] = int(call_details.get("response_time_ms", 0))
+        
+        # Calculate total_tokens for consistency
+        validated["total_tokens"] = validated["prompt_tokens"] + validated["completion_tokens"]
+        
+        # Preserve any additional fields (like error messages)
+        for key, value in call_details.items():
+            if key not in validated:
+                validated[key] = value
+        
+        # Add validation timestamp
+        validated["validated_at"] = datetime.now(timezone.utc).isoformat()
+        
+        # Log warning if there were issues
+        if validated["model"] == "unknown":
+            logger.warning(f"LLM call details missing model name")
+        if validated["prompt_tokens"] == 0 and validated["completion_tokens"] == 0:
+            logger.warning(f"LLM call details missing token counts")
+            
+        return validated
+
     def add_llm_call_details_to_stage(
         self, stage_name: str, call_details: Dict[str, Any]
     ) -> None:
@@ -447,7 +485,9 @@ class ProcessMonitor:
             )
             return
 
-        self.stages[stage_name].add_llm_call_details(call_details)
+        # Validate the call details
+        validated_details = self._validate_llm_call_details(call_details)
+        self.stages[stage_name].add_llm_call_details(validated_details)
 
     def add_stage_details(self, stage_name: str, **kwargs) -> None:
         """
@@ -520,12 +560,18 @@ class ProcessMonitor:
                 "cost": 0.0,
             }
 
-        prompt_tokens = sum(stage.prompt_tokens for stage in self.stages.values())
-        completion_tokens = sum(
-            stage.completion_tokens for stage in self.stages.values()
-        )
-        total_tokens = sum(stage.total_tokens for stage in self.stages.values())
-        cost = sum(stage.cost for stage in self.stages.values())
+        prompt_tokens = 0
+        completion_tokens = 0
+        total_tokens = 0
+        cost = 0.0
+
+        # Calculate totals from llm_calls_data in each stage
+        for stage in self.stages.values():
+            for call in stage.llm_calls_data:
+                prompt_tokens += call.get("prompt_tokens", 0)
+                completion_tokens += call.get("completion_tokens", 0)
+                total_tokens += call.get("total_tokens", 0)
+                cost += call.get("cost", 0.0)
 
         return {
             "prompt_tokens": prompt_tokens,
@@ -591,9 +637,16 @@ class ProcessMonitor:
             if stage.duration is not None:
                 summary += f"  - Duration: {stage.duration:.2f} seconds\n"
 
-            if stage.total_tokens > 0:
+            # Calculate stage totals from llm_calls_data
+            stage_total_tokens = 0
+            stage_cost = 0.0
+            for call in stage.llm_calls_data:
+                stage_total_tokens += call.get("total_tokens", 0)
+                stage_cost += call.get("cost", 0.0)
+
+            if stage_total_tokens > 0:
                 summary += (
-                    f"  - Tokens: {stage.total_tokens} (Cost: ${stage.cost:.6f})\n"
+                    f"  - Tokens: {stage_total_tokens} (Cost: ${stage_cost:.6f})\n"
                 )
 
             # Add important details if present

@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_direct_response/response_from_conversation.py
+# aegis/src/agents/agent_direct_response/response_from_conversation.py
 """
 Direct Response Agent Module
 
@@ -48,7 +48,6 @@ def response_from_conversation(conversation, token) -> Generator[Any, None, None
         conversation (dict): Conversation with 'messages' key
         token (str): Authentication token for API access
             - In RBC environment: OAuth token
-            - In RBC environment: OAuth token
             - In local environment: API key
 
     Yields:
@@ -58,6 +57,22 @@ def response_from_conversation(conversation, token) -> Generator[Any, None, None
     Raises:
         DirectResponseError: If there is an error in generating the response.
     """
+    # Input validation
+    if not isinstance(conversation, dict):
+        raise DirectResponseError("Conversation must be a dictionary")
+    if not isinstance(token, str) or not token.strip():
+        raise DirectResponseError("Token must be a non-empty string")
+    if "messages" in conversation:
+        if not isinstance(conversation["messages"], list):
+            raise DirectResponseError("Conversation messages must be a list")
+        for i, msg in enumerate(conversation["messages"]):
+            if not isinstance(msg, dict):
+                raise DirectResponseError(f"Message {i} must be a dictionary")
+            if "role" not in msg or "content" not in msg:
+                raise DirectResponseError(
+                    f"Message {i} must have 'role' and 'content' fields"
+                )
+
     final_usage_details = None
     try:
         # Prepare system message with response prompt

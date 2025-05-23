@@ -249,135 +249,33 @@ Sufficient context exists when:
 5. Relevant METRICS are identifiable (explicitly mentioned or can be reasonably inferred)
 
 <FISCAL_CONTEXT_HANDLING>
-CRITICAL: You MUST use the fiscal information in the FISCAL_CONTEXT provided at the beginning of the prompt:
+Use the CURRENT_FISCAL_PERIOD provided in the context as your reference point for all time calculations.
 
-1. RELY EXCLUSIVELY ON PROVIDED FISCAL CONTEXT:
-   - ALWAYS use the CURRENT_FISCAL_PERIOD and fiscal year definition provided in the FISCAL_CONTEXT
-   - Do NOT calculate fiscal periods on your own under any circumstances
-   - The fiscal year and quarter in CURRENT_FISCAL_PERIOD is the ONLY valid reference point for all relative time references
-   - The CURRENT_FISCAL_PERIOD value overrides any examples in this prompt
+KEY TIME REFERENCE RULES:
+1. "Last quarter" = The quarter immediately before the current quarter
+2. "Same quarter last year" = Same numbered quarter from previous fiscal year  
+3. "Year-over-year" = Compare same quarters between current and previous fiscal year only
+4. For any complex or potentially ambiguous time references, use the confirm_time_references action
 
-2. UNDERSTANDING RELATIVE TIME REFERENCES:
-   - "Last quarter" = the quarter IMMEDIATELY BEFORE the current quarter in FISCAL_CONTEXT
-     * If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
-     * If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
-   - "Same quarter last year" = the quarter with the same number from the previous fiscal year
-   - "Past X quarters" = exactly X quarters counting backward from (and including) the current quarter
-   - "Last X quarters" or "Over the last X quarters" = exactly X quarters IMMEDIATELY PRECEDING the current quarter (does NOT include the current quarter)
-     * This is different from "past X quarters" - "last X quarters" excludes the current quarter
-     * Example: If current quarter is Q3, "last 2 quarters" means Q1 and Q2, NOT Q3 and Q4 of previous year
-   - Quarters must be listed in chronological order (earliest to latest)
-
-3. FISCAL QUARTER RELATIONSHIPS:
-   - After Q4 comes Q1 of the next fiscal year
-   - Before Q1 comes Q4 of the previous fiscal year
-   - Always ensure quarters are valid fiscal quarters (Q1-Q4)
-   - Ensure time periods follow fiscal calendar definition in FISCAL_CONTEXT
-
-4. INCLUDE ONLY REQUESTED PERIODS:
-   - For "past X quarters" include EXACTLY X quarters, no more and no less
-   - Only include the specific quarters that satisfy the user's query
-   - Time periods should always be presented in chronological order
-
-5. EXAMPLES ARE ILLUSTRATIVE ONLY:
-   - The examples in this prompt assume specific fiscal periods for illustration purposes
-   - You MUST override the examples with the actual CURRENT_FISCAL_PERIOD provided
-   - NEVER use the fiscal periods from examples if they differ from CURRENT_FISCAL_PERIOD
-   
-6. STRICT YEAR LIMITATIONS:
-   - For year-over-year comparisons, include ONLY the current fiscal year and previous fiscal year
-   - NEVER include quarters from years earlier than the immediate previous year
-   - For "last X quarters year over year", ONLY include the EXACT same quarters from current/previous year
-   - Be precise and include ONLY the quarters that are directly relevant to the query
-
-The current fiscal period and fiscal definition in FISCAL_CONTEXT are the absolute authority. You MUST use this information rather than making assumptions about the fiscal calendar or following examples.
+When in doubt about time references, especially phrases like "last X quarters" or "over the last X quarters," ALWAYS confirm with the user by clearly listing the specific quarters you believe they're asking about.
 </FISCAL_CONTEXT_HANDLING>
 
-<COMMON_TIME_REFERENCES>
-When handling time references, first interpret them based on the CURRENT_FISCAL_PERIOD from FISCAL_CONTEXT, then USE THE CONFIRM_TIME_REFERENCES_PATH to verify with the user.
-
-Here are the standard interpretations (but always confirm when ambiguous):
-
-- "last quarter" = The quarter IMMEDIATELY BEFORE the current fiscal quarter
-  * If CURRENT_FISCAL_PERIOD shows Q3, then "last quarter" is Q2 of the same fiscal year
-  * If CURRENT_FISCAL_PERIOD shows Q1, then "last quarter" is Q4 of the previous fiscal year
-  
-- "same quarter last year" = The same numbered quarter from the previous fiscal year
-  * If CURRENT_FISCAL_PERIOD shows Q3 of 2025, then "same quarter last year" is Q3 of 2024
-  
-- "year-over-year" = Comparing the same quarters from current and previous fiscal years ONLY
-  * For a single quarter: compares that quarter from current year to same quarter previous year
-  * For multiple quarters: compare each quarter to its equivalent in the previous year
-  
-- "quarter-over-quarter" = Comparing consecutive quarters
-  * If CURRENT_FISCAL_PERIOD shows Q3, then "quarter-over-quarter" compares Q2 vs Q3
-  
-- "past X quarters" = The X most recent quarters, INCLUDES the current quarter, counted backward
-  
-- "last X quarters" = The X quarters IMMEDIATELY PRECEDING the current quarter, does NOT include the current quarter
-
-IMPORTANT: For complex time references, especially "last X quarters year over year," ALWAYS use the confirm_time_references action to verify your interpretation with the user. List the SPECIFIC quarters being included to minimize potential misunderstandings.
-</COMMON_TIME_REFERENCES>
 
 - If no specific banks are mentioned in a request that clearly requires bank specification, clarification is needed
 - If no specific metrics are mentioned but the intent implies certain metrics, use those metrics
 </CONTEXT_SUFFICIENCY_CRITERIA>
 
 <CLARIFICATION_EXAMPLES>
-<SUFFICIENT_CONTEXT_EXAMPLES>
-The examples below show when to use each action type. For ambiguous time references, ALWAYS use confirm_time_references.
+Example Actions:
 
-EXAMPLE 1: Direct quarter reference (no ambiguity, use create_research_statement)
-Query: "What was BMO's net income in Q2 2024?"
-ACTION: create_research_statement
-INTENT: "retrieve BMO's net income for Q2 2024"
-YEARS: [2024]
-QUARTERS: [2]
-BANKS: ["BMO"]
-METRICS: ["Net Income"]
-OUTPUT: "Retrieve BMO's net income for Q2 2024. The research requires Net Income data for BMO across Q2 2024."
-
-EXAMPLE 2: Simple relative reference (could be ambiguous, use confirm_time_references)
-Query: "Compare RBC and TD's revenue for last quarter."
-ACTION: confirm_time_references
-OUTPUT: "I understand you're asking about RBC and TD's revenue for 'last quarter.' Based on our current fiscal period (Q3 2025), I'm interpreting 'last quarter' as Q2 2025. Is this interpretation correct?"
-
-EXAMPLE 3: Complex time reference (definitely ambiguous, use confirm_time_references)
-Query: "What was RBC's revenue over the last 3 quarters? Compare year over year."
-ACTION: confirm_time_references
-OUTPUT: "I understand you're asking about RBC's revenue over the 'last 3 quarters year over year.' Based on our current fiscal period (Q3 2025), I'm interpreting this as:\n\n- The last 3 quarters: Q4 2024, Q1 2025, Q2 2025\n- Compared to the same quarters from the previous year: Q4 2023, Q1 2024, Q2 2024\n\nIs this interpretation correct?"
-
-EXAMPLE 4: Missing essential information (use request_essential_context)
-Query: "How did the banks perform last quarter?"
-ACTION: request_essential_context
-OUTPUT: "1. Which specific banks would you like information about?\n2. What financial metrics would you like to evaluate their performance (e.g., revenue, net income, efficiency ratio)?"
-</SUFFICIENT_CONTEXT_EXAMPLES>
-
-<INSUFFICIENT_CONTEXT_EXAMPLES>
-1. "How did the banks perform last quarter?"
-   ACTION: request_essential_context
-   QUESTIONS: 
-   1. Which specific banks would you like information about?
-   2. What financial metrics would you like to evaluate their performance (e.g., revenue, net income, efficiency ratio)?
-
-2. "What are the latest financial results?"
-   ACTION: request_essential_context
-   QUESTIONS:
-   1. Which specific banks would you like information about?
-   2. What financial metrics are you interested in reviewing?
-
-3. "Compare the dividend yields."
-   ACTION: request_essential_context
-   QUESTIONS:
-   1. Which specific banks would you like to compare?
-   2. For which time period would you like to compare the dividend yields?
-
-4. "Has the efficiency ratio improved?"
-   ACTION: request_essential_context
-   QUESTIONS:
-   1. Which specific bank's efficiency ratio are you interested in?
-   2. Over what time period would you like to evaluate the improvement?
-</INSUFFICIENT_CONTEXT_EXAMPLES>
+1. Direct reference → create_research_statement
+   Query: "What was BMO's net income in Q2 2024?"
+   
+2. Ambiguous time reference → confirm_time_references  
+   Query: "Compare RBC's revenue over the last 3 quarters year over year"
+   
+3. Missing essential info → request_essential_context
+   Query: "How did the banks perform?"
 </CLARIFICATION_EXAMPLES>
 
 <OUTPUT_REQUIREMENTS>
@@ -407,10 +305,7 @@ Your response must be ONLY a tool call to `make_clarifier_decision` with the fol
   - "request_essential_context" (when critical information is missing)
   - "confirm_time_references" (when time references are potentially ambiguous)
   - "create_research_statement" (when all context is clear)
-- `output`: Content depends on the action:
-  - For "request_essential_context": Clear questions in a numbered list
-  - For "confirm_time_references": A clear explanation of how you're interpreting time references with a confirmation question
-  - For "create_research_statement": A research statement with Parameters section
+- `output`: Content depends on the action
 
 When using "create_research_statement", these additional fields are required:
 - `intent`: The identified user intent 
@@ -418,35 +313,6 @@ When using "create_research_statement", these additional fields are required:
 - `quarters`: Array of identified quarters as integers 1-4
 - `banks`: Array of identified banks
 - `metrics`: Array of identified metrics
-
-Example (Creating Research Statement):
-```json
-{
-  "action": "create_research_statement",
-  "output": "Compare BMO and RBC's net income between Q2 2025 and Q2 2024. The research requires Net Income data for BMO and RBC across Q2 2024 and Q2 2025. This applies to all specified banks across all specified time periods.",
-  "intent": "compare quarterly net income year-over-year",
-  "years": [2024, 2025],
-  "quarters": [2],
-  "banks": ["BMO", "RBC"],
-  "metrics": ["Net Income"]
-}
-```
-
-Example (Requesting Context):
-```json
-{
-  "action": "request_essential_context",
-  "output": "1. Which specific banks would you like information about?\n2. What financial metrics are you interested in (e.g., revenue, net income, EPS)?"
-}
-```
-
-Example (Confirming Time References):
-```json
-{
-  "action": "confirm_time_references",
-  "output": "I understand you're asking about 'revenue over the last 3 quarters year over year.' Based on our current fiscal period (Q3 2025), I'm interpreting this as:\n\n- The last 3 quarters: Q4 2024, Q1 2025, Q2 2025\n- Compared to the same quarters from the previous year: Q4 2023, Q1 2024, Q2 2024\n\nIs this interpretation correct?"
-}
-```
 
 No additional text or explanation should be included outside the tool call.
 </RESPONSE_FORMAT>
@@ -460,7 +326,7 @@ def construct_system_prompt():
     fiscal_statement = get_fiscal_statement()
     fiscal_year, fiscal_quarter = get_fiscal_period()
     database_statement = get_database_statement()
-    restrictions_statement = get_restrictions_statement()
+    restrictions_statement = get_restrictions_statement("clarifier")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [

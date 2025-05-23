@@ -15,12 +15,43 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def validate_fiscal_year(year: int) -> bool:
+    """
+    Validate that a fiscal year is reasonable (not too far in past or future).
+    
+    Args:
+        year: Fiscal year to validate
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    current_year = datetime.now().year
+    # Allow years within 10 years past and 2 years future
+    return current_year - 10 <= year <= current_year + 2
+
+
+def validate_fiscal_quarter(quarter: int) -> bool:
+    """
+    Validate that a fiscal quarter is between 1 and 4.
+    
+    Args:
+        quarter: Fiscal quarter to validate
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    return 1 <= quarter <= 4
+
+
 def get_fiscal_period() -> Tuple[int, int]:
     """
-    Calculate current fiscal year and quarter.
+    Calculate current fiscal year and quarter with validation.
 
     Returns:
         Tuple[int, int]: Fiscal year and quarter
+        
+    Raises:
+        ValueError: If calculated values are invalid
     """
     current_date = datetime.now()
     current_month = current_date.month
@@ -46,6 +77,12 @@ def get_fiscal_period() -> Tuple[int, int]:
         10: 4,  # Q4: Aug-Oct
     }
     fiscal_quarter = fiscal_quarter_map[current_month]
+    
+    # Validate results
+    if not validate_fiscal_year(fiscal_year):
+        raise ValueError(f"Invalid fiscal year calculated: {fiscal_year}")
+    if not validate_fiscal_quarter(fiscal_quarter):
+        raise ValueError(f"Invalid fiscal quarter calculated: {fiscal_quarter}")
 
     return fiscal_year, fiscal_quarter
 
@@ -149,6 +186,13 @@ def get_fiscal_statement() -> str:
 <FISCAL_QUARTER>{fiscal_quarter} (Q{fiscal_quarter})</FISCAL_QUARTER>
 <QUARTER_RANGE>{current_quarter_range}</QUARTER_RANGE>
 <FISCAL_YEAR_DEFINITION>Our fiscal year runs from November 1st through October 31st.</FISCAL_YEAR_DEFINITION>
+<EARNINGS_CALENDAR>
+<TYPICAL_REPORTING_LAG>Banks typically report quarterly earnings 6-8 weeks after quarter end</TYPICAL_REPORTING_LAG>
+<DATA_AVAILABILITY>
+- If current date is within 8 weeks of quarter end, latest quarter data may not be available
+- Always check actual data availability rather than assuming based on calendar
+</DATA_AVAILABILITY>
+</EARNINGS_CALENDAR>
 </FISCAL_CONTEXT>"""
 
         return statement
@@ -156,6 +200,39 @@ def get_fiscal_statement() -> str:
         logger.error(f"Error generating fiscal statement: {str(e)}")
         # Fallback statement in case of errors
         return "<FISCAL_CONTEXT>We operate on a fiscal year that runs from November 1st through October 31st.</FISCAL_CONTEXT>"
+
+
+def calculate_relative_quarter(base_year: int, base_quarter: int, quarters_offset: int) -> Tuple[int, int]:
+    """
+    Calculate a fiscal quarter relative to a base quarter.
+    
+    Args:
+        base_year: Base fiscal year
+        base_quarter: Base fiscal quarter (1-4)
+        quarters_offset: Number of quarters to offset (negative for past, positive for future)
+        
+    Returns:
+        Tuple[int, int]: Target fiscal year and quarter
+        
+    Raises:
+        ValueError: If inputs are invalid
+    """
+    if not validate_fiscal_year(base_year):
+        raise ValueError(f"Invalid base fiscal year: {base_year}")
+    if not validate_fiscal_quarter(base_quarter):
+        raise ValueError(f"Invalid base fiscal quarter: {base_quarter}")
+        
+    # Calculate total quarters from start of fiscal time
+    total_quarters = (base_year - 2000) * 4 + base_quarter + quarters_offset
+    
+    # Calculate target year and quarter
+    target_year = 2000 + (total_quarters - 1) // 4
+    target_quarter = ((total_quarters - 1) % 4) + 1
+    
+    if not validate_fiscal_year(target_year):
+        raise ValueError(f"Calculated year {target_year} is out of valid range")
+    
+    return target_year, target_quarter
 
 
 def test_fiscal_period_calculation():

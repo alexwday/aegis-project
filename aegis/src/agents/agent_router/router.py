@@ -1,4 +1,4 @@
-# python/iris/src/agents/agent_router/router.py
+# aegis/src/agents/agent_router/router.py
 """
 Router Agent Module
 
@@ -55,7 +55,6 @@ def get_routing_decision(
         conversation (dict): Conversation with 'messages' key
         token (str): Authentication token for API access
             - In RBC environment: OAuth token
-            - In RBC environment: OAuth token
             - In local environment: API key
 
     Returns:
@@ -66,6 +65,14 @@ def get_routing_decision(
     Raises:
         RouterError: If there is an error in getting the routing decision.
     """
+    # Input validation
+    if not isinstance(conversation, dict):
+        raise RouterError("Conversation must be a dictionary")
+    if not isinstance(token, str) or not token.strip():
+        raise RouterError("Token must be a non-empty string")
+    if "messages" in conversation and not isinstance(conversation["messages"], list):
+        raise RouterError("Conversation messages must be a list")
+
     usage_details = None  # Initialize usage details
     try:
         # Prepare system message with router prompt

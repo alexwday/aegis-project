@@ -76,13 +76,20 @@ def clarify_research_needs(
                 - quarters: List of quarters identified (for research statements)
                 - banks: List of banks identified (for research statements)
                 - metrics: List of metrics identified (for research statements)
-                - scope: 'research' for all financial queries (for compatibility)
                 - is_continuation: Boolean flag for continuing research (default False)
             - Usage details dictionary for the LLM call, or None if error.
 
     Raises:
         ClarifierError: If there is an error in the clarification process.
     """
+    # Input validation
+    if not isinstance(conversation, dict):
+        raise ClarifierError("Conversation must be a dictionary")
+    if not isinstance(token, str) or not token.strip():
+        raise ClarifierError("Token must be a non-empty string")
+    if "messages" in conversation and not isinstance(conversation["messages"], list):
+        raise ClarifierError("Conversation messages must be a list")
+
     usage_details = None  # Initialize usage details
     try:
         # Prepare system message with clarifier prompt
@@ -162,6 +169,29 @@ def clarify_research_needs(
         banks = arguments.get("banks", [])
         metrics = arguments.get("metrics", [])
 
+        # Validate list types and their contents
+        for field_name, field_value, expected_type in [
+            ("years", years, int),
+            ("quarters", quarters, int),
+            ("banks", banks, str),
+            ("metrics", metrics, str),
+        ]:
+            if not isinstance(field_value, list):
+                raise ClarifierError(
+                    f"{field_name} must be a list, got {type(field_value).__name__}"
+                )
+            for i, item in enumerate(field_value):
+                if not isinstance(item, expected_type):
+                    raise ClarifierError(
+                        f"All {field_name} items must be {expected_type.__name__}, "
+                        f"item {i} is {type(item).__name__}"
+                    )
+
+        # Validate quarters are in valid range
+        for q in quarters:
+            if q not in [1, 2, 3, 4]:
+                raise ClarifierError(f"Quarter must be 1-4, got {q}")
+
         if not action:
             raise ClarifierError("Missing 'action' in tool arguments")
 
@@ -202,7 +232,6 @@ def clarify_research_needs(
         decision = {
             "action": action,
             "output": output,
-            "scope": "research",  # Always set to 'research' for financial queries
             "is_continuation": False,  # Default to False as we don't track continuations
         }
 
@@ -232,7 +261,7 @@ def format_research_parameters(
 ) -> str:
     """
     Format research parameters as a clear, concise paragraph that provides full context
-    for the planner agent without excessive repetition. Clearly states all banks, 
+    for the planner agent without excessive repetition. Clearly states all banks,
     quarters, years, and metrics being requested in a readable format.
 
     Args:
@@ -286,6 +315,8 @@ def format_research_parameters(
 
     # Only add clarification if there are multiple banks AND multiple time periods to avoid confusion
     if len(banks) > 1 and len(time_periods) > 1:
-        paragraph += f" This applies to all specified banks across all specified time periods."
+        paragraph += (
+            f" This applies to all specified banks across all specified time periods."
+        )
 
     return paragraph

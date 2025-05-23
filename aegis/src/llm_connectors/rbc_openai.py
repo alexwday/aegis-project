@@ -19,6 +19,7 @@ Dependencies:
 
 import logging
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Iterator
 
 from openai import OpenAI
@@ -66,6 +67,34 @@ def calculate_cost(
     prompt_cost = (prompt_tokens / 1000) * prompt_token_cost
     completion_cost = (completion_tokens / 1000) * completion_token_cost
     return prompt_cost + completion_cost
+
+
+def create_error_usage_details(
+    error: Exception, 
+    model_name: str = "unknown",
+    response_time_ms: int = 0
+) -> Dict[str, Any]:
+    """
+    Create standardized error usage details for process monitoring.
+    
+    Args:
+        error (Exception): The exception that occurred
+        model_name (str): The model that was being used
+        response_time_ms (int): Response time if available
+        
+    Returns:
+        Dict[str, Any]: Standardized error usage details
+    """
+    return {
+        "model": model_name,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "cost": 0.0,
+        "response_time_ms": response_time_ms,
+        "error": str(error),
+        "error_type": type(error).__name__,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
 
 
 # Remove log_usage_statistics as usage details will be returned by call_llm

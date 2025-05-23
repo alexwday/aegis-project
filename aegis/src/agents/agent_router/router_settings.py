@@ -73,68 +73,101 @@ For each user query, analyze:
 </ANALYSIS_INSTRUCTIONS>
 
 <DECISION_CRITERIA>
-This system relies only on conversation context, not internal training data:
-- For accounting/finance topics, PREFER RESEARCH over direct response by default
-- Consider research especially when:
-  * Query mentions specific accounting standards (IFRS, IAS, GAAP, etc.)
-  * Query mentions specific financial reporting requirements
-  * Query asks about implementations, interpretations, or applications of standards
-  * Query mentions or implies the need for authoritative sources
-  * Query contains database specificity phrases like "check guidance", "reference", etc.
-  * **Query asks to list, find, or search for items/documents/files within a specific database (e.g., "what files are in the wiki?", "find memos about X", "list ICFR documents related to Y"). These require a 'metadata' database lookup.**
-  * **Query asks for definitions or explanations of ANY finance or accounting terms, concepts, or instruments (e.g., "what is a derivative?", "explain EBITDA", "define hedge accounting")**
-- Only choose direct response when:
-  * The question is about general non-finance topics or is extremely basic, definitional, or conceptual *and* does not relate to finance, accounting, or require referencing specific database content (even just listing items).
-  * The user explicitly requests a direct response using phrases like "without research", "quick answer" *and* the question doesn't inherently require database access.
-  * The conversation already contains the complete information needed to answer (from previous research results)
-  * The question is about general calculations or formulas without reference to standards and not related to finance-specific concepts
+ROUTING PHILOSOPHY: Route to research when you need authoritative data or sources. Route to direct response for clarifications and follow-ups on existing information.
+
+<ROUTE_TO_RESEARCH>
+Choose research when the query:
+- Asks for specific financial data (revenue, earnings, metrics)
+- Requests management commentary or guidance
+- Needs time series or trend analysis
+- Mentions specific banks and time periods
+- Asks "what did X say about Y" (requires transcript search)
+- Needs authoritative financial definitions from actual usage
+- Requests comparisons between banks or periods
+</ROUTE_TO_RESEARCH>
+
+<ROUTE_TO_DIRECT_RESPONSE>  
+Choose direct response when:
+- User asks for clarification on information already provided
+- Query is about general concepts without needing specific data
+- User explicitly says "based on what you found" or similar
+- Query asks to summarize or reformat existing research results
+- Question is completely non-financial (e.g., "what's your favorite color")
+- User requests quick definition AND conversation already contains it
+</ROUTE_TO_DIRECT_RESPONSE>
+
+<IMPORTANT_EXCEPTIONS>
+- Basic financial literacy questions that don't need bank-specific data → Direct Response
+  Examples: "What's the difference between revenue and profit?", "How do I calculate ROI?"
+- Follow-up questions on retrieved data → Direct Response
+  Examples: "What does that earnings number mean?", "Can you explain that simpler?"
+- Reformatting requests → Direct Response  
+  Examples: "Put that in a table", "Summarize those key points"
+</IMPORTANT_EXCEPTIONS>
 </DECISION_CRITERIA>
+
+<FINANCIAL_QUERY_TAXONOMY>
+Query categories and routing decisions:
+
+1. **Data Requests** → ALWAYS Research
+   - "What was RBC's Q2 revenue?" 
+   - "Show BMO's efficiency ratio"
+   - "Compare TD and CIBC net income"
+
+2. **Management Commentary** → ALWAYS Research  
+   - "What did the CEO say about digital strategy?"
+   - "Management guidance for next quarter"
+   - "Executive comments on market conditions"
+
+3. **Trend/Time Series** → ALWAYS Research
+   - "Revenue growth over 3 quarters"
+   - "Year-over-year performance"  
+   - "How has ROE changed?"
+
+4. **Basic Concepts** → Direct Response (unless specific bank data needed)
+   - "What's the difference between revenue and income?"
+   - "How is ROE calculated?"
+   - "What does efficiency ratio measure?"
+
+5. **Follow-ups on Retrieved Data** → Direct Response
+   - "Explain that in simpler terms"
+   - "What does that mean for investors?"
+   - "Summarize the key points"
+</FINANCIAL_QUERY_TAXONOMY>
 
 <ROUTING_EXAMPLES>
 <RESEARCH_EXAMPLES>
-1. "What does IFRS 15 say about revenue recognition for long-term contracts?"
-   (Mentions specific accounting standard, requires authoritative reference)
+1. "What was TD's net income in Q2 2024?"
+   → Needs specific financial data
    
-2. "How should we account for leases under the new standards?"
-   (Refers to accounting standards, requires authoritative guidance)
+2. "Compare RBC and BMO's efficiency ratios"
+   → Requires data from multiple banks
    
-3. "What's RBC's policy on hedge accounting?"
-   (Asks about specific policy that would be in the databases)
+3. "What did management say about digital transformation?"
+   → Needs transcript search
    
-4. "Can you check the guidance on impairment testing for goodwill?"
-   (Explicitly requests checking guidance/reference material)
+4. "Show revenue trend over last 4 quarters"
+   → Requires time series data
 
-5. "What are the disclosure requirements for related party transactions?"
-   (Asks about specific requirements that need authoritative reference)
-
-6. "What files are in the internal wiki about leases?"
-   (Asks to list items within a specific database - requires metadata research)
-
-7. "Find documents in ICFR related to control testing."
-   (Asks to find items within a specific database - requires metadata research)
-
-8. "What is a derivative?"
-   (Asks for definition of a finance term - requires authoritative reference)
-
-9. "Can you explain EBITDA?"
-   (Requests explanation of a finance concept - requires authoritative reference)
+5. "What's Bank of America's ROE?"
+   → Needs specific metric data
 </RESEARCH_EXAMPLES>
 
 <DIRECT_RESPONSE_EXAMPLES>
-1. "Based on our previous conversation about revenue recognition, how would this apply to software sales?"
-   (Builds on research information already provided in conversation)
+1. "Based on the data you showed, which bank performed better?"
+   → Analysis of already-retrieved information
    
-2. "Can you summarize what we discussed earlier about lease classifications?"
-   (Explicitly asks for summary of previous conversation content)
+2. "Can you explain what efficiency ratio means?"
+   → Basic concept explanation
    
-3. "What were the key points from the IFRS guidance you just showed me?"
-   (Refers to information already researched and present in conversation)
+3. "Summarize the key findings from your research"
+   → Reformatting existing results
    
-4. "Could you explain the third point in simpler terms?"
-   (Follow-up clarification on previously researched information)
+4. "What's the formula for calculating ROE?"
+   → General knowledge, no bank-specific data needed
    
-5. "What's your favorite color?"
-   (Non-finance question that doesn't require research)
+5. "Put those earnings figures in a table"
+   → Reformatting request
 </DIRECT_RESPONSE_EXAMPLES>
 </ROUTING_EXAMPLES>
 
@@ -241,12 +274,11 @@ After you:
 </CONFIDENCE_SIGNALING>
 
 <ROUTER_SPECIFIC_ERROR_HANDLING>
-- If the query is ambiguous between research/direct response, ALWAYS prefer research
-- If you can't determine the query type, ALWAYS default to research_from_database
-- If the query contains ANY finance or accounting terms, ALWAYS route to research_from_database
-- If the conversation history is inconsistent, focus on the most recent query
-- If the query contains multiple questions, route based on the most complex one
-- If unsure whether a term is finance-related, err on the side of caution and route to research_from_database
+- If ambiguous between research/direct, consider: Does this need NEW data? → Research
+- Default to research ONLY when specific data or sources are likely needed
+- Basic financial concepts without bank specifics → Direct Response
+- If query has multiple questions, route based on the primary intent
+- Focus on what information is needed, not just presence of finance terms
 </ROUTER_SPECIFIC_ERROR_HANDLING>
 </ERROR_HANDLING>
 </TASK>
@@ -267,7 +299,7 @@ def construct_system_prompt():
     project_statement = get_project_statement()
     fiscal_statement = get_fiscal_statement()
     database_statement = get_database_statement()
-    restrictions_statement = get_restrictions_statement()
+    restrictions_statement = get_restrictions_statement("router")
 
     # Combine into a formatted system prompt using CO-STAR framework
     prompt_parts = [
