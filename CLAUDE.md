@@ -98,3 +98,9 @@ deactivate
 - Always activate the virtual environment before running any pip commands
 - Use `python -m <tool>` syntax to ensure the correct tool version is used
 - If you get "externally-managed-environment" errors, you forgot to activate the venv
+
+## Testing Environment Note
+The database refresh scripts (`aegis-database-refresh/`) are tested in an external corporate environment separate from this development machine. When making changes to these scripts:
+- Focus on code correctness and proper error handling
+- Ensure all dependencies are properly declared in setup.py
+- The scripts will be tested with real corporate data and infrastructure that cannot be accessed from this development environment
