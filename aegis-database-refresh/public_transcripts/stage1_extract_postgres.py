@@ -102,15 +102,13 @@ FULL_REFRESH = False
 OAUTH_CONFIG = {
     "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
     "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "scope": "api://YourResource/.default"
+    "client_secret": "YOUR_CLIENT_SECRET"
 }
 
 # --- GPT API Configuration ---
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o",  # Adjust to your model deployment name
-    "api_version": "2024-02-01"
+    "model_name": "gpt-4o"  # Adjust to your model deployment name
 }
 
 # --- CA Bundle for SSL ---

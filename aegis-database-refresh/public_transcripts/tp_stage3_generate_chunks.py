@@ -59,20 +59,23 @@ DOCUMENT_SOURCE = 'earnings_call'
 DOCUMENT_TYPE = 'transcript'
 DOCUMENT_LANGUAGE = 'en'
 
-# --- LLM Configuration ---
-# Should match Stage 1 OAuth and GPT config
+# --- OAuth Configuration ---
 OAUTH_CONFIG = {
     "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
     "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "scope": "api://YourResource/.default"
+    "client_secret": "YOUR_CLIENT_SECRET"
 }
 
+# --- GPT API Configuration ---
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o",
-    "api_version": "2024-02-01"
+    "model_name": "gpt-4o"
 }
+
+# --- CA Bundle for SSL ---
+CA_BUNDLE_FILENAME = 'rbc-ca-bundle.cer'
+# Path to the CA Bundle on the NAS (relative to share root)
+CA_BUNDLE_NAS_PATH = 'certs'
 
 # --- Processing Configuration ---
 # Chunking parameters
@@ -157,8 +160,6 @@ def get_oauth_token():
         'client_secret': OAUTH_CONFIG['client_secret'],
         'grant_type': 'client_credentials'
     }
-    if OAUTH_CONFIG.get('scope'):
-        payload['scope'] = OAUTH_CONFIG['scope']
 
     try:
         response = requests.post(OAUTH_CONFIG['token_url'], data=payload)
@@ -178,21 +179,83 @@ def get_oauth_token():
         return None
 
 def setup_openai_client() -> Optional[OpenAI]:
-    """Sets up the OpenAI client with auth token."""
-    access_token = get_oauth_token()
-    if not access_token:
-        logger.error("Failed to obtain OAuth token.")
-        return None
-        
+    """Sets up the OpenAI client with auth token and SSL configuration."""
+    original_requests_ca_bundle = os.environ.get('REQUESTS_CA_BUNDLE')
+    original_ssl_cert_file = os.environ.get('SSL_CERT_FILE')
+    temp_cert_file_path = None
+    
     try:
+        # Download CA bundle if needed
+        if CA_BUNDLE_FILENAME:
+            try:
+                # Try the dedicated CA bundle path first
+                smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_NAS_PATH}/{CA_BUNDLE_FILENAME}"
+                if not smbclient.path.exists(smb_ca_path):
+                    # Try output path
+                    smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{CA_BUNDLE_FILENAME}"
+                    if not smbclient.path.exists(smb_ca_path):
+                        # Finally try root path
+                        smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_FILENAME}"
+                
+                # If any path exists, download the cert
+                if smbclient.path.exists(smb_ca_path):
+                    with tempfile.NamedTemporaryFile(suffix='.cer', delete=False) as temp_ca_file:
+                        temp_cert_file_path = temp_ca_file.name
+                        with smbclient.open_file(smb_ca_path, mode='rb') as f_ca:
+                            temp_ca_file.write(f_ca.read())
+                    logger.info(f"CA bundle downloaded from {smb_ca_path} to temporary file: {temp_cert_file_path}")
+                    
+                    # Set environment variables for SSL verification
+                    os.environ['REQUESTS_CA_BUNDLE'] = temp_cert_file_path
+                    os.environ['SSL_CERT_FILE'] = temp_cert_file_path
+                    logger.info(f"Set REQUESTS_CA_BUNDLE environment variable to: {temp_cert_file_path}")
+                    logger.info(f"Set SSL_CERT_FILE environment variable to: {temp_cert_file_path}")
+                else:
+                    logger.warning(f"CA bundle not found at any expected paths")
+            except Exception as e:
+                logger.warning(f"Failed to download CA bundle: {e}")
+        
+        # Get OAuth token
+        access_token = get_oauth_token()
+        if not access_token:
+            logger.error("Failed to obtain OAuth token.")
+            return None
+            
+        # Set up OpenAI client
         client = OpenAI(
             api_key=access_token,
             base_url=GPT_CONFIG.get('base_url', 'https://api.openai.com/v1')
         )
+        
         return client
     except Exception as e:
         logger.error(f"Error setting up OpenAI client: {e}")
         return None
+    finally:
+        # Clean up the temporary certificate file
+        if temp_cert_file_path and os.path.exists(temp_cert_file_path):
+            try:
+                os.remove(temp_cert_file_path)
+                logger.info(f"Removed temporary CA bundle file: {temp_cert_file_path}")
+            except Exception as e:
+                logger.warning(f"Failed to remove temporary CA bundle file: {e}")
+        
+        # Restore original environment variables
+        if original_requests_ca_bundle is None:
+            if 'REQUESTS_CA_BUNDLE' in os.environ:
+                del os.environ['REQUESTS_CA_BUNDLE']
+                logger.info("Unset REQUESTS_CA_BUNDLE environment variable")
+        else:
+            os.environ['REQUESTS_CA_BUNDLE'] = original_requests_ca_bundle
+            logger.info(f"Restored original REQUESTS_CA_BUNDLE environment variable")
+            
+        if original_ssl_cert_file is None:
+            if 'SSL_CERT_FILE' in os.environ:
+                del os.environ['SSL_CERT_FILE']
+                logger.info("Unset SSL_CERT_FILE environment variable")
+        else:
+            os.environ['SSL_CERT_FILE'] = original_ssl_cert_file
+            logger.info(f"Restored original SSL_CERT_FILE environment variable")
 
 def count_tokens(text: str, model: str = "gpt-4") -> int:
     """Count tokens in text using tiktoken."""
