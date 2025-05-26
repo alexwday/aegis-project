@@ -85,7 +85,7 @@ MAX_CHUNK_SIZE = 700     # Maximum tokens per chunk
 BATCH_TOKEN_LIMIT = 3000 # Maximum tokens to send to LLM per batch
 
 # Metadata extraction parameters
-METADATA_BATCH_SIZE = 5  # Number of chunks to process together for metadata
+# Note: We process chunks one at a time with context, not in batches
 
 # Section grouping parameters
 SECTION_BATCH_SIZE = 10  # Number of chunks to consider for section boundaries
@@ -377,52 +377,66 @@ Example: If sentences 47-62 form one chunk and 63-78 form another, return:
 
     return prompt
 
-def create_metadata_prompt(chunks_batch: List[Dict[str, Any]]) -> str:
-    """Creates prompt for extracting metadata from chunks."""
+def create_metadata_prompt_with_context(
+    current_chunk: Dict[str, Any],
+    context_chunks: List[Dict[str, Any]]
+) -> Tuple[str, str]:
+    """Creates system and user prompts for extracting metadata from a single chunk with context."""
     
-    chunks_text = ""
-    for i, chunk in enumerate(chunks_batch):
-        chunks_text += f"\nCHUNK {chunk['chunk_id']} (Sentences {chunk['start_sentence']}-{chunk['end_sentence']}):\n"
-        chunks_text += chunk['content']
-        chunks_text += "\n" + "-" * 50
+    # Build context from previous chunks
+    context_text = ""
+    if context_chunks:
+        context_text = "\n\nCONTEXT FROM PREVIOUS CHUNKS:\n"
+        for chunk in context_chunks:
+            context_text += f"\nChunk {chunk['chunk_id']}:"
+            if 'summary' in chunk:
+                context_text += f" {chunk['summary']}"
+            if 'topics' in chunk:
+                context_text += f"\nTopics: {', '.join(chunk['topics'])}"
+            if 'speakers' in chunk:
+                speakers = [f"{s['name']} ({s['role']})" for s in chunk['speakers']]
+                context_text += f"\nSpeakers: {', '.join(speakers)}"
+            context_text += "\n" + "-" * 30
     
-    prompt = f"""Analyze these transcript chunks and extract structured metadata for each.
+    system_prompt = f"""You are an expert at analyzing financial earnings call transcripts. 
 
-{chunks_text}
+Your task is to extract structured metadata from transcript chunks. You have access to previous chunks for context to understand the flow of the conversation.{context_text}
 
-For EACH chunk, extract:
+Always respond with valid JSON only. Do not include any text before or after the JSON."""
+    
+    user_prompt = f"""Extract metadata for this transcript chunk:
+
+CHUNK {current_chunk['chunk_id']} (Sentences {current_chunk['start_sentence']}-{current_chunk['end_sentence']}):
+{current_chunk['content']}
+
+Analyze the chunk and extract:
 1. Speaker(s) and their roles (if identifiable)
 2. Main topics discussed
 3. Key financial metrics with specific values
 4. Sentiment/tone of the discussion
 5. Important statements or guidance
-6. Which other chunks it references or relates to
+6. Which previous chunks it references or relates to (based on context)
 7. An importance score (1-10) based on financial significance
+8. A one-sentence summary
 
 Return ONLY a JSON object with this exact structure:
 {{
-    "chunks": [
-        {{
-            "chunk_id": "chunk_001",
-            "speakers": [
-                {{"name": "John Smith", "role": "CEO"}}
-            ],
-            "topics": ["revenue growth", "market expansion"],
-            "financial_metrics": [
-                {{"metric": "Revenue", "value": "$100M", "period": "Q1 2023", "context": "up 15% YoY"}}
-            ],
-            "sentiment": "positive",
-            "key_statements": ["We expect continued growth in Q2"],
-            "references_chunks": [],
-            "importance_score": 8,
-            "summary": "CEO discusses strong Q1 revenue growth and positive outlook"
-        }}
-    ]
-}}
-
-IMPORTANT: Return ONLY the JSON object, no other text before or after."""
-
-    return prompt
+    "chunk_id": "{current_chunk['chunk_id']}",
+    "speakers": [
+        {{"name": "Speaker Name or Unknown", "role": "CEO/CFO/Analyst/Unknown"}}
+    ],
+    "topics": ["topic1", "topic2"],
+    "financial_metrics": [
+        {{"metric": "Metric Name", "value": "Value", "period": "Period", "context": "Additional context"}}
+    ],
+    "sentiment": "positive/neutral/negative/mixed",
+    "key_statements": ["Important quotes or guidance"],
+    "references_chunks": ["chunk_001", "chunk_002"],
+    "importance_score": 7,
+    "summary": "One sentence summary of this chunk"
+}}"""
+    
+    return system_prompt, user_prompt
 
 def create_section_grouping_prompt(chunks_batch: List[Dict[str, Any]]) -> str:
     """Creates prompt for grouping chunks into sections."""
@@ -621,44 +635,84 @@ def phase2_metadata_extraction(
 ) -> List[Dict[str, Any]]:
     """
     Phase 2: Extract metadata for chunks using LLM.
+    Processes one chunk at a time with a sliding window of context from previous chunks.
     Returns chunks with added metadata.
     """
     logger.info(f"Starting Phase 2: Metadata extraction for {len(chunks)} chunks")
     
-    # Process chunks in batches
-    for i in range(0, len(chunks), METADATA_BATCH_SIZE):
-        batch = chunks[i:i + METADATA_BATCH_SIZE]
-        batch_start = i + 1
-        batch_end = min(i + METADATA_BATCH_SIZE, len(chunks))
-        logger.info(f"Processing metadata batch: chunks {batch_start} to {batch_end} of {len(chunks)} total")
+    CONTEXT_WINDOW_SIZE = 5  # Number of previous chunks to include as context
+    
+    # Process each chunk individually with context
+    for i, current_chunk in enumerate(chunks):
+        logger.info(f"Processing metadata for chunk {i+1} of {len(chunks)}: {current_chunk['chunk_id']}")
         
-        logger.info("Creating metadata extraction prompt...")
-        prompt = create_metadata_prompt(batch)
+        # Get context chunks (up to 5 previous chunks)
+        start_context = max(0, i - CONTEXT_WINDOW_SIZE)
+        context_chunks = chunks[start_context:i] if i > 0 else []
         
-        logger.info(f"Requesting metadata extraction from LLM for chunks {batch_start}-{batch_end}...")
-        response = process_with_llm(client, prompt, temperature=0.2)
+        if context_chunks:
+            logger.info(f"Using {len(context_chunks)} previous chunks as context")
         
-        logger.info(f"Processing metadata response for batch {batch_start}-{batch_end}...")
+        # Create prompts with context
+        system_prompt, user_prompt = create_metadata_prompt_with_context(current_chunk, context_chunks)
         
-        if response and 'chunks' in response:
-            # Match metadata to chunks
-            for chunk_metadata in response['chunks']:
-                chunk_id = chunk_metadata.get('chunk_id')
-                # Find the matching chunk
-                for chunk in batch:
-                    if chunk['chunk_id'] == chunk_id:
-                        # Add metadata to chunk
-                        chunk['speakers'] = chunk_metadata.get('speakers', [])
-                        chunk['topics'] = chunk_metadata.get('topics', [])
-                        chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
-                        chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
-                        chunk['key_statements'] = chunk_metadata.get('key_statements', [])
-                        chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
-                        chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
-                        chunk['summary'] = chunk_metadata.get('summary', '')
-                        break
-        else:
-            logger.warning(f"Failed to extract metadata for batch starting at chunk {i+1}")
+        # Process with LLM using custom system prompt
+        logger.info(f"Requesting metadata extraction from LLM for chunk {current_chunk['chunk_id']}...")
+        try:
+            start_time = time.time()
+            
+            response = client.chat.completions.create(
+                model=GPT_CONFIG['model_name'],
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.2,
+                response_format={"type": "json_object"}
+            )
+            
+            elapsed_time = time.time() - start_time
+            logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
+            
+            response_text = response.choices[0].message.content
+            chunk_metadata = json.loads(response_text)
+            
+            # Add metadata to current chunk
+            current_chunk['speakers'] = chunk_metadata.get('speakers', [])
+            current_chunk['topics'] = chunk_metadata.get('topics', [])
+            current_chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
+            current_chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
+            current_chunk['key_statements'] = chunk_metadata.get('key_statements', [])
+            current_chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
+            current_chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
+            current_chunk['summary'] = chunk_metadata.get('summary', '')
+            
+            logger.info(f"Successfully extracted metadata for chunk {current_chunk['chunk_id']}")
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing error for chunk {current_chunk['chunk_id']}: {e}")
+            logger.error(f"Response text: {response_text[:500]}...")
+            # Set default metadata on error
+            current_chunk['speakers'] = []
+            current_chunk['topics'] = []
+            current_chunk['financial_metrics'] = []
+            current_chunk['sentiment'] = 'neutral'
+            current_chunk['key_statements'] = []
+            current_chunk['references_chunks'] = []
+            current_chunk['importance_score'] = 5
+            current_chunk['summary'] = f"Error processing chunk {current_chunk['chunk_id']}"
+            
+        except Exception as e:
+            logger.error(f"Error processing chunk {current_chunk['chunk_id']}: {e}")
+            # Set default metadata on error
+            current_chunk['speakers'] = []
+            current_chunk['topics'] = []
+            current_chunk['financial_metrics'] = []
+            current_chunk['sentiment'] = 'neutral'
+            current_chunk['key_statements'] = []
+            current_chunk['references_chunks'] = []
+            current_chunk['importance_score'] = 5
+            current_chunk['summary'] = f"Error processing chunk {current_chunk['chunk_id']}"
     
     logger.info("Phase 2 complete: Metadata extraction finished")
     return chunks
