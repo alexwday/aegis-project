@@ -69,7 +69,8 @@ OAUTH_CONFIG = {
 # --- GPT API Configuration ---
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o"
+    "model_name": "gpt-4o",
+    "max_tokens": 4096  # Maximum tokens for responses
 }
 
 # --- CA Bundle for SSL ---
@@ -500,7 +501,8 @@ def phase1_smart_chunking(
                 ],
                 functions=[get_chunking_function()],
                 function_call={"name": "identify_chunk_boundaries"},
-                temperature=0.1
+                temperature=0.1,
+                max_tokens=GPT_CONFIG.get('max_tokens', 4096)
             )
             
             elapsed_time = time.time() - start_time
@@ -795,7 +797,8 @@ def phase2_metadata_extraction(
                 ],
                 functions=[get_metadata_extraction_function()],
                 function_call={"name": "extract_chunk_metadata"},
-                temperature=0.2
+                temperature=0.2,
+                max_tokens=GPT_CONFIG.get('max_tokens', 4096)
             )
             
             elapsed_time = time.time() - start_time
@@ -824,7 +827,12 @@ def phase2_metadata_extraction(
         except json.JSONDecodeError as e:
             logger.error(f"JSON parsing error for chunk {current_chunk['chunk_id']}: {e}")
             if 'function_call' in locals() and function_call:
-                logger.error(f"Function call arguments: {function_call.arguments[:500]}...")
+                logger.error(f"Function call arguments length: {len(function_call.arguments)}")
+                logger.error(f"Function call arguments preview: {function_call.arguments[:500]}...")
+                logger.error(f"Function call arguments end: ...{function_call.arguments[-500:]}")
+                # Check if it looks truncated
+                if not function_call.arguments.rstrip().endswith('}'):
+                    logger.error("WARNING: Function arguments appear to be truncated!")
             # Set default metadata on error
             current_chunk['speakers'] = []
             current_chunk['topics'] = []
@@ -890,7 +898,8 @@ def phase3_section_grouping(
                 ],
                 functions=[get_section_grouping_function()],
                 function_call={"name": "identify_sections"},
-                temperature=0.2
+                temperature=0.2,
+                max_tokens=GPT_CONFIG.get('max_tokens', 4096)
             )
             
             elapsed_time = time.time() - start_time
