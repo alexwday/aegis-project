@@ -366,13 +366,14 @@ IMPORTANT:
 - Do not include {last_chunk_boundary + 1} in your response
 - Each index marks the START of a new chunk
 
-RESPOND WITH JSON:
+Return ONLY a JSON object with this structure:
 {{
-    "chunk_breaks": [list of sentence indices where new chunks start],
+    "chunk_breaks": [list of integer sentence indices where new chunks start],
     "reasoning": "Brief explanation of your chunking decisions"
 }}
 
-Example: If sentences 47-62 form one chunk and 63-78 form another, return {{"chunk_breaks": [63]}}"""
+Example: If sentences 47-62 form one chunk and 63-78 form another, return:
+{{"chunk_breaks": [63], "reasoning": "New topic starts at sentence 63"}}"""
 
     return prompt
 
@@ -398,26 +399,28 @@ For EACH chunk, extract:
 6. Which other chunks it references or relates to
 7. An importance score (1-10) based on financial significance
 
-RESPOND WITH JSON:
+Return ONLY a JSON object with this exact structure:
 {{
     "chunks": [
         {{
-            "chunk_id": "chunk_id_here",
+            "chunk_id": "chunk_001",
             "speakers": [
-                {{"name": "Speaker Name or 'Unknown'", "role": "CEO/CFO/Analyst/Unknown"}}
+                {{"name": "John Smith", "role": "CEO"}}
             ],
-            "topics": ["topic1", "topic2"],
+            "topics": ["revenue growth", "market expansion"],
             "financial_metrics": [
-                {{"metric": "Revenue", "value": "$X", "period": "Q1 2023", "context": "up X% YoY"}}
+                {{"metric": "Revenue", "value": "$100M", "period": "Q1 2023", "context": "up 15% YoY"}}
             ],
-            "sentiment": "positive/neutral/negative/mixed",
-            "key_statements": ["Important quote or guidance"],
-            "references_chunks": ["related_chunk_ids"],
-            "importance_score": 7,
-            "summary": "One sentence summary of this chunk"
+            "sentiment": "positive",
+            "key_statements": ["We expect continued growth in Q2"],
+            "references_chunks": [],
+            "importance_score": 8,
+            "summary": "CEO discusses strong Q1 revenue growth and positive outlook"
         }}
     ]
-}}"""
+}}
+
+IMPORTANT: Return ONLY the JSON object, no other text before or after."""
 
     return prompt
 
@@ -449,7 +452,7 @@ Identify where sections begin based on:
 3. Speaker patterns (CEO to CFO handoff, Operator introducing Q&A)
 4. Content type changes (results to outlook, prepared remarks to Q&A)
 
-RESPOND WITH JSON:
+Return ONLY a JSON object with this structure:
 {{
     "sections": [
         {{
@@ -457,10 +460,12 @@ RESPOND WITH JSON:
             "end_chunk_id": "chunk_005",
             "section_type": "Introduction",
             "section_name": "Q1 2023 Opening Remarks",
-            "reasoning": "Why this is a distinct section"
+            "reasoning": "CEO introduces participants and agenda"
         }}
     ]
-}}"""
+}}
+
+IMPORTANT: Return ONLY the JSON object, no other text."""
 
     return prompt
 
@@ -473,7 +478,7 @@ def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> O
         response = client.chat.completions.create(
             model=GPT_CONFIG['model_name'],
             messages=[
-                {"role": "system", "content": "You are an expert at analyzing financial transcripts. Always respond with valid JSON."},
+                {"role": "system", "content": "You are an expert at analyzing financial transcripts. Always respond with valid JSON only. Do not include any text before or after the JSON."},
                 {"role": "user", "content": prompt}
             ],
             temperature=temperature,
@@ -484,7 +489,27 @@ def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> O
         logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
         
         response_text = response.choices[0].message.content
-        return json.loads(response_text)
+        
+        # Log first 500 chars of response for debugging
+        logger.info(f"LLM response preview: {response_text[:500]}...")
+        
+        # Try to parse JSON
+        try:
+            return json.loads(response_text)
+        except json.JSONDecodeError as json_error:
+            logger.error(f"JSON parsing error: {json_error}")
+            logger.error(f"Response text: {response_text[:1000]}...")
+            
+            # Try to extract JSON from the response if it contains extra text
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                logger.info("Attempting to extract JSON from response...")
+                try:
+                    return json.loads(json_match.group())
+                except:
+                    logger.error("Failed to extract valid JSON from response")
+            return None
         
     except Exception as e:
         logger.error(f"Error processing with LLM: {e}")
