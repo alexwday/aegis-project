@@ -21,7 +21,6 @@ from typing import List, Dict, Any, Optional, Tuple
 import logging
 import smbclient
 from openai import OpenAI
-import tiktoken
 import pysbd
 
 # Configure logging
@@ -259,14 +258,13 @@ def setup_openai_client() -> Optional[OpenAI]:
             logger.info(f"Restored original SSL_CERT_FILE environment variable")
 
 def count_tokens(text: str, model: str = "gpt-4") -> int:
-    """Count tokens in text using tiktoken."""
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-        return len(encoding.encode(text))
-    except Exception as e:
-        logger.warning(f"Error counting tokens, using approximation: {e}")
-        # Rough approximation: 1 token ≈ 4 characters
-        return len(text) // 4
+    """Count tokens in text using character approximation.
+    
+    Uses a conservative estimate of 1 token ≈ 4 characters for English text.
+    This is a reasonable approximation for GPT models.
+    """
+    # Rough approximation: 1 token ≈ 4 characters
+    return len(text) // 4
 
 # ==============================================================================
 # --- Sentence Processing Functions ---
@@ -469,6 +467,9 @@ RESPOND WITH JSON:
 def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> Optional[Dict[str, Any]]:
     """Sends prompt to LLM and returns parsed JSON response."""
     try:
+        logger.info("Sending request to LLM...")
+        start_time = time.time()
+        
         response = client.chat.completions.create(
             model=GPT_CONFIG['model_name'],
             messages=[
@@ -478,6 +479,9 @@ def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> O
             temperature=temperature,
             response_format={"type": "json_object"}
         )
+        
+        elapsed_time = time.time() - start_time
+        logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
         
         response_text = response.choices[0].message.content
         return json.loads(response_text)
@@ -519,6 +523,7 @@ def phase1_smart_chunking(
         logger.info(f"Processing batch: sentences {last_chunk_boundary + 1} to {batch_end_idx} ({token_count} tokens)")
         
         # Get chunk boundaries from LLM
+        logger.info("Creating chunking prompt...")
         prompt = create_chunking_prompt(
             batch_text,
             last_chunk_boundary,
@@ -526,6 +531,7 @@ def phase1_smart_chunking(
             batch_end_idx - last_chunk_boundary
         )
         
+        logger.info(f"Requesting chunk boundaries from LLM for batch {last_chunk_boundary + 1}-{batch_end_idx}...")
         response = process_with_llm(client, prompt)
         
         if response and 'chunk_breaks' in response:
@@ -597,10 +603,17 @@ def phase2_metadata_extraction(
     # Process chunks in batches
     for i in range(0, len(chunks), METADATA_BATCH_SIZE):
         batch = chunks[i:i + METADATA_BATCH_SIZE]
-        logger.info(f"Processing metadata batch: chunks {i+1} to {min(i+METADATA_BATCH_SIZE, len(chunks))}")
+        batch_start = i + 1
+        batch_end = min(i + METADATA_BATCH_SIZE, len(chunks))
+        logger.info(f"Processing metadata batch: chunks {batch_start} to {batch_end} of {len(chunks)} total")
         
+        logger.info("Creating metadata extraction prompt...")
         prompt = create_metadata_prompt(batch)
+        
+        logger.info(f"Requesting metadata extraction from LLM for chunks {batch_start}-{batch_end}...")
         response = process_with_llm(client, prompt, temperature=0.2)
+        
+        logger.info(f"Processing metadata response for batch {batch_start}-{batch_end}...")
         
         if response and 'chunks' in response:
             # Match metadata to chunks
@@ -645,10 +658,17 @@ def phase3_section_grouping(
     # Process chunks to identify section boundaries
     for i in range(0, len(chunks), SECTION_BATCH_SIZE):
         batch = chunks[i:i + SECTION_BATCH_SIZE * 2]  # Get overlapping context
-        logger.info(f"Processing section batch starting at chunk {i+1}")
+        batch_start = i + 1
+        batch_end = min(i + SECTION_BATCH_SIZE * 2, len(chunks))
+        logger.info(f"Processing section grouping batch: chunks {batch_start} to {batch_end} of {len(chunks)} total")
         
+        logger.info("Creating section grouping prompt...")
         prompt = create_section_grouping_prompt(batch)
+        
+        logger.info(f"Requesting section grouping from LLM for chunks {batch_start}-{batch_end}...")
         response = process_with_llm(client, prompt, temperature=0.2)
+        
+        logger.info(f"Processing section grouping response for batch {batch_start}-{batch_end}...")
         
         if response and 'sections' in response:
             for section_info in response['sections']:
@@ -711,22 +731,42 @@ def process_transcript(
     
     # Split into sentences
     logger.info("Splitting text into sentences...")
+    start_sentence_time = time.time()
     sentences = split_into_sentences(markdown_content)
     indexed_sentences = create_indexed_sentences(sentences)
-    logger.info(f"Created {len(indexed_sentences)} indexed sentences")
+    sentence_time = time.time() - start_sentence_time
+    logger.info(f"Created {len(indexed_sentences)} indexed sentences in {sentence_time:.2f} seconds")
     
     # Phase 1: Smart chunking
+    logger.info("\n" + "="*60)
+    logger.info("PHASE 1: SMART CHUNKING")
+    logger.info("="*60)
+    phase1_start = time.time()
     chunks = phase1_smart_chunking(indexed_sentences, client)
+    phase1_time = time.time() - phase1_start
+    logger.info(f"Phase 1 completed in {phase1_time:.2f} seconds")
     
     # Add file metadata to each chunk
     for chunk in chunks:
         chunk.update(file_metadata)
     
     # Phase 2: Metadata extraction
+    logger.info("\n" + "="*60)
+    logger.info("PHASE 2: METADATA EXTRACTION")
+    logger.info("="*60)
+    phase2_start = time.time()
     chunks = phase2_metadata_extraction(chunks, client)
+    phase2_time = time.time() - phase2_start
+    logger.info(f"Phase 2 completed in {phase2_time:.2f} seconds")
     
     # Phase 3: Section grouping
+    logger.info("\n" + "="*60)
+    logger.info("PHASE 3: SECTION GROUPING")
+    logger.info("="*60)
+    phase3_start = time.time()
     chunks, sections = phase3_section_grouping(chunks, client, file_metadata)
+    phase3_time = time.time() - phase3_start
+    logger.info(f"Phase 3 completed in {phase3_time:.2f} seconds")
     
     # Generate embeddings (placeholder - would need embedding model)
     for chunk in chunks:
@@ -814,9 +854,13 @@ def main():
     
     for idx, file_info in enumerate(files_to_process):
         try:
-            logger.info(f"\n{'='*60}")
-            logger.info(f"Processing file {idx + 1}/{len(files_to_process)}: {file_info['file_name']}")
-            logger.info(f"{'='*60}")
+            file_start_time = time.time()
+            logger.info(f"\n{'='*80}")
+            logger.info(f"FILE PROCESSING: {idx + 1} of {len(files_to_process)}")
+            logger.info(f"File: {file_info['file_name']}")
+            logger.info(f"Bank: {file_info.get('bank_name', 'Unknown')}")
+            logger.info(f"Period: Q{file_info.get('fiscal_quarter', '?')} {file_info.get('fiscal_year', '?')}")
+            logger.info(f"{'='*80}")
             
             # Build path to markdown file from Stage 2
             file_base_name = os.path.splitext(file_info['file_name'])[0]
@@ -899,7 +943,10 @@ def main():
                 'status': 'completed'
             })
             
+            file_processing_time = time.time() - file_start_time
             logger.info(f"Successfully processed {file_info['file_name']} into {len(chunks)} chunks and {len(sections)} sections")
+            logger.info(f"File processing completed in {file_processing_time:.2f} seconds")
+            logger.info(f"Average time per chunk: {file_processing_time/len(chunks):.2f} seconds") if chunks else None
             
         except Exception as e:
             logger.error(f"Error processing {file_info.get('file_name', 'unknown')}: {e}")

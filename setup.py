@@ -11,7 +11,6 @@ setup(
         "psycopg2-binary",
         "jupyter",
         "pysbd",
-        "tiktoken",
         "smbclient",
     ],
     extras_require={
