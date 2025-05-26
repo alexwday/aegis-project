@@ -591,7 +591,10 @@ def _model_generator(
                             summary_usage_details = None
                             stream_completed = False
                             summary_stream = generate_streaming_summary(
-                                aggregated_detailed_research, token
+                                aggregated_detailed_research, 
+                                "research",  # scope
+                                token,
+                                None  # original_query_plan
                             )
                             for chunk in summary_stream:
                                 if isinstance(chunk, dict) and "usage_details" in chunk:
