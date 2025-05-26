@@ -366,14 +366,7 @@ IMPORTANT:
 - Do not include {last_chunk_boundary + 1} in your response
 - Each index marks the START of a new chunk
 
-Return ONLY a JSON object with this structure:
-{{
-    "chunk_breaks": [list of integer sentence indices where new chunks start],
-    "reasoning": "Brief explanation of your chunking decisions"
-}}
-
-Example: If sentences 47-62 form one chunk and 63-78 form another, return:
-{{"chunk_breaks": [63], "reasoning": "New topic starts at sentence 63"}}"""
+Use the identify_chunk_boundaries function to specify where new chunks should begin."""
 
     return prompt
 
@@ -400,41 +393,23 @@ def create_metadata_prompt_with_context(
     
     system_prompt = f"""You are an expert at analyzing financial earnings call transcripts. 
 
-Your task is to extract structured metadata from transcript chunks. You have access to previous chunks for context to understand the flow of the conversation.{context_text}
+Your task is to extract structured metadata from transcript chunks. You will use the extract_chunk_metadata function to provide your analysis.
 
-Always respond with valid JSON only. Do not include any text before or after the JSON."""
+You have access to previous chunks for context to understand the flow of the conversation.{context_text}
+
+When analyzing the chunk:
+- Identify all speakers and their roles based on context and speech patterns
+- Extract specific financial metrics with exact values
+- Assess sentiment based on tone and language used
+- Identify references to previous discussions
+- Rate importance based on financial materiality and strategic significance"""
     
-    user_prompt = f"""Extract metadata for this transcript chunk:
+    user_prompt = f"""Please analyze this transcript chunk and extract metadata using the extract_chunk_metadata function:
 
 CHUNK {current_chunk['chunk_id']} (Sentences {current_chunk['start_sentence']}-{current_chunk['end_sentence']}):
 {current_chunk['content']}
 
-Analyze the chunk and extract:
-1. Speaker(s) and their roles (if identifiable)
-2. Main topics discussed
-3. Key financial metrics with specific values
-4. Sentiment/tone of the discussion
-5. Important statements or guidance
-6. Which previous chunks it references or relates to (based on context)
-7. An importance score (1-10) based on financial significance
-8. A one-sentence summary
-
-Return ONLY a JSON object with this exact structure:
-{{
-    "chunk_id": "{current_chunk['chunk_id']}",
-    "speakers": [
-        {{"name": "Speaker Name or Unknown", "role": "CEO/CFO/Analyst/Unknown"}}
-    ],
-    "topics": ["topic1", "topic2"],
-    "financial_metrics": [
-        {{"metric": "Metric Name", "value": "Value", "period": "Period", "context": "Additional context"}}
-    ],
-    "sentiment": "positive/neutral/negative/mixed",
-    "key_statements": ["Important quotes or guidance"],
-    "references_chunks": ["chunk_001", "chunk_002"],
-    "importance_score": 7,
-    "summary": "One sentence summary of this chunk"
-}}"""
+Use the extract_chunk_metadata function to provide structured metadata for this chunk."""
     
     return system_prompt, user_prompt
 
@@ -466,68 +441,10 @@ Identify where sections begin based on:
 3. Speaker patterns (CEO to CFO handoff, Operator introducing Q&A)
 4. Content type changes (results to outlook, prepared remarks to Q&A)
 
-Return ONLY a JSON object with this structure:
-{{
-    "sections": [
-        {{
-            "start_chunk_id": "chunk_001",
-            "end_chunk_id": "chunk_005",
-            "section_type": "Introduction",
-            "section_name": "Q1 2023 Opening Remarks",
-            "reasoning": "CEO introduces participants and agenda"
-        }}
-    ]
-}}
-
-IMPORTANT: Return ONLY the JSON object, no other text."""
+Use the identify_sections function to provide the section structure."""
 
     return prompt
 
-def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> Optional[Dict[str, Any]]:
-    """Sends prompt to LLM and returns parsed JSON response."""
-    try:
-        logger.info("Sending request to LLM...")
-        start_time = time.time()
-        
-        response = client.chat.completions.create(
-            model=GPT_CONFIG['model_name'],
-            messages=[
-                {"role": "system", "content": "You are an expert at analyzing financial transcripts. Always respond with valid JSON only. Do not include any text before or after the JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            response_format={"type": "json_object"}
-        )
-        
-        elapsed_time = time.time() - start_time
-        logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
-        
-        response_text = response.choices[0].message.content
-        
-        # Log first 500 chars of response for debugging
-        logger.info(f"LLM response preview: {response_text[:500]}...")
-        
-        # Try to parse JSON
-        try:
-            return json.loads(response_text)
-        except json.JSONDecodeError as json_error:
-            logger.error(f"JSON parsing error: {json_error}")
-            logger.error(f"Response text: {response_text[:1000]}...")
-            
-            # Try to extract JSON from the response if it contains extra text
-            import re
-            json_match = re.search(r'\{[\s\S]*\}', response_text)
-            if json_match:
-                logger.info("Attempting to extract JSON from response...")
-                try:
-                    return json.loads(json_match.group())
-                except:
-                    logger.error("Failed to extract valid JSON from response")
-            return None
-        
-    except Exception as e:
-        logger.error(f"Error processing with LLM: {e}")
-        return None
 
 # ==============================================================================
 # --- Phase 1: Smart Chunking ---
@@ -571,11 +488,40 @@ def phase1_smart_chunking(
         )
         
         logger.info(f"Requesting chunk boundaries from LLM for batch {last_chunk_boundary + 1}-{batch_end_idx}...")
-        response = process_with_llm(client, prompt)
         
-        if response and 'chunk_breaks' in response:
-            chunk_breaks = response['chunk_breaks']
-            logger.info(f"LLM identified chunk breaks at: {chunk_breaks}")
+        try:
+            start_time = time.time()
+            
+            response = client.chat.completions.create(
+                model=GPT_CONFIG['model_name'],
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing financial transcripts and identifying natural chunk boundaries."},
+                    {"role": "user", "content": prompt}
+                ],
+                functions=[get_chunking_function()],
+                function_call={"name": "identify_chunk_boundaries"},
+                temperature=0.1
+            )
+            
+            elapsed_time = time.time() - start_time
+            logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
+            
+            # Extract function call response
+            function_call = response.choices[0].message.function_call
+            if function_call and function_call.name == "identify_chunk_boundaries":
+                result = json.loads(function_call.arguments)
+                chunk_breaks = result.get('chunk_breaks', [])
+                reasoning = result.get('reasoning', '')
+                logger.info(f"LLM identified chunk breaks at: {chunk_breaks} - {reasoning}")
+            else:
+                logger.error("No function call in response")
+                chunk_breaks = []
+                
+        except Exception as e:
+            logger.error(f"Error getting chunk boundaries: {e}")
+            chunk_breaks = []
+        
+        if chunk_breaks:
             
             # Process the chunk breaks
             current_start = last_chunk_boundary + 1
@@ -626,6 +572,186 @@ def phase1_smart_chunking(
     return chunks
 
 # ==============================================================================
+# --- Function Definitions for Tool Calling ---
+# ==============================================================================
+
+def get_chunking_function():
+    """Returns the function definition for chunk boundary identification."""
+    return {
+        "name": "identify_chunk_boundaries",
+        "description": "Identify sentence indices where new chunks should begin",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "chunk_breaks": {
+                    "type": "array",
+                    "description": "List of sentence indices where new chunks should start",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "reasoning": {
+                    "type": "string",
+                    "description": "Brief explanation of chunking decisions"
+                }
+            },
+            "required": ["chunk_breaks", "reasoning"]
+        }
+    }
+
+def get_section_grouping_function():
+    """Returns the function definition for section grouping."""
+    return {
+        "name": "identify_sections",
+        "description": "Identify section boundaries in the transcript",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sections": {
+                    "type": "array",
+                    "description": "List of identified sections",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "start_chunk_id": {
+                                "type": "string",
+                                "description": "ID of the first chunk in this section"
+                            },
+                            "end_chunk_id": {
+                                "type": "string",
+                                "description": "ID of the last chunk in this section"
+                            },
+                            "section_type": {
+                                "type": "string",
+                                "description": "Type of section",
+                                "enum": ["Introduction", "Financial Results", "Business Segments", "Guidance", "Q&A", "Closing"]
+                            },
+                            "section_name": {
+                                "type": "string",
+                                "description": "Descriptive name for the section"
+                            },
+                            "reasoning": {
+                                "type": "string",
+                                "description": "Why this is a distinct section"
+                            }
+                        },
+                        "required": ["start_chunk_id", "end_chunk_id", "section_type", "section_name", "reasoning"]
+                    }
+                }
+            },
+            "required": ["sections"]
+        }
+    }
+
+def get_metadata_extraction_function():
+    """Returns the function definition for metadata extraction."""
+    return {
+        "name": "extract_chunk_metadata",
+        "description": "Extract structured metadata from a transcript chunk",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "chunk_id": {
+                    "type": "string",
+                    "description": "The ID of the chunk being analyzed"
+                },
+                "speakers": {
+                    "type": "array",
+                    "description": "List of speakers in this chunk",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "Speaker name or 'Unknown'"
+                            },
+                            "role": {
+                                "type": "string",
+                                "description": "Speaker role",
+                                "enum": ["CEO", "CFO", "COO", "Analyst", "Operator", "Other", "Unknown"]
+                            }
+                        },
+                        "required": ["name", "role"]
+                    }
+                },
+                "topics": {
+                    "type": "array",
+                    "description": "Main topics discussed in this chunk",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "financial_metrics": {
+                    "type": "array",
+                    "description": "Financial metrics mentioned with values",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "metric": {
+                                "type": "string",
+                                "description": "Name of the financial metric"
+                            },
+                            "value": {
+                                "type": "string",
+                                "description": "Value of the metric"
+                            },
+                            "period": {
+                                "type": "string",
+                                "description": "Time period for the metric"
+                            },
+                            "context": {
+                                "type": "string",
+                                "description": "Additional context (e.g., YoY change)"
+                            }
+                        },
+                        "required": ["metric", "value"]
+                    }
+                },
+                "sentiment": {
+                    "type": "string",
+                    "description": "Overall sentiment of the discussion",
+                    "enum": ["positive", "neutral", "negative", "mixed"]
+                },
+                "key_statements": {
+                    "type": "array",
+                    "description": "Important quotes or guidance statements",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "references_chunks": {
+                    "type": "array",
+                    "description": "IDs of previous chunks referenced",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "importance_score": {
+                    "type": "integer",
+                    "description": "Importance score from 1-10 based on financial significance",
+                    "minimum": 1,
+                    "maximum": 10
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "One sentence summary of this chunk"
+                }
+            },
+            "required": [
+                "chunk_id",
+                "speakers",
+                "topics",
+                "financial_metrics",
+                "sentiment",
+                "key_statements",
+                "references_chunks",
+                "importance_score",
+                "summary"
+            ]
+        }
+    }
+
+# ==============================================================================
 # --- Phase 2: Metadata Extraction ---
 # ==============================================================================
 
@@ -667,31 +793,38 @@ def phase2_metadata_extraction(
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
+                functions=[get_metadata_extraction_function()],
+                function_call={"name": "extract_chunk_metadata"},
+                temperature=0.2
             )
             
             elapsed_time = time.time() - start_time
             logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
             
-            response_text = response.choices[0].message.content
-            chunk_metadata = json.loads(response_text)
-            
-            # Add metadata to current chunk
-            current_chunk['speakers'] = chunk_metadata.get('speakers', [])
-            current_chunk['topics'] = chunk_metadata.get('topics', [])
-            current_chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
-            current_chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
-            current_chunk['key_statements'] = chunk_metadata.get('key_statements', [])
-            current_chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
-            current_chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
-            current_chunk['summary'] = chunk_metadata.get('summary', '')
-            
-            logger.info(f"Successfully extracted metadata for chunk {current_chunk['chunk_id']}")
+            # Extract function call response
+            function_call = response.choices[0].message.function_call
+            if function_call and function_call.name == "extract_chunk_metadata":
+                chunk_metadata = json.loads(function_call.arguments)
+                
+                # Add metadata to current chunk
+                current_chunk['speakers'] = chunk_metadata.get('speakers', [])
+                current_chunk['topics'] = chunk_metadata.get('topics', [])
+                current_chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
+                current_chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
+                current_chunk['key_statements'] = chunk_metadata.get('key_statements', [])
+                current_chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
+                current_chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
+                current_chunk['summary'] = chunk_metadata.get('summary', '')
+                
+                logger.info(f"Successfully extracted metadata for chunk {current_chunk['chunk_id']}")
+            else:
+                logger.error(f"No function call in response for chunk {current_chunk['chunk_id']}")
+                raise ValueError("No function call in response")
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON parsing error for chunk {current_chunk['chunk_id']}: {e}")
-            logger.error(f"Response text: {response_text[:500]}...")
+            if 'function_call' in locals() and function_call:
+                logger.error(f"Function call arguments: {function_call.arguments[:500]}...")
             # Set default metadata on error
             current_chunk['speakers'] = []
             current_chunk['topics'] = []
@@ -745,38 +878,64 @@ def phase3_section_grouping(
         prompt = create_section_grouping_prompt(batch)
         
         logger.info(f"Requesting section grouping from LLM for chunks {batch_start}-{batch_end}...")
-        response = process_with_llm(client, prompt, temperature=0.2)
         
-        logger.info(f"Processing section grouping response for batch {batch_start}-{batch_end}...")
-        
-        if response and 'sections' in response:
-            for section_info in response['sections']:
-                # Create section entry
-                section_id = f"{metadata['transcript_id']}_S{len(sections)+1:03d}"
+        try:
+            start_time = time.time()
+            
+            response = client.chat.completions.create(
+                model=GPT_CONFIG['model_name'],
+                messages=[
+                    {"role": "system", "content": "You are an expert at analyzing financial earnings call transcripts and identifying major sections."},
+                    {"role": "user", "content": prompt}
+                ],
+                functions=[get_section_grouping_function()],
+                function_call={"name": "identify_sections"},
+                temperature=0.2
+            )
+            
+            elapsed_time = time.time() - start_time
+            logger.info(f"LLM response received in {elapsed_time:.2f} seconds")
+            
+            # Extract function call response
+            function_call = response.choices[0].message.function_call
+            if function_call and function_call.name == "identify_sections":
+                result = json.loads(function_call.arguments)
+                sections_data = result.get('sections', [])
                 
-                # Find chunks in this section
-                section_chunks = []
-                for chunk in chunks:
-                    if (chunk['chunk_id'] >= section_info['start_chunk_id'] and 
-                        chunk['chunk_id'] <= section_info['end_chunk_id']):
-                        section_chunks.append(chunk)
+                logger.info(f"Processing section grouping response for batch {batch_start}-{batch_end}...")
                 
-                if section_chunks:
-                    section = {
-                        'section_id': section_id,
-                        'section_type': section_info['section_type'],
-                        'section_name': section_info['section_name'],
-                        'section_content': " ".join([c['content'] for c in section_chunks]),
-                        'chunk_ids': [c['chunk_id'] for c in section_chunks],
-                        'start_sentence': section_chunks[0]['start_sentence'],
-                        'end_sentence': section_chunks[-1]['end_sentence'],
-                        **metadata
-                    }
+                for section_info in sections_data:
+                    # Create section entry
+                    section_id = f"{metadata['transcript_id']}_S{len(sections)+1:03d}"
                     
-                    # Generate section summary
-                    section['section_summary'] = section_chunks[0].get('summary', '') if section_chunks else ''
+                    # Find chunks in this section
+                    section_chunks = []
+                    for chunk in chunks:
+                        if (chunk['chunk_id'] >= section_info['start_chunk_id'] and 
+                            chunk['chunk_id'] <= section_info['end_chunk_id']):
+                            section_chunks.append(chunk)
                     
-                    sections.append(section)
+                    if section_chunks:
+                        section = {
+                            'section_id': section_id,
+                            'section_type': section_info['section_type'],
+                            'section_name': section_info['section_name'],
+                            'section_content': " ".join([c['content'] for c in section_chunks]),
+                            'chunk_ids': [c['chunk_id'] for c in section_chunks],
+                            'start_sentence': section_chunks[0]['start_sentence'],
+                            'end_sentence': section_chunks[-1]['end_sentence'],
+                            **metadata
+                        }
+                        
+                        # Generate section summary
+                        section['section_summary'] = section_chunks[0].get('summary', '') if section_chunks else ''
+                        
+                        sections.append(section)
+            else:
+                logger.error("No function call in response for section grouping")
+                
+        except Exception as e:
+            logger.error(f"Error in section grouping: {e}")
     
     # Update chunks with section information
     for section in sections:
