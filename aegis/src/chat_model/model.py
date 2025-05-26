@@ -624,9 +624,10 @@ def _model_generator(
                             )
                         
                         yield "\n\n---"
-                    completion_message = f"\nCompleted processing {len(selected_databases)} database queries.\n"
-                    yield completion_message
-                    logger.info("Completed research process")
+                    
+                completion_message = f"\nCompleted processing {len(selected_databases)} database queries.\n"
+                yield completion_message
+                logger.info("Completed research process")
 
                 
         else:
