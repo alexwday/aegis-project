@@ -22,6 +22,7 @@ import logging
 import smbclient
 from openai import OpenAI
 import tiktoken
+import pysbd
 
 # Configure logging
 logging.basicConfig(
@@ -273,27 +274,18 @@ def count_tokens(text: str, model: str = "gpt-4") -> int:
 
 def split_into_sentences(text: str) -> List[str]:
     """
-    Split text into sentences, handling common edge cases.
+    Split text into sentences using PySBD (Python Sentence Boundary Disambiguation).
+    This handles edge cases like abbreviations, decimals, and complex punctuation.
     Returns a list of sentences.
     """
-    # Handle common abbreviations that shouldn't end sentences
-    abbreviations = r"(?:Mr|Mrs|Dr|Ms|Prof|Sr|Jr|Inc|Corp|Co|Ltd|vs|etc|al|i\.e|e\.g)"
+    # Initialize the segmenter with clean=False to preserve original formatting
+    segmenter = pysbd.Segmenter(language="en", clean=False)
     
-    # Pattern to match sentence endings (., !, ?) but not abbreviations
-    sentence_end_pattern = r'(?<![A-Z][a-z]' + abbreviations + r')(?<!\d)(?<![A-Z])\.(?:\s+|$)|[!?](?:\s+|$)'
+    # Segment the text into sentences
+    sentences = segmenter.segment(text)
     
-    # Split on sentence endings
-    sentences = re.split(sentence_end_pattern, text)
-    
-    # Clean up sentences
-    cleaned_sentences = []
-    for i, sentence in enumerate(sentences):
-        sentence = sentence.strip()
-        if sentence:
-            # Re-add the period if it was removed by the split
-            if i < len(sentences) - 1 and not sentence[-1] in '.!?':
-                sentence += '.'
-            cleaned_sentences.append(sentence)
+    # Filter out empty sentences and strip whitespace
+    cleaned_sentences = [s.strip() for s in sentences if s.strip()]
     
     return cleaned_sentences
 
