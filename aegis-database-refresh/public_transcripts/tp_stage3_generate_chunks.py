@@ -1,37 +1,27 @@
 # -*- coding: utf-8 -*-
 """
-Stage 3: Generate Transcript Chunks using LLM (Optimized)
+Stage 3: Generate Transcript Chunks with Sentence-Based LLM Chunking
 
-This script processes transcript files from Stage 2.
-For each transcript, it:
-1. Uses regex patterns to parse transcript into structured sentences (without speaker identification)
-2. Uses LLM to determine semantic chunk boundaries
-3. Groups chunks into sections
-4. Creates structured output for database insertion
-5. Extracts metadata (including speaker) using surrounding chunks as context
+This script processes markdown files from Stage 2 using a two-phase approach:
+1. Phase 1: Split text into indexed sentences, then use LLM to identify chunk boundaries
+2. Phase 2: Extract metadata for each chunk using LLM
 
-Features:
-- TEST_MODE configuration to process only one transcript
-- Regex-based sentence parsing (no speaker identification)
-- LLM with tool definitions for semantic operations
-- Sliding window approach for chunking
-- Batch embedding generation
-- Metadata extraction using surrounding chunks
-- CO-STAR format prompts with XML tags
+The LLM only returns sentence indices, avoiding any content rewriting to handle DLP concerns.
 """
 
 import os
 import sys
 import json
 import time
+import re
 import tempfile
 import requests
-import smbclient
-import logging
-import re
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
+import logging
+import smbclient
 from openai import OpenAI
+import tiktoken
 
 # Configure logging
 logging.basicConfig(
@@ -53,8 +43,7 @@ TEST_MODE = True
 # Specify which transcript to process in test mode (None = first available)
 TEST_TRANSCRIPT_ID = None
 
-# --- NAS Configuration ---
-# Network attached storage connection parameters
+# --- NAS Configuration (Should match Stage 1/2) ---
 NAS_PARAMS = {
     "ip": "your_nas_ip",
     "share": "your_share_name",
@@ -62,199 +51,81 @@ NAS_PARAMS = {
     "password": "your_nas_password"
 }
 
-# Base path on the NAS share where Stage 1/2 output files were stored
+# Base paths
 NAS_OUTPUT_FOLDER_PATH = "path/to/your/output_folder"
 
-# --- Processing Configuration ---
-# Document source identifier for earnings call transcripts
+# Document configuration
 DOCUMENT_SOURCE = 'earnings_call'
 DOCUMENT_TYPE = 'transcript'
 DOCUMENT_LANGUAGE = 'en'
 
-# --- OAuth Configuration ---
+# --- LLM Configuration ---
+# Should match Stage 1 OAuth and GPT config
 OAUTH_CONFIG = {
     "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
     "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET"
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "scope": "api://YourResource/.default"
 }
 
-# --- GPT API Configuration ---
 GPT_CONFIG = {
     "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o"
+    "model_name": "gpt-4o",
+    "api_version": "2024-02-01"
 }
 
-# --- CA Bundle for SSL ---
-CA_BUNDLE_FILENAME = 'rbc-ca-bundle.cer'
-CA_BUNDLE_NAS_PATH = 'certs'
+# --- Processing Configuration ---
+# Chunking parameters
+TARGET_CHUNK_SIZE = 500  # Target tokens per chunk
+MIN_CHUNK_SIZE = 300     # Minimum tokens per chunk
+MAX_CHUNK_SIZE = 700     # Maximum tokens per chunk
+BATCH_TOKEN_LIMIT = 3000 # Maximum tokens to send to LLM per batch
 
-# --- Chunking Configuration ---
-# Number of previous chunks to include in context
-PREVIOUS_CHUNKS_CONTEXT = 20
-# Number of future sentences to include in context
-FUTURE_SENTENCES_CONTEXT = 19
-# Maximum tokens per chunk (approximate)
-MAX_CHUNK_TOKENS = 500
+# Metadata extraction parameters
+METADATA_BATCH_SIZE = 5  # Number of chunks to process together for metadata
 
-# --- Metadata Context Configuration ---
-# Number of chunks before and after for metadata extraction
-METADATA_CONTEXT_BEFORE = 10
-METADATA_CONTEXT_AFTER = 10
-
-# --- Embedding Configuration ---
-EMBEDDING_MODEL = "text-embedding-3-large"
-EMBEDDING_DIMENSION = 2000
-EMBEDDING_BATCH_SIZE = 50
-
-# --- Section Types ---
-SECTION_TYPES = [
-    "Introduction",
-    "Financial Results",
-    "Business Segment Performance",
-    "Risk Management",
-    "Capital Management",
-    "Guidance and Outlook",
-    "Q&A Session",
-    "Closing Remarks",
-    "Other"
-]
-
-# --- Tool Definitions ---
-CHUNKING_DECISION_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "chunking_decision",
-        "description": "Decide whether to add a sentence to the current chunk or start a new chunk",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "add_to_chunk": {
-                    "type": "boolean",
-                    "description": "Whether to add the sentence to the current chunk"
-                },
-                "reasoning": {
-                    "type": "string",
-                    "description": "Brief explanation of the decision"
-                },
-                "related_chunks": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "IDs of previous chunks that are semantically related"
-                },
-                "additional_context": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "context": {"type": "string"},
-                            "source": {"type": "string"}
-                        }
-                    },
-                    "description": "Additional context from previous discussion"
-                }
-            },
-            "required": ["add_to_chunk", "reasoning", "related_chunks", "additional_context"]
-        }
-    }
-}
-
-CHUNK_METADATA_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "extract_chunk_metadata",
-        "description": "Extract metadata from a transcript chunk using surrounding context",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "chunk_speaker": {
-                    "type": "string",
-                    "description": "Primary speaker in the chunk (identified from context)"
-                },
-                "chunk_tags": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "3-5 keywords/phrases relevant to the content"
-                },
-                "chunk_topics": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "2-3 thematic topics discussed"
-                },
-                "related_chunks": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "IDs of chunks that are semantically related to this chunk"
-                },
-                "supporting_context": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "context": {"type": "string", "description": "The supporting information"},
-                            "source": {"type": "string", "description": "The chunk ID where this context comes from"}
-                        },
-                        "required": ["context", "source"]
-                    },
-                    "description": "Relevant context from other chunks that supports understanding this chunk"
-                }
-            },
-            "required": ["chunk_speaker", "chunk_tags", "chunk_topics", "related_chunks", "supporting_context"]
-        }
-    }
-}
-
-SECTION_BOUNDARY_TOOL = {
-    "type": "function",
-    "function": {
-        "name": "section_boundary_decision",
-        "description": "Determine if a chunk should start a new section",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "start_new_section": {
-                    "type": "boolean",
-                    "description": "Whether the chunk should start a new section"
-                },
-                "section_type": {
-                    "type": "string",
-                    "description": "Type of the section from the available types"
-                },
-                "section_name": {
-                    "type": "string",
-                    "description": "Specific descriptive name for this section"
-                },
-                "reasoning": {
-                    "type": "string",
-                    "description": "Brief explanation of the decision"
-                }
-            },
-            "required": ["start_new_section", "section_type", "section_name", "reasoning"]
-        }
-    }
-}
+# Section grouping parameters
+SECTION_BATCH_SIZE = 10  # Number of chunks to consider for section boundaries
 
 # ==============================================================================
 # --- Helper Functions ---
 # ==============================================================================
 
-def create_nas_directory(smb_path: str) -> bool:
-    """Create a directory on NAS if it doesn't exist."""
+def initialize_smb_client():
+    """Sets up smbclient credentials."""
     try:
-        smbclient.makedirs(smb_path, exist_ok=True)
+        smbclient.ClientConfig(username=NAS_PARAMS["user"], password=NAS_PARAMS["password"])
+        logger.info("SMB client configured successfully.")
         return True
     except Exception as e:
-        logger.error(f"Error creating directory '{smb_path}': {e}")
+        logger.error(f"Failed to configure SMB client: {e}")
+        return False
+
+def create_nas_directory(smb_dir_path):
+    """Creates a directory on the NAS if it doesn't exist."""
+    try:
+        if not smbclient.path.exists(smb_dir_path):
+            logger.info(f"Creating NAS directory: {smb_dir_path}")
+            smbclient.makedirs(smb_dir_path, exist_ok=True)
+        return True
+    except Exception as e:
+        logger.error(f"Error creating/accessing NAS directory '{smb_dir_path}': {e}")
         return False
 
 def write_json_to_nas(smb_path: str, data: Any) -> bool:
-    """Write JSON data to NAS."""
+    """Writes JSON data to a specified file path on the NAS."""
     try:
-        json_string = json.dumps(data, indent=2, ensure_ascii=False)
+        dir_path = os.path.dirname(smb_path)
+        if not smbclient.path.exists(dir_path):
+            smbclient.makedirs(dir_path, exist_ok=True)
+
+        json_string = json.dumps(data, indent=2, default=str)
         with smbclient.open_file(smb_path, mode='w', encoding='utf-8') as f:
             f.write(json_string)
+        logger.info(f"Successfully wrote JSON to: {smb_path}")
         return True
     except Exception as e:
-        logger.error(f"Error writing JSON to '{smb_path}': {e}")
+        logger.error(f"Error writing JSON to NAS '{smb_path}': {e}")
         return False
 
 def read_json_from_nas(smb_path: str) -> Optional[Any]:
@@ -263,6 +134,7 @@ def read_json_from_nas(smb_path: str) -> Optional[Any]:
         with smbclient.open_file(smb_path, mode='r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
+        logger.warning(f"File not found: {smb_path}")
         return None
     except Exception as e:
         logger.error(f"Error reading JSON from '{smb_path}': {e}")
@@ -277,881 +149,724 @@ def read_text_from_nas(smb_path: str) -> Optional[str]:
         logger.error(f"Error reading text from '{smb_path}': {e}")
         return None
 
-def extract_transcript_metadata(content: str, file_info: Dict) -> Dict:
-    """Extract metadata from transcript content and file info."""
-    metadata = {
-        "document_source": DOCUMENT_SOURCE,
-        "document_type": DOCUMENT_TYPE,
-        "document_language": DOCUMENT_LANGUAGE,
-        "bank_name": file_info.get("bank_name", ""),
-        "fiscal_year": file_info.get("fiscal_year", ""),
-        "fiscal_quarter": file_info.get("fiscal_quarter", ""),
-        "file_name": file_info.get("file_name", ""),
-        "file_path": file_info.get("file_path", ""),
-        "date_last_modified": file_info.get("date_last_modified", "")
+def get_oauth_token():
+    """Retrieves an OAuth access token using client credentials flow."""
+    logger.info("Requesting OAuth access token...")
+    payload = {
+        'client_id': OAUTH_CONFIG['client_id'],
+        'client_secret': OAUTH_CONFIG['client_secret'],
+        'grant_type': 'client_credentials'
     }
-    
-    # Create document name
-    metadata["document_name"] = f"{metadata['bank_name']} Q{metadata['fiscal_quarter']} {metadata['fiscal_year']} Earnings Call"
-    
-    # Create transcript ID
-    metadata["transcript_id"] = f"{metadata['bank_name'].replace(' ', '_')}_{metadata['fiscal_year']}_Q{metadata['fiscal_quarter']}"
-    
-    return metadata
+    if OAUTH_CONFIG.get('scope'):
+        payload['scope'] = OAUTH_CONFIG['scope']
 
-# ==============================================================================
-# --- OAuth and OpenAI Client Functions ---
-# ==============================================================================
-
-def get_oauth_token() -> Optional[str]:
-    """Obtain OAuth token using client credentials flow."""
     try:
-        response = requests.post(
-            OAUTH_CONFIG["token_url"],
-            data={
-                "grant_type": "client_credentials",
-                "client_id": OAUTH_CONFIG["client_id"],
-                "client_secret": OAUTH_CONFIG["client_secret"]
-            }
-        )
+        response = requests.post(OAUTH_CONFIG['token_url'], data=payload)
         response.raise_for_status()
-        return response.json()["access_token"]
+        token_data = response.json()
+        access_token = token_data.get('access_token')
+        
+        if not access_token:
+            logger.error("'access_token' not found in OAuth response.")
+            return None
+            
+        logger.info("OAuth token obtained successfully.")
+        return access_token
+        
     except Exception as e:
-        logger.error(f"Failed to obtain OAuth token: {e}")
+        logger.error(f"Failed to get OAuth token: {e}")
         return None
 
 def setup_openai_client() -> Optional[OpenAI]:
-    """Set up OpenAI client with OAuth authentication."""
-    token = get_oauth_token()
-    if not token:
+    """Sets up the OpenAI client with auth token."""
+    access_token = get_oauth_token()
+    if not access_token:
+        logger.error("Failed to obtain OAuth token.")
         return None
-    
-    # Download CA bundle if needed
-    ca_bundle_local_path = None
+        
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.cer') as tmp_file:
-            ca_bundle_local_path = tmp_file.name
-            smb_ca_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{CA_BUNDLE_NAS_PATH}/{CA_BUNDLE_FILENAME}"
-            
-            with smbclient.open_file(smb_ca_path, mode='rb') as src:
-                tmp_file.write(src.read())
+        client = OpenAI(
+            api_key=access_token,
+            base_url=GPT_CONFIG.get('base_url', 'https://api.openai.com/v1')
+        )
+        return client
     except Exception as e:
-        logger.error(f"Failed to download CA bundle: {e}")
+        logger.error(f"Error setting up OpenAI client: {e}")
         return None
-    
-    # Create OpenAI client
-    client = OpenAI(
-        api_key=token,
-        base_url=GPT_CONFIG["base_url"],
-        default_headers={
-            "Authorization": f"Bearer {token}"
-        },
-        http_client=None  # Will be configured with CA bundle
-    )
-    
-    # Set up SSL verification
-    if ca_bundle_local_path:
-        import httpx
-        client._client = httpx.Client(
-            verify=ca_bundle_local_path,
-            timeout=httpx.Timeout(timeout=600.0)
-        )
-    
-    return client
 
-# ==============================================================================
-# --- Regex-based Parsing Functions ---
-# ==============================================================================
-
-def parse_transcript_to_sentences(content: str) -> List[Dict]:
-    """Parse transcript into sentences WITHOUT speaker identification."""
-    sentences = []
-    sentence_id = 1
-    
-    # Split content into paragraphs first
-    paragraphs = content.split('\n\n')
-    
-    for paragraph in paragraphs:
-        # Skip empty paragraphs
-        if not paragraph.strip():
-            continue
-            
-        # Use regex to split on sentence boundaries while preserving them
-        # This pattern looks for periods, question marks, or exclamation points
-        # followed by a space and a capital letter (or end of string)
-        sentence_pattern = r'(?<=[.!?])\s+(?=[A-Z])|(?<=[.!?])$'
-        
-        # Split the paragraph into sentences
-        potential_sentences = re.split(sentence_pattern, paragraph.strip())
-        
-        for sentence in potential_sentences:
-            sentence = sentence.strip()
-            
-            # Skip empty sentences
-            if not sentence:
-                continue
-                
-            # Skip very short sentences (likely parsing errors)
-            if len(sentence) < 5:
-                continue
-                
-            # Add the sentence to our list
-            sentences.append({
-                "sentence_id": sentence_id,
-                "text": sentence,
-                "position": sentence_id
-            })
-            sentence_id += 1
-    
-    return sentences
-
-# ==============================================================================
-# --- LLM-based Chunking Functions ---
-# ==============================================================================
-
-def should_add_to_chunk(
-    client: OpenAI,
-    previous_chunks: List[Dict],
-    current_chunk: Dict,
-    active_sentence: Dict,
-    future_sentences: List[Dict]
-) -> Dict:
-    """Use LLM to decide if sentence should be added to current chunk."""
-    
-    # Prepare context
-    context = {
-        "previous_chunks": [
-            {
-                "chunk_id": c["chunk_id"],
-                "summary": " ".join(c["content"].split()[:50]) + "..." if len(c["content"].split()) > 50 else c["content"]
-            }
-            for c in previous_chunks[-PREVIOUS_CHUNKS_CONTEXT:]
-        ],
-        "current_chunk": {
-            "sentences": current_chunk["sentences"],
-            "content": current_chunk["content"]
-        },
-        "active_sentence": {
-            "sentence_id": active_sentence["sentence_id"],
-            "text": active_sentence["text"]
-        },
-        "future_sentences": [
-            {
-                "sentence_id": s["sentence_id"],
-                "text": s["text"]
-            }
-            for s in future_sentences[:FUTURE_SENTENCES_CONTEXT]
-        ]
-    }
-    
-    prompt = f"""
-<context>
-You are analyzing an earnings call transcript to determine semantic chunk boundaries. Your task is to decide whether a sentence should be added to the current chunk or start a new chunk.
-</context>
-
-<objective>
-Analyze the provided context and decide if the active sentence should be added to the current chunk or begin a new chunk. This decision should create semantically coherent chunks that maintain topic unity while respecting natural discourse boundaries.
-</objective>
-
-<style>
-Your response should use the chunking_decision tool with clear, concise reasoning that focuses on semantic cohesion, topic continuity, and discourse markers.
-</style>
-
-<tone>
-Be analytical and decisive. Provide clear justification for your decisions based on the content's semantic relationships.
-</tone>
-
-<audience>
-This decision will be used by an automated system to create searchable chunks of the earnings call transcript for financial analysts and researchers.
-</audience>
-
-<response>
-Analyze the following context and make your chunking decision:
-
-<current_context>
-{json.dumps(context, indent=2)}
-</current_context>
-
-<considerations>
-1. Topic continuity - Does the sentence continue the same topic or introduce a new one?
-2. Natural boundaries - Does this sentence start a new question, answer, or major topic shift?
-3. Semantic completeness - Would adding this sentence make the chunk too long or unfocused?
-4. Context flow - Does the sentence logically belong with the current chunk based on surrounding content?
-5. Discourse markers - Look for transition phrases like "moving on to", "turning to", "next question", etc.
-</considerations>
-
-Use the chunking_decision tool to provide your decision.
-</response>
-"""
-    
+def count_tokens(text: str, model: str = "gpt-4") -> int:
+    """Count tokens in text using tiktoken."""
     try:
-        response = client.chat.completions.create(
-            model=GPT_CONFIG["model_name"],
-            messages=[{"role": "user", "content": prompt}],
-            tools=[CHUNKING_DECISION_TOOL],
-            tool_choice={"type": "function", "function": {"name": "chunking_decision"}},
-            temperature=0.3
-        )
-        
-        tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
+        encoding = tiktoken.encoding_for_model(model)
+        return len(encoding.encode(text))
     except Exception as e:
-        logger.error(f"Error in LLM chunking decision: {e}")
-        # Default to adding to current chunk if error
-        return {
-            "add_to_chunk": True,
-            "reasoning": "Error in LLM processing, defaulting to continue chunk",
-            "related_chunks": [],
-            "additional_context": []
-        }
+        logger.warning(f"Error counting tokens, using approximation: {e}")
+        # Rough approximation: 1 token ≈ 4 characters
+        return len(text) // 4
 
-def generate_chunk_metadata(
-    client: OpenAI, 
-    chunk: Dict, 
-    previous_chunks: List[Dict], 
-    future_chunks: List[Dict]
-) -> Dict:
-    """Generate metadata for a chunk using surrounding chunks as context."""
+# ==============================================================================
+# --- Sentence Processing Functions ---
+# ==============================================================================
+
+def split_into_sentences(text: str) -> List[str]:
+    """
+    Split text into sentences, handling common edge cases.
+    Returns a list of sentences.
+    """
+    # Handle common abbreviations that shouldn't end sentences
+    abbreviations = r"(?:Mr|Mrs|Dr|Ms|Prof|Sr|Jr|Inc|Corp|Co|Ltd|vs|etc|al|i\.e|e\.g)"
     
-    # Prepare context from surrounding chunks
-    context_chunks = {
-        "target_chunk": {
-            "chunk_id": chunk["chunk_id"],
-            "content": chunk["content"]
-        },
-        "previous_chunks": [
-            {
-                "chunk_id": c["chunk_id"],
-                "content": c["content"][:500] + "..." if len(c["content"]) > 500 else c["content"]
-            }
-            for c in previous_chunks[-METADATA_CONTEXT_BEFORE:]
-        ],
-        "future_chunks": [
-            {
-                "chunk_id": c["chunk_id"],
-                "content": c["content"][:500] + "..." if len(c["content"]) > 500 else c["content"]
-            }
-            for c in future_chunks[:METADATA_CONTEXT_AFTER]
-        ]
-    }
+    # Pattern to match sentence endings (., !, ?) but not abbreviations
+    sentence_end_pattern = r'(?<![A-Z][a-z]' + abbreviations + r')(?<!\d)(?<![A-Z])\.(?:\s+|$)|[!?](?:\s+|$)'
     
-    prompt = f"""
-<context>
-You are analyzing an earnings call transcript chunk to extract comprehensive metadata. The transcript has been divided into semantic chunks, and you need to identify key information about each chunk using surrounding context.
-</context>
-
-<objective>
-Extract detailed metadata from the target chunk, including speaker identification, key topics, related content, and supporting context from surrounding chunks. Use the surrounding chunks to identify information that may not be explicit in the target chunk itself.
-</objective>
-
-<style>
-Be thorough and precise in your metadata extraction. Use the surrounding context to infer missing information, especially speaker identity. Provide specific, actionable metadata that will enable effective search and retrieval.
-</style>
-
-<tone>
-Be analytical and comprehensive. Focus on extracting high-quality metadata that captures the essence of the content and its relationships to other parts of the transcript.
-</tone>
-
-<audience>
-This metadata will be used by financial analysts and researchers to search and analyze earnings call content. The metadata should enable precise retrieval and understanding of context.
-</audience>
-
-<response>
-Analyze the following chunk and its surrounding context:
-
-<chunk_context>
-{json.dumps(context_chunks, indent=2)}
-</chunk_context>
-
-<extraction_requirements>
-1. Speaker Identification:
-   - Look for speaker introductions in previous chunks
-   - Check for speaker names at the beginning of statements
-   - Identify role/title indicators (CEO, CFO, Analyst, etc.)
-   - Use context clues from Q&A patterns
-
-2. Key Tags (3-5 keywords/phrases):
-   - Financial metrics mentioned
-   - Business segments discussed
-   - Strategic initiatives
-   - Market conditions
-   - Specific products or services
-
-3. Main Topics (2-3 thematic areas):
-   - Broad themes being discussed
-   - Major business areas covered
-   - Strategic focus areas
-
-4. Related Chunks:
-   - Identify chunks discussing similar topics
-   - Find chunks with the same speaker
-   - Locate chunks that provide context or follow-up
-
-5. Supporting Context:
-   - Extract relevant information from other chunks that helps understand this chunk
-   - Include speaker introductions from earlier chunks
-   - Add context about questions being answered
-   - Reference specific metrics or statements from related chunks
-</extraction_requirements>
-
-Use the extract_chunk_metadata tool to provide comprehensive metadata for the target chunk.
-</response>
-"""
+    # Split on sentence endings
+    sentences = re.split(sentence_end_pattern, text)
     
-    try:
-        response = client.chat.completions.create(
-            model=GPT_CONFIG["model_name"],
-            messages=[{"role": "user", "content": prompt}],
-            tools=[CHUNK_METADATA_TOOL],
-            tool_choice={"type": "function", "function": {"name": "extract_chunk_metadata"}},
-            temperature=0.3
-        )
-        
-        tool_call = response.choices[0].message.tool_calls[0]
-        metadata = json.loads(tool_call.function.arguments)
-        
-        # Merge with existing chunk data
-        chunk.update(metadata)
-        return metadata
-        
-    except Exception as e:
-        logger.error(f"Error generating chunk metadata: {e}")
-        return {
-            "chunk_speaker": "Unknown",
-            "chunk_tags": [],
-            "chunk_topics": [],
-            "related_chunks": [],
-            "supporting_context": []
-        }
-
-def generate_embeddings_batch(client: OpenAI, texts: List[str]) -> List[List[float]]:
-    """Generate embeddings for multiple texts in batches."""
-    all_embeddings = []
-    
-    # Process in batches
-    for i in range(0, len(texts), EMBEDDING_BATCH_SIZE):
-        batch = texts[i:i + EMBEDDING_BATCH_SIZE]
-        
-        try:
-            response = client.embeddings.create(
-                model=EMBEDDING_MODEL,
-                input=batch,
-                dimensions=EMBEDDING_DIMENSION
-            )
-            
-            # Extract embeddings in order
-            batch_embeddings = [item.embedding for item in response.data]
-            all_embeddings.extend(batch_embeddings)
-            
-        except Exception as e:
-            logger.error(f"Error generating embeddings for batch {i//EMBEDDING_BATCH_SIZE}: {e}")
-            # Return zero vectors for failed batch
-            all_embeddings.extend([[0.0] * EMBEDDING_DIMENSION] * len(batch))
-    
-    return all_embeddings
-
-def process_transcript_to_chunks(
-    client: OpenAI,
-    sentences: List[Dict],
-    metadata: Dict
-) -> List[Dict]:
-    """Process sentences into semantic chunks."""
-    
-    chunks = []
-    current_chunk = None
-    chunk_counter = 1
-    
-    # First pass: Create chunks based on semantic boundaries
+    # Clean up sentences
+    cleaned_sentences = []
     for i, sentence in enumerate(sentences):
-        if current_chunk is None:
-            # Start first chunk
-            current_chunk = {
-                "chunk_id": f"{metadata['transcript_id']}_C{chunk_counter:03d}",
-                "sentences": [sentence["sentence_id"]],
-                "content": sentence["text"],
-                "related_chunks": [],
-                "additional_context": []
-            }
-        else:
-            # Get future sentences for context
-            future_sentences = sentences[i+1:i+1+FUTURE_SENTENCES_CONTEXT]
+        sentence = sentence.strip()
+        if sentence:
+            # Re-add the period if it was removed by the split
+            if i < len(sentences) - 1 and not sentence[-1] in '.!?':
+                sentence += '.'
+            cleaned_sentences.append(sentence)
+    
+    return cleaned_sentences
+
+def create_indexed_sentences(sentences: List[str]) -> Dict[int, str]:
+    """
+    Create a dictionary of indexed sentences.
+    Returns {1: "First sentence.", 2: "Second sentence.", ...}
+    """
+    return {i + 1: sentence for i, sentence in enumerate(sentences)}
+
+def format_sentences_for_llm(indexed_sentences: Dict[int, str], start_idx: int, end_idx: int) -> str:
+    """Format indexed sentences for LLM input."""
+    formatted_lines = []
+    for idx in range(start_idx, end_idx + 1):
+        if idx in indexed_sentences:
+            formatted_lines.append(f"[{idx}] {indexed_sentences[idx]}")
+    return "\n".join(formatted_lines)
+
+def collect_sentences_for_batch(
+    indexed_sentences: Dict[int, str], 
+    start_idx: int, 
+    token_limit: int
+) -> Tuple[int, str, int]:
+    """
+    Collect sentences starting from start_idx up to token_limit.
+    Returns: (end_idx, formatted_text, token_count)
+    """
+    current_tokens = 0
+    current_idx = start_idx
+    batch_sentences = []
+    
+    while current_idx <= len(indexed_sentences) and current_tokens < token_limit:
+        if current_idx in indexed_sentences:
+            sentence = indexed_sentences[current_idx]
+            sentence_tokens = count_tokens(f"[{current_idx}] {sentence}")
             
-            # Ask LLM if sentence should be added to current chunk
-            decision = should_add_to_chunk(
-                client,
-                chunks,
-                current_chunk,
-                sentence,
-                future_sentences
-            )
-            
-            if decision["add_to_chunk"]:
-                # Add to current chunk
-                current_chunk["sentences"].append(sentence["sentence_id"])
-                current_chunk["content"] += " " + sentence["text"]
+            if current_tokens + sentence_tokens > token_limit and batch_sentences:
+                # Don't add this sentence if it would exceed limit
+                break
                 
-                # Add any related chunks or context
-                current_chunk["related_chunks"].extend(decision.get("related_chunks", []))
-                current_chunk["additional_context"].extend(decision.get("additional_context", []))
+            batch_sentences.append(f"[{current_idx}] {sentence}")
+            current_tokens += sentence_tokens
+        
+        current_idx += 1
+    
+    formatted_text = "\n".join(batch_sentences)
+    return current_idx - 1, formatted_text, current_tokens
+
+# ==============================================================================
+# --- LLM Processing Functions ---
+# ==============================================================================
+
+def create_chunking_prompt(
+    batch_sentences: str,
+    last_chunk_boundary: int,
+    target_chunk_size: int,
+    sentence_count: int
+) -> str:
+    """Creates the prompt for the LLM to identify chunk boundaries."""
+    
+    prompt = f"""You are processing a financial earnings call transcript. Your task is to identify natural breakpoints to create semantic chunks.
+
+CURRENT SENTENCES TO PROCESS:
+{batch_sentences}
+
+INSTRUCTIONS:
+1. Identify sentence indices where new chunks should start
+2. Target chunk size is approximately {target_chunk_size} tokens (roughly 10-15 sentences)
+3. Minimum chunk size: {MIN_CHUNK_SIZE} tokens
+4. Maximum chunk size: {MAX_CHUNK_SIZE} tokens
+5. Create chunks at natural boundaries:
+   - Topic changes
+   - Speaker transitions
+   - Section changes (e.g., from prepared remarks to Q&A)
+   - Logical breaks in discussion
+
+IMPORTANT:
+- The first chunk starts at sentence [{last_chunk_boundary + 1}]
+- Return ONLY the sentence indices where NEW chunks should begin
+- Do not include {last_chunk_boundary + 1} in your response
+- Each index marks the START of a new chunk
+
+RESPOND WITH JSON:
+{{
+    "chunk_breaks": [list of sentence indices where new chunks start],
+    "reasoning": "Brief explanation of your chunking decisions"
+}}
+
+Example: If sentences 47-62 form one chunk and 63-78 form another, return {{"chunk_breaks": [63]}}"""
+
+    return prompt
+
+def create_metadata_prompt(chunks_batch: List[Dict[str, Any]]) -> str:
+    """Creates prompt for extracting metadata from chunks."""
+    
+    chunks_text = ""
+    for i, chunk in enumerate(chunks_batch):
+        chunks_text += f"\nCHUNK {chunk['chunk_id']} (Sentences {chunk['start_sentence']}-{chunk['end_sentence']}):\n"
+        chunks_text += chunk['content']
+        chunks_text += "\n" + "-" * 50
+    
+    prompt = f"""Analyze these transcript chunks and extract structured metadata for each.
+
+{chunks_text}
+
+For EACH chunk, extract:
+1. Speaker(s) and their roles (if identifiable)
+2. Main topics discussed
+3. Key financial metrics with specific values
+4. Sentiment/tone of the discussion
+5. Important statements or guidance
+6. Which other chunks it references or relates to
+7. An importance score (1-10) based on financial significance
+
+RESPOND WITH JSON:
+{{
+    "chunks": [
+        {{
+            "chunk_id": "chunk_id_here",
+            "speakers": [
+                {{"name": "Speaker Name or 'Unknown'", "role": "CEO/CFO/Analyst/Unknown"}}
+            ],
+            "topics": ["topic1", "topic2"],
+            "financial_metrics": [
+                {{"metric": "Revenue", "value": "$X", "period": "Q1 2023", "context": "up X% YoY"}}
+            ],
+            "sentiment": "positive/neutral/negative/mixed",
+            "key_statements": ["Important quote or guidance"],
+            "references_chunks": ["related_chunk_ids"],
+            "importance_score": 7,
+            "summary": "One sentence summary of this chunk"
+        }}
+    ]
+}}"""
+
+    return prompt
+
+def create_section_grouping_prompt(chunks_batch: List[Dict[str, Any]]) -> str:
+    """Creates prompt for grouping chunks into sections."""
+    
+    chunks_summary = ""
+    for chunk in chunks_batch:
+        chunks_summary += f"\nChunk {chunk['chunk_id']}:\n"
+        chunks_summary += f"Topics: {chunk.get('topics', [])}\n"
+        chunks_summary += f"Summary: {chunk.get('summary', 'No summary')}\n"
+        chunks_summary += "-" * 30
+    
+    prompt = f"""Analyze these transcript chunks and identify section boundaries for the earnings call.
+
+{chunks_summary}
+
+Earnings calls typically have these sections:
+- Introduction/Opening Remarks
+- Financial Results Overview
+- Business Segment Performance
+- Guidance and Outlook
+- Q&A Session
+- Closing Remarks
+
+Identify where sections begin based on:
+1. Major topic shifts
+2. Transition phrases ("Now turning to...", "Let's move to Q&A", etc.)
+3. Speaker patterns (CEO to CFO handoff, Operator introducing Q&A)
+4. Content type changes (results to outlook, prepared remarks to Q&A)
+
+RESPOND WITH JSON:
+{{
+    "sections": [
+        {{
+            "start_chunk_id": "chunk_001",
+            "end_chunk_id": "chunk_005",
+            "section_type": "Introduction",
+            "section_name": "Q1 2023 Opening Remarks",
+            "reasoning": "Why this is a distinct section"
+        }}
+    ]
+}}"""
+
+    return prompt
+
+def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> Optional[Dict[str, Any]]:
+    """Sends prompt to LLM and returns parsed JSON response."""
+    try:
+        response = client.chat.completions.create(
+            model=GPT_CONFIG['model_name'],
+            messages=[
+                {"role": "system", "content": "You are an expert at analyzing financial transcripts. Always respond with valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            response_format={"type": "json_object"}
+        )
+        
+        response_text = response.choices[0].message.content
+        return json.loads(response_text)
+        
+    except Exception as e:
+        logger.error(f"Error processing with LLM: {e}")
+        return None
+
+# ==============================================================================
+# --- Phase 1: Smart Chunking ---
+# ==============================================================================
+
+def phase1_smart_chunking(
+    indexed_sentences: Dict[int, str],
+    client: OpenAI
+) -> List[Dict[str, Any]]:
+    """
+    Phase 1: Use LLM to identify chunk boundaries.
+    Returns list of chunks with sentence ranges.
+    """
+    chunks = []
+    last_chunk_boundary = 0
+    total_sentences = len(indexed_sentences)
+    
+    logger.info(f"Starting Phase 1: Smart chunking of {total_sentences} sentences")
+    
+    while last_chunk_boundary < total_sentences:
+        # Collect sentences for this batch
+        batch_end_idx, batch_text, token_count = collect_sentences_for_batch(
+            indexed_sentences,
+            last_chunk_boundary + 1,
+            BATCH_TOKEN_LIMIT
+        )
+        
+        if batch_end_idx <= last_chunk_boundary:
+            # No more sentences to process
+            break
+            
+        logger.info(f"Processing batch: sentences {last_chunk_boundary + 1} to {batch_end_idx} ({token_count} tokens)")
+        
+        # Get chunk boundaries from LLM
+        prompt = create_chunking_prompt(
+            batch_text,
+            last_chunk_boundary,
+            TARGET_CHUNK_SIZE,
+            batch_end_idx - last_chunk_boundary
+        )
+        
+        response = process_with_llm(client, prompt)
+        
+        if response and 'chunk_breaks' in response:
+            chunk_breaks = response['chunk_breaks']
+            logger.info(f"LLM identified chunk breaks at: {chunk_breaks}")
+            
+            # Process the chunk breaks
+            current_start = last_chunk_boundary + 1
+            
+            for break_idx in chunk_breaks:
+                if break_idx > current_start and break_idx <= batch_end_idx:
+                    # Create chunk from current_start to break_idx - 1
+                    chunks.append({
+                        'start_sentence': current_start,
+                        'end_sentence': break_idx - 1
+                    })
+                    current_start = break_idx
+            
+            # Update last_chunk_boundary to the last break point
+            if chunk_breaks and chunk_breaks[-1] <= batch_end_idx:
+                last_chunk_boundary = chunk_breaks[-1] - 1
             else:
-                # Finalize current chunk and start new one
-                chunks.append(current_chunk)
-                
-                # Start new chunk
-                chunk_counter += 1
-                current_chunk = {
-                    "chunk_id": f"{metadata['transcript_id']}_C{chunk_counter:03d}",
-                    "sentences": [sentence["sentence_id"]],
-                    "content": sentence["text"],
-                    "related_chunks": decision.get("related_chunks", []),
-                    "additional_context": decision.get("additional_context", [])
-                }
+                # If no valid breaks, use the end of this batch
+                last_chunk_boundary = batch_end_idx
+        else:
+            logger.warning("LLM did not return valid chunk breaks, using batch boundary")
+            # Create a chunk for this entire batch
+            chunks.append({
+                'start_sentence': last_chunk_boundary + 1,
+                'end_sentence': batch_end_idx
+            })
+            last_chunk_boundary = batch_end_idx
     
-    # Don't forget the last chunk
-    if current_chunk and current_chunk["sentences"]:
-        chunks.append(current_chunk)
+    # Don't forget the final chunk
+    if last_chunk_boundary < total_sentences:
+        chunks.append({
+            'start_sentence': last_chunk_boundary + 1,
+            'end_sentence': total_sentences
+        })
     
-    # Second pass: Generate metadata for each chunk using surrounding context
-    logger.info(f"Generating metadata for {len(chunks)} chunks...")
+    # Add chunk IDs and content
     for i, chunk in enumerate(chunks):
-        # Get surrounding chunks for context
-        previous_chunks = chunks[max(0, i-METADATA_CONTEXT_BEFORE):i]
-        future_chunks = chunks[i+1:min(len(chunks), i+1+METADATA_CONTEXT_AFTER)]
-        
-        # Generate metadata using surrounding context
-        generate_chunk_metadata(client, chunk, previous_chunks, future_chunks)
-        
-        # Add transcript metadata
-        chunk.update(metadata)
+        chunk['chunk_id'] = f"chunk_{i+1:03d}"
+        # Combine sentences for this chunk
+        sentences = []
+        for idx in range(chunk['start_sentence'], chunk['end_sentence'] + 1):
+            if idx in indexed_sentences:
+                sentences.append(indexed_sentences[idx])
+        chunk['content'] = " ".join(sentences)
+        chunk['token_count'] = count_tokens(chunk['content'])
     
-    # Third pass: Generate embeddings for all chunks in batch
-    logger.info(f"Generating embeddings for {len(chunks)} chunks...")
-    chunk_texts = [chunk["content"] for chunk in chunks]
-    embeddings = generate_embeddings_batch(client, chunk_texts)
-    
-    # Add embeddings and additional fields to chunks
-    for i, chunk in enumerate(chunks):
-        chunk["embedding"] = embeddings[i]
-        # Add additional fields required for database
-        chunk["section_importance_score"] = 1.0  # Default score, can be computed later
-        chunk["section_token_count"] = len(chunk["content"].split())  # Approximate
-    
+    logger.info(f"Phase 1 complete: Created {len(chunks)} chunks")
     return chunks
 
 # ==============================================================================
-# --- Section Grouping Functions ---
+# --- Phase 2: Metadata Extraction ---
 # ==============================================================================
 
-def should_start_new_section(
+def phase2_metadata_extraction(
+    chunks: List[Dict[str, Any]],
+    client: OpenAI
+) -> List[Dict[str, Any]]:
+    """
+    Phase 2: Extract metadata for chunks using LLM.
+    Returns chunks with added metadata.
+    """
+    logger.info(f"Starting Phase 2: Metadata extraction for {len(chunks)} chunks")
+    
+    # Process chunks in batches
+    for i in range(0, len(chunks), METADATA_BATCH_SIZE):
+        batch = chunks[i:i + METADATA_BATCH_SIZE]
+        logger.info(f"Processing metadata batch: chunks {i+1} to {min(i+METADATA_BATCH_SIZE, len(chunks))}")
+        
+        prompt = create_metadata_prompt(batch)
+        response = process_with_llm(client, prompt, temperature=0.2)
+        
+        if response and 'chunks' in response:
+            # Match metadata to chunks
+            for chunk_metadata in response['chunks']:
+                chunk_id = chunk_metadata.get('chunk_id')
+                # Find the matching chunk
+                for chunk in batch:
+                    if chunk['chunk_id'] == chunk_id:
+                        # Add metadata to chunk
+                        chunk['speakers'] = chunk_metadata.get('speakers', [])
+                        chunk['topics'] = chunk_metadata.get('topics', [])
+                        chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
+                        chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
+                        chunk['key_statements'] = chunk_metadata.get('key_statements', [])
+                        chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
+                        chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
+                        chunk['summary'] = chunk_metadata.get('summary', '')
+                        break
+        else:
+            logger.warning(f"Failed to extract metadata for batch starting at chunk {i+1}")
+    
+    logger.info("Phase 2 complete: Metadata extraction finished")
+    return chunks
+
+# ==============================================================================
+# --- Phase 3: Section Grouping ---
+# ==============================================================================
+
+def phase3_section_grouping(
+    chunks: List[Dict[str, Any]],
     client: OpenAI,
-    current_section_chunks: List[Dict],
-    next_chunk: Dict,
-    previous_sections: List[Dict]
-) -> Dict:
-    """Determine if chunk should start a new section."""
-    
-    context = {
-        "current_section": {
-            "chunks": [c["chunk_id"] for c in current_section_chunks],
-            "content_summary": " ".join([c["content"] for c in current_section_chunks[-3:]])[:500] + "..."
-        },
-        "next_chunk": {
-            "chunk_id": next_chunk["chunk_id"],
-            "content": next_chunk["content"],
-            "speaker": next_chunk.get("chunk_speaker", "Unknown"),
-            "topics": next_chunk.get("chunk_topics", [])
-        },
-        "previous_sections": [
-            {
-                "section_name": s["section_name"],
-                "section_type": s["section_type"]
-            }
-            for s in previous_sections[-5:]
-        ]
-    }
-    
-    prompt = f"""
-<context>
-You are analyzing an earnings call transcript to identify section boundaries. Earnings calls typically follow a structured format with distinct sections that need to be identified for proper organization and retrieval.
-</context>
-
-<objective>
-Determine whether the next chunk should start a new section in the transcript. If so, identify the appropriate section type and provide a descriptive name for the section.
-</objective>
-
-<style>
-Be decisive and clear in your section boundary detection. Focus on major topical shifts and structural markers that indicate new sections in earnings calls.
-</style>
-
-<tone>
-Be analytical and structured. Your decisions should reflect the formal structure of earnings call presentations.
-</tone>
-
-<audience>
-Financial analysts and researchers who need to navigate earnings call transcripts efficiently by section.
-</audience>
-
-<response>
-Analyze the following context to determine section boundaries:
-
-<section_context>
-{json.dumps(context, indent=2)}
-</section_context>
-
-<available_section_types>
-{SECTION_TYPES}
-</available_section_types>
-
-<decision_criteria>
-1. Major topic shifts:
-   - Moving from results to guidance
-   - Transitioning to Q&A
-   - Shifting between business segments
-
-2. Transition phrases:
-   - "Now let's turn to..."
-   - "Moving on to..."
-   - "I'll now open the floor for questions"
-   - "This concludes our prepared remarks"
-
-3. Speaker patterns:
-   - CEO/CFO handoffs
-   - Operator introducing Q&A
-   - Analyst questions beginning
-
-4. Content markers:
-   - Financial results summary
-   - Segment performance details
-   - Forward-looking statements
-   - Risk discussions
-
-5. Structural patterns:
-   - Introduction → Results → Outlook → Q&A → Closing
-   - Follow typical earnings call flow
-</decision_criteria>
-
-Use the section_boundary_decision tool to provide your decision.
-</response>
-"""
-    
-    try:
-        response = client.chat.completions.create(
-            model=GPT_CONFIG["model_name"],
-            messages=[{"role": "user", "content": prompt}],
-            tools=[SECTION_BOUNDARY_TOOL],
-            tool_choice={"type": "function", "function": {"name": "section_boundary_decision"}},
-            temperature=0.3
-        )
-        
-        tool_call = response.choices[0].message.tool_calls[0]
-        return json.loads(tool_call.function.arguments)
-    except Exception as e:
-        logger.error(f"Error in section boundary detection: {e}")
-        return {
-            "start_new_section": False,
-            "section_type": "Other",
-            "section_name": "Unnamed Section",
-            "reasoning": "Error in processing"
-        }
-
-def generate_section_summary(client: OpenAI, chunks: List[Dict], section_type: str, section_name: str) -> str:
-    """Generate a summary for a section."""
-    
-    combined_content = " ".join([c["content"] for c in chunks])
-    
-    prompt = f"""
-<context>
-You are summarizing a section of an earnings call transcript. Each section contains important financial information, strategic updates, or analyst discussions that need to be captured concisely.
-</context>
-
-<objective>
-Create a 2-3 sentence summary that captures the key points and main takeaways from this section. Focus on specific information that would be most valuable to financial analysts and investors.
-</objective>
-
-<style>
-Be concise and fact-focused. Prioritize concrete information like numbers, percentages, guidance figures, and specific strategic announcements over general statements.
-</style>
-
-<tone>
-Professional and informative. Write in a style appropriate for financial analysis and reporting.
-</tone>
-
-<audience>
-Financial analysts, investors, and researchers who need quick access to the key information from each section of the earnings call.
-</audience>
-
-<response>
-Summarize the following section:
-
-<section_details>
-Section Type: {section_type}
-Section Name: {section_name}
-
-Content (first 2000 characters):
-{combined_content[:2000]}...
-</section_details>
-
-<summary_requirements>
-1. Include specific numbers when mentioned (revenue, margins, growth rates)
-2. Highlight guidance or forward-looking statements
-3. Note any significant announcements or strategic changes
-4. Capture the main theme or focus of the section
-5. Keep to 2-3 sentences maximum
-</summary_requirements>
-
-Provide your summary below:
-</response>
-"""
-    
-    try:
-        response = client.chat.completions.create(
-            model=GPT_CONFIG["model_name"],
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3
-        )
-        
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        logger.error(f"Error generating section summary: {e}")
-        return f"Summary generation failed for {section_name}"
-
-def group_chunks_into_sections(client: OpenAI, chunks: List[Dict], metadata: Dict) -> List[Dict]:
-    """Group chunks into coherent sections."""
+    metadata: Dict[str, Any]
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """
+    Phase 3: Group chunks into sections.
+    Returns (updated_chunks, sections)
+    """
+    logger.info(f"Starting Phase 3: Section grouping for {len(chunks)} chunks")
     
     sections = []
-    current_section_chunks = []
-    section_counter = 1
     
-    # Initialize with first chunk
-    current_section_type = "Introduction"
-    current_section_name = f"{metadata['bank_name']} Q{metadata['fiscal_quarter']} {metadata['fiscal_year']} Opening Remarks"
-    
-    for i, chunk in enumerate(chunks):
-        if not current_section_chunks:
-            current_section_chunks.append(chunk)
-        else:
-            result = should_start_new_section(
-                client,
-                current_section_chunks,
-                chunk,
-                sections
-            )
-            
-            if result["start_new_section"]:
-                # Finalize current section
-                section = {
-                    "section_id": f"{metadata['transcript_id']}_S{section_counter:03d}",
-                    "section_type": current_section_type,
-                    "section_name": current_section_name,
-                    "section_summary": generate_section_summary(client, current_section_chunks, current_section_type, current_section_name),
-                    "section_content": " ".join([c["content"] for c in current_section_chunks]),
-                    "chunk_ids": [c["chunk_id"] for c in current_section_chunks]
-                }
-                section.update(metadata)
-                sections.append(section)
+    # Process chunks to identify section boundaries
+    for i in range(0, len(chunks), SECTION_BATCH_SIZE):
+        batch = chunks[i:i + SECTION_BATCH_SIZE * 2]  # Get overlapping context
+        logger.info(f"Processing section batch starting at chunk {i+1}")
+        
+        prompt = create_section_grouping_prompt(batch)
+        response = process_with_llm(client, prompt, temperature=0.2)
+        
+        if response and 'sections' in response:
+            for section_info in response['sections']:
+                # Create section entry
+                section_id = f"{metadata['transcript_id']}_S{len(sections)+1:03d}"
                 
-                # Start new section
-                section_counter += 1
-                current_section_chunks = [chunk]
-                current_section_type = result["section_type"]
-                current_section_name = result["section_name"]
-            else:
-                current_section_chunks.append(chunk)
-    
-    # Don't forget the last section
-    if current_section_chunks:
-        section = {
-            "section_id": f"{metadata['transcript_id']}_S{section_counter:03d}",
-            "section_type": current_section_type,
-            "section_name": current_section_name,
-            "section_summary": generate_section_summary(client, current_section_chunks, current_section_type, current_section_name),
-            "section_content": " ".join([c["content"] for c in current_section_chunks]),
-            "chunk_ids": [c["chunk_id"] for c in current_section_chunks]
-        }
-        section.update(metadata)
-        sections.append(section)
+                # Find chunks in this section
+                section_chunks = []
+                for chunk in chunks:
+                    if (chunk['chunk_id'] >= section_info['start_chunk_id'] and 
+                        chunk['chunk_id'] <= section_info['end_chunk_id']):
+                        section_chunks.append(chunk)
+                
+                if section_chunks:
+                    section = {
+                        'section_id': section_id,
+                        'section_type': section_info['section_type'],
+                        'section_name': section_info['section_name'],
+                        'section_content': " ".join([c['content'] for c in section_chunks]),
+                        'chunk_ids': [c['chunk_id'] for c in section_chunks],
+                        'start_sentence': section_chunks[0]['start_sentence'],
+                        'end_sentence': section_chunks[-1]['end_sentence'],
+                        **metadata
+                    }
+                    
+                    # Generate section summary
+                    section['section_summary'] = section_chunks[0].get('summary', '') if section_chunks else ''
+                    
+                    sections.append(section)
     
     # Update chunks with section information
     for section in sections:
-        section_order = 1
-        for chunk_id in section["chunk_ids"]:
+        for i, chunk_id in enumerate(section['chunk_ids']):
             for chunk in chunks:
-                if chunk["chunk_id"] == chunk_id:
-                    chunk["section_name"] = section["section_name"]
-                    chunk["section_type"] = section["section_type"]
-                    chunk["section_summary"] = section["section_summary"]
-                    chunk["section_order"] = section_order
-                    section_order += 1
+                if chunk['chunk_id'] == chunk_id:
+                    chunk['section_id'] = section['section_id']
+                    chunk['section_name'] = section['section_name']
+                    chunk['section_type'] = section['section_type']
+                    chunk['section_summary'] = section['section_summary']
+                    chunk['section_order'] = i + 1
+                    break
     
-    return sections
+    logger.info(f"Phase 3 complete: Created {len(sections)} sections")
+    return chunks, sections
 
 # ==============================================================================
 # --- Main Processing Function ---
 # ==============================================================================
 
+def process_transcript(
+    markdown_content: str,
+    client: OpenAI,
+    file_metadata: Dict[str, Any]
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], Dict[str, Any]]:
+    """
+    Process a transcript through all phases.
+    Returns (chunks, sections, processing_metadata)
+    """
+    start_time = time.time()
+    
+    # Split into sentences
+    logger.info("Splitting text into sentences...")
+    sentences = split_into_sentences(markdown_content)
+    indexed_sentences = create_indexed_sentences(sentences)
+    logger.info(f"Created {len(indexed_sentences)} indexed sentences")
+    
+    # Phase 1: Smart chunking
+    chunks = phase1_smart_chunking(indexed_sentences, client)
+    
+    # Add file metadata to each chunk
+    for chunk in chunks:
+        chunk.update(file_metadata)
+    
+    # Phase 2: Metadata extraction
+    chunks = phase2_metadata_extraction(chunks, client)
+    
+    # Phase 3: Section grouping
+    chunks, sections = phase3_section_grouping(chunks, client, file_metadata)
+    
+    # Generate embeddings (placeholder - would need embedding model)
+    for chunk in chunks:
+        chunk['embedding'] = [0.0] * 1536  # Placeholder embedding
+        chunk['section_token_count'] = chunk.get('token_count', 0)
+        chunk['section_importance_score'] = chunk.get('importance_score', 5) / 10.0
+    
+    # Create processing metadata
+    processing_metadata = {
+        'total_sentences': len(sentences),
+        'total_chunks': len(chunks),
+        'total_sections': len(sections),
+        'total_tokens': sum(chunk.get('token_count', 0) for chunk in chunks),
+        'processing_time': time.time() - start_time,
+        'processing_timestamp': datetime.now(timezone.utc).isoformat(),
+        'model_used': GPT_CONFIG['model_name'],
+        'chunking_parameters': {
+            'target_chunk_size': TARGET_CHUNK_SIZE,
+            'min_chunk_size': MIN_CHUNK_SIZE,
+            'max_chunk_size': MAX_CHUNK_SIZE,
+            'batch_token_limit': BATCH_TOKEN_LIMIT
+        }
+    }
+    
+    return chunks, sections, processing_metadata
+
+# ==============================================================================
+# --- Main Execution Logic ---
+# ==============================================================================
+
 def main():
-    """Main processing function."""
     logger.info("=" * 60)
-    logger.info("Stage 3: Generate Transcript Chunks (Optimized)")
+    logger.info("Running Stage 3: Generate Chunks with Sentence-Based Chunking")
+    logger.info(f"Document Source: {DOCUMENT_SOURCE}")
     logger.info("=" * 60)
     
-    # Initialize SMB client
-    logger.info("Initializing SMB client...")
-    smbclient.ClientConfig(username=NAS_PARAMS["user"], password=NAS_PARAMS["password"])
-    
-    # Set up OpenAI client
-    logger.info("Setting up OpenAI client...")
-    client = setup_openai_client()
-    if not client:
-        logger.error("Failed to set up OpenAI client")
+    # Initialize clients
+    if not initialize_smb_client():
+        logger.error("Failed to initialize SMB client. Exiting.")
         sys.exit(1)
     
-    # Determine input/output paths matching stage 1/2 structure
-    # Base output directory (same as stage 1 and 2)
-    base_output_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{NAS_OUTPUT_FOLDER_PATH}/{DOCUMENT_SOURCE}"
-    stage1_output_dir_smb = base_output_path
+    openai_client = setup_openai_client()
+    if not openai_client:
+        logger.error("Failed to set up OpenAI client. Exiting.")
+        sys.exit(1)
     
-    logger.info(f"Using base output directory: {stage1_output_dir_smb}")
-    
+    # Define paths
+    stage1_output_dir = os.path.join(NAS_OUTPUT_FOLDER_PATH, DOCUMENT_SOURCE).replace('\\', '/')
+    stage1_output_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{stage1_output_dir}"
     stage2_output_dir_smb = os.path.join(stage1_output_dir_smb, '2A_processed_files').replace('\\', '/')
-    stage3_output_dir_smb = os.path.join(stage1_output_dir_smb, '3A_transcript_chunks').replace('\\', '/')
+    stage3_output_dir_smb = os.path.join(stage1_output_dir_smb, '3_transcript_chunks').replace('\\', '/')
     
     # Create output directory
-    if not create_nas_directory(stage3_output_dir_smb):
-        logger.error("Failed to create output directory")
-        sys.exit(1)
+    create_nas_directory(stage3_output_dir_smb)
     
-    # Load list of processed files from stage 2
-    files_to_process_path = os.path.join(stage1_output_dir_smb, '1C_nas_files_to_process.json').replace('\\', '/')
-    files_to_process = read_json_from_nas(files_to_process_path)
+    # Check for skip flag
+    skip_flag_path = os.path.join(stage1_output_dir_smb, '_SKIP_SUBSEQUENT_STAGES.flag').replace('\\', '/')
+    try:
+        if smbclient.path.exists(skip_flag_path):
+            logger.info("Skip flag found. No files to process.")
+            return
+    except Exception as e:
+        logger.warning(f"Error checking skip flag: {e}")
+    
+    # Load files to process
+    files_json_path = os.path.join(stage1_output_dir_smb, '1C_nas_files_to_process.json').replace('\\', '/')
+    files_to_process = read_json_from_nas(files_json_path)
     
     if not files_to_process:
-        logger.warning("No files to process from stage 1")
+        logger.error("No files to process or error loading file list.")
         return
     
-    # Filter for test mode
+    logger.info(f"Found {len(files_to_process)} files to process")
+    
+    # Filter for test mode if enabled
     if TEST_MODE:
         if TEST_TRANSCRIPT_ID:
-            files_to_process = [f for f in files_to_process if f.get("file_name", "").startswith(TEST_TRANSCRIPT_ID)]
+            files_to_process = [f for f in files_to_process if TEST_TRANSCRIPT_ID in f.get('file_name', '')]
         else:
             files_to_process = files_to_process[:1]
-        logger.info(f"TEST MODE: Processing {len(files_to_process)} transcript(s)")
+        logger.info(f"TEST MODE: Processing only {len(files_to_process)} file(s)")
     
-    # Process each transcript
-    total_files = len(files_to_process)
+    # Process each file
+    all_transcripts_metadata = []
     
-    for i, file_info in enumerate(files_to_process):
-        logger.info(f"\nProcessing transcript {i+1}/{total_files}")
-        logger.info(f"File: {file_info.get('file_name', 'Unknown')}")
-        
+    for idx, file_info in enumerate(files_to_process):
         try:
-            # Load content from stage 2
+            logger.info(f"\n{'='*60}")
+            logger.info(f"Processing file {idx + 1}/{len(files_to_process)}: {file_info['file_name']}")
+            logger.info(f"{'='*60}")
+            
+            # Build path to markdown file from Stage 2
             file_base_name = os.path.splitext(file_info['file_name'])[0]
-            
-            # First try to load JSON for structured data
-            json_path = os.path.join(
-                stage2_output_dir_smb,
-                file_base_name,
-                f"{file_base_name}.json"
-            ).replace('\\', '/')
-            
-            json_content = read_json_from_nas(json_path)
-            
-            # Load markdown as backup or for text extraction
             markdown_path = os.path.join(
                 stage2_output_dir_smb,
                 file_base_name,
                 f"{file_base_name}.md"
             ).replace('\\', '/')
             
+            # Read markdown content
             markdown_content = read_text_from_nas(markdown_path)
-            
-            if not markdown_content and not json_content:
-                logger.error(f"Failed to read stage 2 output files")
+            if not markdown_content:
+                logger.error(f"Failed to read markdown file: {markdown_path}")
                 continue
             
-            # Extract metadata
-            content_for_metadata = markdown_content if markdown_content else str(json_content)
-            metadata = extract_transcript_metadata(content_for_metadata, file_info)
-            transcript_id = metadata["transcript_id"]
-            logger.info(f"Transcript ID: {transcript_id}")
-            
-            # Parse transcript into sentences (without speaker identification)
-            logger.info("Parsing transcript into sentences...")
-            
-            # Use markdown content if available, otherwise extract from JSON
-            if markdown_content:
-                sentences = parse_transcript_to_sentences(markdown_content)
-            else:
-                # Extract content from JSON if markdown not available
-                json_text = json_content.get('content', '')
-                sentences = parse_transcript_to_sentences(json_text)
-            
-            logger.info(f"Found {len(sentences)} sentences")
-            
-            # Save sentence data
-            sentences_output_path = os.path.join(
-                stage3_output_dir_smb,
-                f"2A_transcript_sentences_{transcript_id}.json"
-            ).replace('\\', '/')
-            
-            sentence_data = {
-                "transcript_id": transcript_id,
-                "metadata": metadata,
-                "sentences": sentences
+            # Prepare metadata
+            file_metadata = {
+                'document_source': DOCUMENT_SOURCE,
+                'document_type': DOCUMENT_TYPE,
+                'document_language': DOCUMENT_LANGUAGE,
+                'bank_name': file_info['bank_name'],
+                'fiscal_year': file_info['fiscal_year'],
+                'fiscal_quarter': file_info['fiscal_quarter'],
+                'document_name': file_info.get('document_name', f"Q{file_info['fiscal_quarter']} {file_info['fiscal_year']} Earnings Call"),
+                'file_name': file_info['file_name'],
+                'file_path': file_info['file_path'],
+                'file_size': file_info['file_size'],
+                'date_last_modified': file_info['date_last_modified'],
+                'date_created': datetime.now(timezone.utc).isoformat(),
+                'date_processed': datetime.now(timezone.utc).isoformat()
             }
             
-            if not write_json_to_nas(sentences_output_path, sentence_data):
-                logger.error("Failed to save sentence data")
-                continue
+            # Create transcript ID
+            transcript_id = f"{file_metadata['bank_name'].replace(' ', '_')}_{file_metadata['fiscal_year']}_Q{file_metadata['fiscal_quarter']}"
+            file_metadata['transcript_id'] = transcript_id
             
-            # Generate chunks with metadata extraction using surrounding context
-            logger.info("Generating semantic chunks...")
-            chunks = process_transcript_to_chunks(client, sentences, metadata)
-            logger.info(f"Created {len(chunks)} chunks")
+            # Process transcript
+            chunks, sections, processing_metadata = process_transcript(
+                markdown_content,
+                openai_client,
+                file_metadata
+            )
             
-            # Save chunk data (before section assignment)
-            chunks_output_path = os.path.join(
-                stage3_output_dir_smb,
-                f"3A_transcript_chunks_{transcript_id}.json"
-            ).replace('\\', '/')
+            # Create transcript output directory
+            transcript_dir = os.path.join(stage3_output_dir_smb, transcript_id).replace('\\', '/')
+            create_nas_directory(transcript_dir)
             
-            if not write_json_to_nas(chunks_output_path, chunks):
-                logger.error("Failed to save chunk data")
-                continue
+            # Save indexed sentences
+            sentences_path = os.path.join(transcript_dir, f"2A_transcript_sentences_{transcript_id}.json").replace('\\', '/')
+            sentences = split_into_sentences(markdown_content)
+            indexed_sentences = create_indexed_sentences(sentences)
+            sentence_data = {
+                "transcript_id": transcript_id,
+                "metadata": file_metadata,
+                "sentences": [
+                    {"sentence_id": i, "text": text, "position": i}
+                    for i, text in indexed_sentences.items()
+                ]
+            }
+            write_json_to_nas(sentences_path, sentence_data)
             
-            # Group chunks into sections
-            logger.info("Grouping chunks into sections...")
-            sections = group_chunks_into_sections(client, chunks, metadata)
-            logger.info(f"Created {len(sections)} sections")
+            # Save metadata
+            metadata_path = os.path.join(transcript_dir, f"2B_transcript_metadata_{transcript_id}.json").replace('\\', '/')
+            write_json_to_nas(metadata_path, {**file_metadata, **processing_metadata})
             
-            # Save section data
-            sections_output_path = os.path.join(
-                stage3_output_dir_smb,
-                f"3B_transcript_sections_{transcript_id}.json"
-            ).replace('\\', '/')
+            # Save chunks
+            chunks_path = os.path.join(transcript_dir, f"3A_transcript_chunks_{transcript_id}.json").replace('\\', '/')
+            write_json_to_nas(chunks_path, chunks)
             
-            if not write_json_to_nas(sections_output_path, sections):
-                logger.error("Failed to save section data")
-                continue
+            # Save sections
+            sections_path = os.path.join(transcript_dir, f"3B_transcript_sections_{transcript_id}.json").replace('\\', '/')
+            write_json_to_nas(sections_path, sections)
             
-            # Save updated chunks (with section info)
-            chunks_final_path = os.path.join(
-                stage3_output_dir_smb,
-                f"3C_transcript_chunks_final_{transcript_id}.json"
-            ).replace('\\', '/')
+            # Add to overall metadata
+            all_transcripts_metadata.append({
+                **file_metadata,
+                **processing_metadata,
+                'chunks_file': chunks_path,
+                'sections_file': sections_path,
+                'status': 'completed'
+            })
             
-            if not write_json_to_nas(chunks_final_path, chunks):
-                logger.error("Failed to save final chunk data")
-                continue
-            
-            logger.info(f"Successfully processed transcript: {transcript_id}")
+            logger.info(f"Successfully processed {file_info['file_name']} into {len(chunks)} chunks and {len(sections)} sections")
             
         except Exception as e:
-            logger.error(f"Error processing transcript: {e}")
-            continue
+            logger.error(f"Error processing {file_info.get('file_name', 'unknown')}: {e}")
+            all_transcripts_metadata.append({
+                **file_info,
+                'status': 'failed',
+                'error': str(e),
+                'date_processed': datetime.now(timezone.utc).isoformat()
+            })
     
-    logger.info("\n" + "=" * 60)
+    # Save overall processing summary
+    summary_path = os.path.join(stage3_output_dir_smb, '3_processing_summary.json').replace('\\', '/')
+    write_json_to_nas(summary_path, {
+        'stage': 'stage3_generate_chunks',
+        'processed_count': len([m for m in all_transcripts_metadata if m.get('status') == 'completed']),
+        'failed_count': len([m for m in all_transcripts_metadata if m.get('status') == 'failed']),
+        'total_files': len(files_to_process),
+        'processing_timestamp': datetime.now(timezone.utc).isoformat(),
+        'transcripts': all_transcripts_metadata
+    })
+    
+    logger.info("=" * 60)
     logger.info("Stage 3 completed successfully!")
     logger.info("=" * 60)
 

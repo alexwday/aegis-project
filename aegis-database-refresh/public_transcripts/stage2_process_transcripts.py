@@ -1,83 +1,60 @@
 # -*- coding: utf-8 -*-
 """
-Stage 2: Process Transcripts with Sentence-Based LLM Chunking
+Stage 2: Process Documents with Azure Document Intelligence
 
-This script processes transcript text using a two-phase approach:
-1. Phase 1: Split text into indexed sentences, then use LLM to identify chunk boundaries
-2. Phase 2: Extract metadata for each chunk using LLM
+This script takes the list of files identified in Stage 1
+(from '1C_nas_files_to_process.json') and processes each file
+using the Azure Document Intelligence 'prebuilt-layout' model
+to extract content in Markdown format.
 
-The LLM only returns sentence indices, avoiding any content rewriting to handle DLP concerns.
+It handles large PDF files (>2000 pages) by splitting them into
+1000-page chunks, processing each chunk individually, and then
+recombining the Markdown output.
+
+Outputs for each processed file (Markdown and full analysis JSON)
+are stored in a structured directory on the NAS.
 """
 
 import os
 import sys
 import json
-import time
-import re
 import tempfile
+import time
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Tuple
-import logging
 import smbclient
-import pypdf
-from openai import OpenAI
-import tiktoken
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-logger = logging.getLogger(__name__)
+from pypdf import PdfReader, PdfWriter # For PDF handling
+from azure.core.credentials import AzureKeyCredential
+from azure.ai.documentintelligence import DocumentIntelligenceClient
+from azure.ai.documentintelligence.models import AnalyzeDocumentRequest, DocumentContentFormat # Corrected import
 
 # ==============================================================================
 # --- Configuration ---
 # ==============================================================================
 
-# --- NAS Configuration (Should match Stage 1) ---
+# --- Azure Document Intelligence Configuration ---
+# Azure service connection parameters
+AZURE_DI_ENDPOINT = "YOUR_DI_ENDPOINT"
+AZURE_DI_KEY = "YOUR_DI_KEY"
+
+# --- NAS Configuration (Should match Stage 1 or be loaded) ---
+# Network attached storage connection parameters
 NAS_PARAMS = {
     "ip": "your_nas_ip",
     "share": "your_share_name",
     "user": "your_nas_user",
     "password": "your_nas_password"
 }
-
-# Base paths
-NAS_BASE_INPUT_PATH = "path/to/your/transcripts"
+# Base path on the NAS share where Stage 1 output files were stored
 NAS_OUTPUT_FOLDER_PATH = "path/to/your/output_folder"
 
-# Document configuration
-DOCUMENT_SOURCE = 'earnings_call'
-DOCUMENT_TYPE = 'transcript'
-DOCUMENT_LANGUAGE = 'en'
+# --- Processing Configuration (Should match Stage 1) ---
+# Define the specific document source processed in Stage 1.
+DOCUMENT_SOURCE = 'internal_esg' # From Stage 1
+DB_TABLE_NAME = 'apg_catalog'    # From Stage 1 (Potentially needed for context, maybe not)
 
-# --- LLM Configuration ---
-# Should match Stage 1 OAuth and GPT config
-OAUTH_CONFIG = {
-    "token_url": "YOUR_OAUTH_TOKEN_ENDPOINT_URL",
-    "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "scope": "api://YourResource/.default"
-}
-
-GPT_CONFIG = {
-    "base_url": "YOUR_CUSTOM_GPT_API_BASE_URL",
-    "model_name": "gpt-4o",
-    "api_version": "2024-02-01"
-}
-
-# --- Processing Configuration ---
-# Chunking parameters
-TARGET_CHUNK_SIZE = 500  # Target tokens per chunk
-MIN_CHUNK_SIZE = 300     # Minimum tokens per chunk
-MAX_CHUNK_SIZE = 700     # Maximum tokens per chunk
-BATCH_TOKEN_LIMIT = 3000 # Maximum tokens to send to LLM per batch
-
-# Metadata extraction parameters
-METADATA_BATCH_SIZE = 5  # Number of chunks to process together for metadata
+# PDF Processing Configuration
+PDF_PAGE_LIMIT = 2000
+PDF_CHUNK_SIZE = 1000
 
 # ==============================================================================
 # --- Helper Functions ---
@@ -87,648 +64,441 @@ def initialize_smb_client():
     """Sets up smbclient credentials."""
     try:
         smbclient.ClientConfig(username=NAS_PARAMS["user"], password=NAS_PARAMS["password"])
-        logger.info("SMB client configured successfully.")
+        print("SMB client configured successfully.")
         return True
     except Exception as e:
-        logger.error(f"Failed to configure SMB client: {e}")
+        print(f"[ERROR] Failed to configure SMB client: {e}")
         return False
 
 def create_nas_directory(smb_dir_path):
     """Creates a directory on the NAS if it doesn't exist."""
     try:
         if not smbclient.path.exists(smb_dir_path):
-            logger.info(f"Creating NAS directory: {smb_dir_path}")
+            print(f"   Creating NAS directory: {smb_dir_path}")
             smbclient.makedirs(smb_dir_path, exist_ok=True)
+            print(f"   Successfully created directory.")
+        else:
+            # print(f"   NAS directory already exists: {smb_dir_path}") # Optional: reduce verbosity
+            pass
         return True
-    except Exception as e:
-        logger.error(f"Error creating/accessing NAS directory '{smb_dir_path}': {e}")
+    except Exception as e: # General exception will catch SMB errors too
+        print(f"   [ERROR] Unexpected error creating/accessing NAS directory '{smb_dir_path}': {e}")
         return False
 
-def write_json_to_nas(smb_path: str, data: Any) -> bool:
-    """Writes JSON data to a specified file path on the NAS."""
+def write_to_nas(smb_path, content_bytes):
+    """Writes bytes to a file path on the NAS using smbclient."""
+    print(f"   Attempting to write to NAS path: {smb_path}")
     try:
+        # Ensure the directory exists first (redundant if create_nas_directory called before, but safe)
         dir_path = os.path.dirname(smb_path)
-        if not smbclient.path.exists(dir_path):
-            smbclient.makedirs(dir_path, exist_ok=True)
+        if not create_nas_directory(dir_path):
+            return False # Failed to create directory
 
-        json_string = json.dumps(data, indent=2, default=str)
-        with smbclient.open_file(smb_path, mode='w', encoding='utf-8') as f:
-            f.write(json_string)
-        logger.info(f"Successfully wrote JSON to: {smb_path}")
+        with smbclient.open_file(smb_path, mode='wb') as f: # Write in binary mode
+            f.write(content_bytes)
+        print(f"   Successfully wrote {len(content_bytes)} bytes to: {smb_path}")
         return True
-    except Exception as e:
-        logger.error(f"Error writing JSON to NAS '{smb_path}': {e}")
+    except Exception as e: # General exception will catch SMB errors too
+        print(f"   [ERROR] Unexpected error writing to NAS '{smb_path}': {e}")
         return False
 
-def download_from_nas(smb_path: str, local_temp_dir: str) -> Optional[str]:
+def download_from_nas(smb_path, local_temp_dir):
     """Downloads a file from NAS to a local temporary directory."""
     local_file_path = os.path.join(local_temp_dir, os.path.basename(smb_path))
+    print(f"   Attempting to download from NAS: {smb_path} to {local_file_path}")
     try:
         with smbclient.open_file(smb_path, mode='rb') as nas_f:
             with open(local_file_path, 'wb') as local_f:
                 local_f.write(nas_f.read())
-        logger.info(f"Downloaded to: {local_file_path}")
+        print(f"   Successfully downloaded to: {local_file_path}")
         return local_file_path
-    except Exception as e:
-        logger.error(f"Error downloading from NAS '{smb_path}': {e}")
+    except Exception as e: # General exception will catch SMB errors too
+        print(f"   [ERROR] Unexpected error downloading from NAS '{smb_path}': {e}")
         return None
 
-def extract_text_from_pdf(pdf_path: str) -> str:
-    """Extracts all text from a PDF file."""
+def analyze_document_with_di(di_client, local_file_path, output_format=DocumentContentFormat.MARKDOWN): # Corrected usage
+    """Analyzes a local document using Azure Document Intelligence layout model."""
+    print(f"   Analyzing local file with DI: {local_file_path}")
     try:
-        text = ""
-        with open(pdf_path, 'rb') as f:
-            pdf_reader = pypdf.PdfReader(f)
-            for page_num, page in enumerate(pdf_reader.pages):
-                page_text = page.extract_text()
-                if page_text:
-                    text += f"\n{page_text}\n"
-        return text
-    except Exception as e:
-        logger.error(f"Error extracting text from PDF: {e}")
-        return ""
+        # Read the file content first
+        with open(local_file_path, "rb") as f:
+            document_bytes = f.read() # Read bytes only once
 
-def get_oauth_token():
-    """Retrieves an OAuth access token using client credentials flow."""
-    import requests
-    
-    logger.info("Requesting OAuth access token...")
-    payload = {
-        'client_id': OAUTH_CONFIG['client_id'],
-        'client_secret': OAUTH_CONFIG['client_secret'],
-        'grant_type': 'client_credentials'
-    }
-    if OAUTH_CONFIG.get('scope'):
-        payload['scope'] = OAUTH_CONFIG['scope']
-
-    try:
-        response = requests.post(OAUTH_CONFIG['token_url'], data=payload)
-        response.raise_for_status()
-        token_data = response.json()
-        access_token = token_data.get('access_token')
-        
-        if not access_token:
-            logger.error("'access_token' not found in OAuth response.")
-            return None
-            
-        logger.info("OAuth token obtained successfully.")
-        return access_token
-        
-    except Exception as e:
-        logger.error(f"Failed to get OAuth token: {e}")
-        return None
-
-def setup_openai_client() -> Optional[OpenAI]:
-    """Sets up the OpenAI client with auth token."""
-    access_token = get_oauth_token()
-    if not access_token:
-        logger.error("Failed to obtain OAuth token.")
-        return None
-        
-    try:
-        client = OpenAI(
-            api_key=access_token,
-            base_url=GPT_CONFIG.get('base_url', 'https://api.openai.com/v1')
+        # Try passing bytes directly as the second argument, as allowed by the SDK signature.
+        poller = di_client.begin_analyze_document(
+            "prebuilt-layout",       # model_id (positional)
+            document_bytes,          # analyze_request (positional, as bytes)
+            output_content_format=output_format # kwargs
         )
-        return client
+        result = poller.result()
+        print(f"   DI analysis successful.")
+        return result
     except Exception as e:
-        logger.error(f"Error setting up OpenAI client: {e}")
+        # Print the specific error type for better debugging
+        print(f"   [ERROR] Document Intelligence analysis failed for {local_file_path}: {type(e).__name__} - {e}")
         return None
 
-def count_tokens(text: str, model: str = "gpt-4") -> int:
-    """Count tokens in text using tiktoken."""
+def split_pdf(local_pdf_path, chunk_size, temp_dir):
+    """Splits a PDF into chunks of a specified size."""
+    chunk_paths = []
+    base_name = os.path.splitext(os.path.basename(local_pdf_path))[0]
+    print(f"   Splitting PDF: {os.path.basename(local_pdf_path)} into {chunk_size}-page chunks...")
     try:
-        encoding = tiktoken.encoding_for_model(model)
-        return len(encoding.encode(text))
+        reader = PdfReader(local_pdf_path)
+        total_pages = len(reader.pages)
+        for i in range(0, total_pages, chunk_size):
+            writer = PdfWriter()
+            start_page = i
+            end_page = min(i + chunk_size, total_pages)
+            print(f"      Creating chunk {len(chunk_paths) + 1}: pages {start_page + 1}-{end_page}")
+            for page_num in range(start_page, end_page):
+                writer.add_page(reader.pages[page_num])
+
+            chunk_filename = f"{base_name}_chunk_{len(chunk_paths) + 1}.pdf"
+            chunk_path = os.path.join(temp_dir, chunk_filename)
+            with open(chunk_path, "wb") as chunk_file:
+                writer.write(chunk_file)
+            chunk_paths.append(chunk_path)
+            print(f"      Saved chunk to: {chunk_path}")
+        print(f"   Successfully split into {len(chunk_paths)} chunks.")
+        return chunk_paths
     except Exception as e:
-        logger.warning(f"Error counting tokens, using approximation: {e}")
-        # Rough approximation: 1 token ≈ 4 characters
-        return len(text) // 4
-
-# ==============================================================================
-# --- Sentence Processing Functions ---
-# ==============================================================================
-
-def split_into_sentences(text: str) -> List[str]:
-    """
-    Split text into sentences, handling common edge cases.
-    Returns a list of sentences.
-    """
-    # Handle common abbreviations that shouldn't end sentences
-    abbreviations = r"(?:Mr|Mrs|Dr|Ms|Prof|Sr|Jr|Inc|Corp|Co|Ltd|vs|etc|al|i\.e|e\.g)"
-    
-    # Pattern to match sentence endings (., !, ?) but not abbreviations
-    sentence_end_pattern = r'(?<![A-Z][a-z]' + abbreviations + r')(?<!\d)(?<![A-Z])\.(?:\s+|$)|[!?](?:\s+|$)'
-    
-    # Split on sentence endings
-    sentences = re.split(sentence_end_pattern, text)
-    
-    # Clean up sentences
-    cleaned_sentences = []
-    for i, sentence in enumerate(sentences):
-        sentence = sentence.strip()
-        if sentence:
-            # Re-add the period if it was removed by the split
-            if i < len(sentences) - 1 and not sentence[-1] in '.!?':
-                sentence += '.'
-            cleaned_sentences.append(sentence)
-    
-    return cleaned_sentences
-
-def create_indexed_sentences(sentences: List[str]) -> Dict[int, str]:
-    """
-    Create a dictionary of indexed sentences.
-    Returns {1: "First sentence.", 2: "Second sentence.", ...}
-    """
-    return {i + 1: sentence for i, sentence in enumerate(sentences)}
-
-def format_sentences_for_llm(indexed_sentences: Dict[int, str], start_idx: int, end_idx: int) -> str:
-    """Format indexed sentences for LLM input."""
-    formatted_lines = []
-    for idx in range(start_idx, end_idx + 1):
-        if idx in indexed_sentences:
-            formatted_lines.append(f"[{idx}] {indexed_sentences[idx]}")
-    return "\n".join(formatted_lines)
-
-def collect_sentences_for_batch(
-    indexed_sentences: Dict[int, str], 
-    start_idx: int, 
-    token_limit: int
-) -> Tuple[int, str, int]:
-    """
-    Collect sentences starting from start_idx up to token_limit.
-    Returns: (end_idx, formatted_text, token_count)
-    """
-    current_tokens = 0
-    current_idx = start_idx
-    batch_sentences = []
-    
-    while current_idx <= len(indexed_sentences) and current_tokens < token_limit:
-        if current_idx in indexed_sentences:
-            sentence = indexed_sentences[current_idx]
-            sentence_tokens = count_tokens(f"[{current_idx}] {sentence}")
-            
-            if current_tokens + sentence_tokens > token_limit and batch_sentences:
-                # Don't add this sentence if it would exceed limit
-                break
-                
-            batch_sentences.append(f"[{current_idx}] {sentence}")
-            current_tokens += sentence_tokens
-        
-        current_idx += 1
-    
-    formatted_text = "\n".join(batch_sentences)
-    return current_idx - 1, formatted_text, current_tokens
-
-# ==============================================================================
-# --- LLM Processing Functions ---
-# ==============================================================================
-
-def create_chunking_prompt(
-    batch_sentences: str,
-    last_chunk_boundary: int,
-    target_chunk_size: int,
-    sentence_count: int
-) -> str:
-    """Creates the prompt for the LLM to identify chunk boundaries."""
-    
-    prompt = f"""You are processing a financial earnings call transcript. Your task is to identify natural breakpoints to create semantic chunks.
-
-CURRENT SENTENCES TO PROCESS:
-{batch_sentences}
-
-INSTRUCTIONS:
-1. Identify sentence indices where new chunks should start
-2. Target chunk size is approximately {target_chunk_size} tokens (roughly 10-15 sentences)
-3. Minimum chunk size: {MIN_CHUNK_SIZE} tokens
-4. Maximum chunk size: {MAX_CHUNK_SIZE} tokens
-5. Create chunks at natural boundaries:
-   - Topic changes
-   - Speaker transitions
-   - Section changes (e.g., from prepared remarks to Q&A)
-   - Logical breaks in discussion
-
-IMPORTANT:
-- The first chunk starts at sentence [{last_chunk_boundary + 1}]
-- Return ONLY the sentence indices where NEW chunks should begin
-- Do not include {last_chunk_boundary + 1} in your response
-- Each index marks the START of a new chunk
-
-RESPOND WITH JSON:
-{{
-    "chunk_breaks": [list of sentence indices where new chunks start],
-    "reasoning": "Brief explanation of your chunking decisions"
-}}
-
-Example: If sentences 47-62 form one chunk and 63-78 form another, return {{"chunk_breaks": [63]}}"""
-
-    return prompt
-
-def create_metadata_prompt(chunks_batch: List[Dict[str, Any]]) -> str:
-    """Creates prompt for extracting metadata from chunks."""
-    
-    chunks_text = ""
-    for i, chunk in enumerate(chunks_batch):
-        chunks_text += f"\nCHUNK {chunk['chunk_id']} (Sentences {chunk['start_sentence']}-{chunk['end_sentence']}):\n"
-        chunks_text += chunk['content']
-        chunks_text += "\n" + "-" * 50
-    
-    prompt = f"""Analyze these transcript chunks and extract structured metadata for each.
-
-{chunks_text}
-
-For EACH chunk, extract:
-1. Speaker(s) and their roles (if identifiable)
-2. Main topics discussed
-3. Key financial metrics with specific values
-4. Sentiment/tone of the discussion
-5. Important statements or guidance
-6. Which other chunks it references or relates to
-7. An importance score (1-10) based on financial significance
-
-RESPOND WITH JSON:
-{{
-    "chunks": [
-        {{
-            "chunk_id": "chunk_id_here",
-            "speakers": [
-                {{"name": "Speaker Name or 'Unknown'", "role": "CEO/CFO/Analyst/Unknown"}}
-            ],
-            "topics": ["topic1", "topic2"],
-            "financial_metrics": [
-                {{"metric": "Revenue", "value": "$X", "period": "Q1 2023", "context": "up X% YoY"}}
-            ],
-            "sentiment": "positive/neutral/negative/mixed",
-            "key_statements": ["Important quote or guidance"],
-            "references_chunks": ["related_chunk_ids"],
-            "importance_score": 7,
-            "summary": "One sentence summary of this chunk"
-        }}
-    ]
-}}"""
-
-    return prompt
-
-def process_with_llm(client: OpenAI, prompt: str, temperature: float = 0.1) -> Optional[Dict[str, Any]]:
-    """Sends prompt to LLM and returns parsed JSON response."""
-    try:
-        response = client.chat.completions.create(
-            model=GPT_CONFIG['model_name'],
-            messages=[
-                {"role": "system", "content": "You are an expert at analyzing financial transcripts. Always respond with valid JSON."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=temperature,
-            response_format={"type": "json_object"}
-        )
-        
-        response_text = response.choices[0].message.content
-        return json.loads(response_text)
-        
-    except Exception as e:
-        logger.error(f"Error processing with LLM: {e}")
-        return None
-
-# ==============================================================================
-# --- Phase 1: Smart Chunking ---
-# ==============================================================================
-
-def phase1_smart_chunking(
-    indexed_sentences: Dict[int, str],
-    client: OpenAI
-) -> List[Dict[str, Any]]:
-    """
-    Phase 1: Use LLM to identify chunk boundaries.
-    Returns list of chunks with sentence ranges.
-    """
-    chunks = []
-    last_chunk_boundary = 0
-    total_sentences = len(indexed_sentences)
-    
-    logger.info(f"Starting Phase 1: Smart chunking of {total_sentences} sentences")
-    
-    while last_chunk_boundary < total_sentences:
-        # Collect sentences for this batch
-        batch_end_idx, batch_text, token_count = collect_sentences_for_batch(
-            indexed_sentences,
-            last_chunk_boundary + 1,
-            BATCH_TOKEN_LIMIT
-        )
-        
-        if batch_end_idx <= last_chunk_boundary:
-            # No more sentences to process
-            break
-            
-        logger.info(f"Processing batch: sentences {last_chunk_boundary + 1} to {batch_end_idx} ({token_count} tokens)")
-        
-        # Get chunk boundaries from LLM
-        prompt = create_chunking_prompt(
-            batch_text,
-            last_chunk_boundary,
-            TARGET_CHUNK_SIZE,
-            batch_end_idx - last_chunk_boundary
-        )
-        
-        response = process_with_llm(client, prompt)
-        
-        if response and 'chunk_breaks' in response:
-            chunk_breaks = response['chunk_breaks']
-            logger.info(f"LLM identified chunk breaks at: {chunk_breaks}")
-            
-            # Process the chunk breaks
-            current_start = last_chunk_boundary + 1
-            
-            for break_idx in chunk_breaks:
-                if break_idx > current_start and break_idx <= batch_end_idx:
-                    # Create chunk from current_start to break_idx - 1
-                    chunks.append({
-                        'start_sentence': current_start,
-                        'end_sentence': break_idx - 1
-                    })
-                    current_start = break_idx
-            
-            # Update last_chunk_boundary to the last break point
-            if chunk_breaks and chunk_breaks[-1] <= batch_end_idx:
-                last_chunk_boundary = chunk_breaks[-1] - 1
-            else:
-                # If no valid breaks, use the end of this batch
-                last_chunk_boundary = batch_end_idx
-        else:
-            logger.warning("LLM did not return valid chunk breaks, using batch boundary")
-            # Create a chunk for this entire batch
-            chunks.append({
-                'start_sentence': last_chunk_boundary + 1,
-                'end_sentence': batch_end_idx
-            })
-            last_chunk_boundary = batch_end_idx
-    
-    # Don't forget the final chunk
-    if last_chunk_boundary < total_sentences:
-        chunks.append({
-            'start_sentence': last_chunk_boundary + 1,
-            'end_sentence': total_sentences
-        })
-    
-    # Add chunk IDs and content
-    for i, chunk in enumerate(chunks):
-        chunk['chunk_id'] = f"chunk_{i+1:03d}"
-        # Combine sentences for this chunk
-        sentences = []
-        for idx in range(chunk['start_sentence'], chunk['end_sentence'] + 1):
-            if idx in indexed_sentences:
-                sentences.append(indexed_sentences[idx])
-        chunk['content'] = " ".join(sentences)
-        chunk['token_count'] = count_tokens(chunk['content'])
-    
-    logger.info(f"Phase 1 complete: Created {len(chunks)} chunks")
-    return chunks
-
-# ==============================================================================
-# --- Phase 2: Metadata Extraction ---
-# ==============================================================================
-
-def phase2_metadata_extraction(
-    chunks: List[Dict[str, Any]],
-    client: OpenAI
-) -> List[Dict[str, Any]]:
-    """
-    Phase 2: Extract metadata for chunks using LLM.
-    Returns chunks with added metadata.
-    """
-    logger.info(f"Starting Phase 2: Metadata extraction for {len(chunks)} chunks")
-    
-    # Process chunks in batches
-    for i in range(0, len(chunks), METADATA_BATCH_SIZE):
-        batch = chunks[i:i + METADATA_BATCH_SIZE]
-        logger.info(f"Processing metadata batch: chunks {i+1} to {min(i+METADATA_BATCH_SIZE, len(chunks))}")
-        
-        prompt = create_metadata_prompt(batch)
-        response = process_with_llm(client, prompt, temperature=0.2)
-        
-        if response and 'chunks' in response:
-            # Match metadata to chunks
-            for chunk_metadata in response['chunks']:
-                chunk_id = chunk_metadata.get('chunk_id')
-                # Find the matching chunk
-                for chunk in batch:
-                    if chunk['chunk_id'] == chunk_id:
-                        # Add metadata to chunk
-                        chunk['speakers'] = chunk_metadata.get('speakers', [])
-                        chunk['topics'] = chunk_metadata.get('topics', [])
-                        chunk['financial_metrics'] = chunk_metadata.get('financial_metrics', [])
-                        chunk['sentiment'] = chunk_metadata.get('sentiment', 'neutral')
-                        chunk['key_statements'] = chunk_metadata.get('key_statements', [])
-                        chunk['references_chunks'] = chunk_metadata.get('references_chunks', [])
-                        chunk['importance_score'] = chunk_metadata.get('importance_score', 5)
-                        chunk['summary'] = chunk_metadata.get('summary', '')
-                        break
-        else:
-            logger.warning(f"Failed to extract metadata for batch starting at chunk {i+1}")
-    
-    logger.info("Phase 2 complete: Metadata extraction finished")
-    return chunks
+        print(f"   [ERROR] Failed to split PDF {local_pdf_path}: {e}")
+        return [] # Return empty list on failure
 
 # ==============================================================================
 # --- Main Processing Function ---
 # ==============================================================================
 
-def process_transcript(
-    text: str,
-    client: OpenAI,
-    file_metadata: Dict[str, Any]
-) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
-    """
-    Process a transcript through both phases.
-    Returns (chunks, processing_metadata)
-    """
-    start_time = time.time()
-    
-    # Split into sentences
-    logger.info("Splitting text into sentences...")
-    sentences = split_into_sentences(text)
-    indexed_sentences = create_indexed_sentences(sentences)
-    logger.info(f"Created {len(indexed_sentences)} indexed sentences")
-    
-    # Phase 1: Smart chunking
-    chunks = phase1_smart_chunking(indexed_sentences, client)
-    
-    # Add file metadata to each chunk
-    for chunk in chunks:
-        chunk.update(file_metadata)
-    
-    # Phase 2: Metadata extraction
-    chunks = phase2_metadata_extraction(chunks, client)
-    
-    # Create processing metadata
-    processing_metadata = {
-        'total_sentences': len(sentences),
-        'total_chunks': len(chunks),
-        'total_tokens': sum(chunk.get('token_count', 0) for chunk in chunks),
-        'processing_time': time.time() - start_time,
-        'processing_timestamp': datetime.now(timezone.utc).isoformat(),
-        'model_used': GPT_CONFIG['model_name'],
-        'chunking_parameters': {
-            'target_chunk_size': TARGET_CHUNK_SIZE,
-            'min_chunk_size': MIN_CHUNK_SIZE,
-            'max_chunk_size': MAX_CHUNK_SIZE,
-            'batch_token_limit': BATCH_TOKEN_LIMIT
-        }
-    }
-    
-    return chunks, processing_metadata
-
-# ==============================================================================
-# --- Main Execution Logic ---
-# ==============================================================================
-
-def main():
-    logger.info("=" * 60)
-    logger.info("Running Stage 2: Process Transcripts with Sentence-Based Chunking")
-    logger.info(f"Document Source: {DOCUMENT_SOURCE}")
-    logger.info("=" * 60)
-    
-    # Initialize clients
-    if not initialize_smb_client():
-        logger.error("Failed to initialize SMB client. Exiting.")
-        sys.exit(1)
-    
-    openai_client = setup_openai_client()
-    if not openai_client:
-        logger.error("Failed to set up OpenAI client. Exiting.")
-        sys.exit(1)
-    
-    # Define paths
-    stage1_output_dir = os.path.join(NAS_OUTPUT_FOLDER_PATH, DOCUMENT_SOURCE).replace('\\', '/')
-    stage1_output_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{stage1_output_dir}"
-    
-    # Check for skip flag
-    skip_flag_path = os.path.join(stage1_output_dir_smb, '_SKIP_SUBSEQUENT_STAGES.flag').replace('\\', '/')
+def main_processing_stage2(di_client, files_to_process_json_smb, stage2_output_dir_smb):
+    """Loads input files, processes them with DI, and saves results."""
+    print(f"--- Starting Main Processing for Stage 2 ---")
+    # --- Load Files to Process List ---
+    print(f"[4] Loading list of files to process from: {os.path.basename(files_to_process_json_smb)}...")
+    files_to_process = []
     try:
-        if smbclient.path.exists(skip_flag_path):
-            logger.info("Skip flag found. No files to process.")
-            return
-    except Exception as e:
-        logger.warning(f"Error checking skip flag: {e}")
-    
-    # Load files to process
-    files_json_path = os.path.join(stage1_output_dir_smb, '1C_nas_files_to_process.json').replace('\\', '/')
-    try:
-        with smbclient.open_file(files_json_path, mode='r', encoding='utf-8') as f:
+        # Read the JSON file content from NAS
+        with smbclient.open_file(files_to_process_json_smb, mode='r', encoding='utf-8') as f:
             files_to_process = json.load(f)
+        print(f"   Successfully loaded {len(files_to_process)} file entries.")
+        if not files_to_process:
+             print("   List is empty. No files to process in Stage 2.")
+             print("\n" + "="*60)
+             print(f"--- Stage 2 Completed (No files to process) ---")
+             print("="*60 + "\n")
+             return # Exit this function early
+    except json.JSONDecodeError as e:
+        print(f"   [CRITICAL ERROR] Failed to parse JSON from '{files_to_process_json_smb}': {e}")
+        sys.exit(1) # Exit script if critical file cannot be read/parsed
     except Exception as e:
-        logger.error(f"Error loading files to process: {e}")
-        sys.exit(1)
-    
-    logger.info(f"Found {len(files_to_process)} files to process")
-    
-    # Create output directory
-    output_dir = os.path.join(stage1_output_dir, '2_processed_transcripts').replace('\\', '/')
-    output_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{output_dir}"
-    create_nas_directory(output_dir_smb)
-    
-    # Process each file
-    all_transcripts_metadata = []
-    
+        print(f"   [CRITICAL ERROR] Unexpected error reading or parsing '{files_to_process_json_smb}': {e}")
+        sys.exit(1) # Exit script if critical file cannot be read/parsed
+    print("-" * 60)
+
+    # --- Process Each File ---
+    print(f"[4] Processing {len(files_to_process)} files...")
+    processed_count = 0
+    error_count = 0
+
+    # Create a single temporary directory for all downloads/chunks
     with tempfile.TemporaryDirectory() as temp_dir:
-        for idx, file_info in enumerate(files_to_process):
+        print(f"   Using temporary directory: {temp_dir}")
+
+        for i, file_info in enumerate(files_to_process):
+            start_time = time.time()
+            file_has_error = False
+            print(f"\n--- Processing file {i+1}/{len(files_to_process)} ---")
             try:
-                logger.info(f"\n{'='*60}")
-                logger.info(f"Processing file {idx + 1}/{len(files_to_process)}: {file_info['file_name']}")
-                logger.info(f"{'='*60}")
-                
-                # Download file
-                file_smb_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{file_info['file_path']}"
-                local_path = download_from_nas(file_smb_path, temp_dir)
-                
-                if not local_path:
-                    logger.error(f"Failed to download {file_info['file_name']}")
+                file_name = file_info.get('file_name')
+                file_path_relative = file_info.get('file_path') # Path relative to share root
+
+                if not file_name or not file_path_relative:
+                    print("   [ERROR] Skipping entry due to missing 'file_name' or 'file_path'.")
+                    error_count += 1
                     continue
-                
-                # Extract text
-                text = extract_text_from_pdf(local_path)
-                if not text:
-                    logger.error(f"No text extracted from {file_info['file_name']}")
+
+                print(f"   File Name: {file_name}")
+                print(f"   Relative NAS Path: {file_path_relative}")
+
+                # Construct full SMB path for the input file
+                input_file_smb_path = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{file_path_relative}"
+
+                # Construct output paths
+                file_name_base = os.path.splitext(file_name)[0]
+                file_output_subfolder_smb = os.path.join(stage2_output_dir_smb, file_name_base).replace('\\', '/')
+                output_md_smb_path = os.path.join(file_output_subfolder_smb, f"{file_name_base}.md").replace('\\', '/')
+                output_json_smb_path = os.path.join(file_output_subfolder_smb, f"{file_name_base}.json").replace('\\', '/') # Base name for non-chunked
+
+                print(f"   Output Subfolder (SMB): {file_output_subfolder_smb}")
+                print(f"   Output Markdown Path (SMB): {output_md_smb_path}")
+                print(f"   Output JSON Path (SMB): {output_json_smb_path}")
+
+                # Ensure the specific output subfolder exists for this file
+                if not create_nas_directory(file_output_subfolder_smb):
+                    print(f"   [ERROR] Failed to create output subfolder for {file_name}. Skipping.")
+                    error_count += 1
                     continue
-                
-                # Prepare metadata
-                file_metadata = {
-                    'document_source': DOCUMENT_SOURCE,
-                    'document_type': DOCUMENT_TYPE,
-                    'document_language': DOCUMENT_LANGUAGE,
-                    'bank_name': file_info['bank_name'],
-                    'fiscal_year': file_info['fiscal_year'],
-                    'fiscal_quarter': file_info['fiscal_quarter'],
-                    'document_name': file_info.get('document_name', f"Q{file_info['fiscal_quarter']} {file_info['fiscal_year']} Earnings Call"),
-                    'file_name': file_info['file_name'],
-                    'file_name_base': os.path.splitext(file_info['file_name'])[0],
-                    'file_path': file_info['file_path'],
-                    'file_size': file_info['file_size'],
-                    'date_last_modified': file_info['date_last_modified'],
-                    'date_processed': datetime.now(timezone.utc).isoformat()
-                }
-                
-                # Process transcript
-                chunks, processing_metadata = process_transcript(
-                    text,
-                    openai_client,
-                    file_metadata
-                )
-                
-                # Create transcript output directory
-                transcript_dir = os.path.join(output_dir, file_metadata['file_name_base']).replace('\\', '/')
-                transcript_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{transcript_dir}"
-                create_nas_directory(transcript_dir_smb)
-                
-                # Save chunks
-                chunks_path = os.path.join(transcript_dir_smb, f"{file_metadata['file_name_base']}_chunks.json").replace('\\', '/')
-                write_json_to_nas(chunks_path, chunks)
-                
-                # Save processing metadata
-                metadata_path = os.path.join(transcript_dir_smb, f"{file_metadata['file_name_base']}_metadata.json").replace('\\', '/')
-                write_json_to_nas(metadata_path, {**file_metadata, **processing_metadata})
-                
-                # Save indexed sentences for reference
-                sentences_path = os.path.join(transcript_dir_smb, f"{file_metadata['file_name_base']}_sentences.json").replace('\\', '/')
-                sentences = split_into_sentences(text)
-                indexed_sentences = create_indexed_sentences(sentences)
-                write_json_to_nas(sentences_path, indexed_sentences)
-                
-                # Add to overall metadata
-                all_transcripts_metadata.append({
-                    **file_metadata,
-                    **processing_metadata,
-                    'chunks_file': chunks_path,
-                    'status': 'completed'
-                })
-                
-                logger.info(f"Successfully processed {file_info['file_name']} into {len(chunks)} chunks")
-                
-                # Clean up
-                os.remove(local_path)
-                
+
+                # Download file from NAS to temporary local directory
+                local_file_path = download_from_nas(input_file_smb_path, temp_dir)
+                if not local_file_path:
+                    print(f"   [ERROR] Failed to download {file_name} from NAS. Skipping.")
+                    error_count += 1
+                    continue # Skip to next file
+
+                # --- Document Intelligence Processing ---
+                combined_markdown = ""
+                results_json_list = [] # To store DI results (full or chunked)
+
+                # Check if PDF and needs splitting
+                is_pdf = file_name.lower().endswith('.pdf')
+                needs_splitting = False
+                page_count = 0
+                local_chunk_paths = []
+
+                if is_pdf:
+                    try:
+                        reader = PdfReader(local_file_path)
+                        page_count = len(reader.pages)
+                        print(f"   PDF detected with {page_count} pages.")
+                        if page_count > PDF_PAGE_LIMIT:
+                            needs_splitting = True
+                            print(f"   PDF exceeds page limit ({PDF_PAGE_LIMIT}). Splitting required.")
+                        else:
+                             print(f"   PDF within page limit. Processing as single document.")
+                    except Exception as pdf_err:
+                        print(f"   [WARNING] Could not read PDF metadata for {file_name}: {pdf_err}. Attempting to process as single document.")
+                        is_pdf = False # Treat as non-pdf if metadata read fails
+
+                if is_pdf and needs_splitting:
+                    # Split PDF into chunks
+                    local_chunk_paths = split_pdf(local_file_path, PDF_CHUNK_SIZE, temp_dir)
+                    if not local_chunk_paths:
+                        print(f"   [ERROR] Failed to split PDF {file_name}. Skipping analysis.")
+                        file_has_error = True
+                    else:
+                        # Process each chunk
+                        all_chunks_processed = True
+                        for chunk_index, chunk_path in enumerate(local_chunk_paths):
+                            print(f"      Processing chunk {chunk_index + 1}/{len(local_chunk_paths)}...")
+                            analyze_result = analyze_document_with_di(di_client, chunk_path)
+                            if analyze_result and analyze_result.content:
+                                combined_markdown += analyze_result.content + "\n\n" # Add separator between chunks
+                                # Manually create dictionary from AnalyzeResult, mirroring example structure
+                                result_dict = {'content': analyze_result.content, 'pages': []}
+                                if hasattr(analyze_result, 'pages'):
+                                    for page in analyze_result.pages:
+                                        page_data = {
+                                            'page_number': page.page_number,
+                                            'width': page.width if hasattr(page, 'width') else None,
+                                            'height': page.height if hasattr(page, 'height') else None,
+                                            'unit': page.unit if hasattr(page, 'unit') else None,
+                                            'angle': page.angle if hasattr(page, 'angle') else None
+                                            # Add other page attributes if needed
+                                        }
+                                        result_dict['pages'].append(page_data)
+                                if hasattr(analyze_result, 'tables') and analyze_result.tables:
+                                    result_dict['tables_count'] = len(analyze_result.tables)
+                                if hasattr(analyze_result, 'paragraphs') and analyze_result.paragraphs:
+                                    result_dict['paragraphs_count'] = len(analyze_result.paragraphs)
+                                # Add other relevant attributes if needed
+                                results_json_list.append(result_dict)
+                                print(f"      Chunk {chunk_index + 1} processed successfully.")
+                            else:
+                                print(f"      [ERROR] Failed to process chunk {chunk_index + 1} for {file_name}.")
+                                file_has_error = True
+                                all_chunks_processed = False
+                                # Decide whether to break or continue processing other chunks
+                                # break # Option: Stop processing this file if one chunk fails
+                        if not all_chunks_processed:
+                             print(f"   [ERROR] Not all chunks of {file_name} were processed successfully.")
+                        else:
+                             print(f"   All chunks of {file_name} processed.")
+
+                else: # Process non-PDF or small PDF
+                    analyze_result = analyze_document_with_di(di_client, local_file_path)
+                    if analyze_result and analyze_result.content:
+                        combined_markdown = analyze_result.content
+                        # Manually create dictionary from AnalyzeResult, mirroring example structure
+                        result_dict = {'content': analyze_result.content, 'pages': []}
+                        if hasattr(analyze_result, 'pages'):
+                            for page in analyze_result.pages:
+                                page_data = {
+                                    'page_number': page.page_number,
+                                    'width': page.width if hasattr(page, 'width') else None,
+                                    'height': page.height if hasattr(page, 'height') else None,
+                                    'unit': page.unit if hasattr(page, 'unit') else None,
+                                    'angle': page.angle if hasattr(page, 'angle') else None
+                                    # Add other page attributes if needed
+                                }
+                                result_dict['pages'].append(page_data)
+                        if hasattr(analyze_result, 'tables') and analyze_result.tables:
+                            result_dict['tables_count'] = len(analyze_result.tables)
+                        if hasattr(analyze_result, 'paragraphs') and analyze_result.paragraphs:
+                            result_dict['paragraphs_count'] = len(analyze_result.paragraphs)
+                        # Add other relevant attributes if needed
+                        results_json_list.append(result_dict)
+                    else:
+                        print(f"   [ERROR] Failed to process document {file_name}.")
+                        file_has_error = True
+
+                # --- Save Results to NAS ---
+                if combined_markdown and not file_has_error:
+                    print(f"   Saving combined Markdown output to NAS...")
+                    md_bytes = combined_markdown.encode('utf-8')
+                    if not write_to_nas(output_md_smb_path, md_bytes):
+                        print(f"   [ERROR] Failed to write Markdown file for {file_name} to NAS.")
+                        file_has_error = True # Mark error even if DI worked
+
+                if results_json_list and not file_has_error:
+                    print(f"   Saving analysis JSON output(s) to NAS...")
+                    if needs_splitting:
+                        # Save JSON for each chunk
+                        for chunk_index, result_json in enumerate(results_json_list):
+                            chunk_json_smb_path = os.path.join(file_output_subfolder_smb, f"{file_name_base}_chunk_{chunk_index + 1}.json").replace('\\', '/')
+                            # Add handler for non-serializable objects
+                            def json_serializer(obj):
+                                if hasattr(obj, '__dict__'):
+                                    return obj.__dict__
+                                return str(obj)
+                            
+                            json_bytes = json.dumps(result_json, indent=4, default=json_serializer).encode('utf-8')
+                            if not write_to_nas(chunk_json_smb_path, json_bytes):
+                                print(f"   [ERROR] Failed to write JSON chunk {chunk_index + 1} for {file_name} to NAS.")
+                                # Don't necessarily mark file_has_error, maybe just log warning?
+                    else:
+                        # Save single JSON for non-split files
+                        # Add handler for non-serializable objects
+                        def json_serializer(obj):
+                            if hasattr(obj, '__dict__'):
+                                return obj.__dict__
+                            return str(obj)
+                        
+                        json_bytes = json.dumps(results_json_list[0], indent=4, default=json_serializer).encode('utf-8')
+                        if not write_to_nas(output_json_smb_path, json_bytes):
+                            print(f"   [ERROR] Failed to write JSON file for {file_name} to NAS.")
+                            # Don't necessarily mark file_has_error, maybe just log warning?
+
             except Exception as e:
-                logger.error(f"Error processing {file_info.get('file_name', 'unknown')}: {e}")
-                all_transcripts_metadata.append({
-                    **file_info,
-                    'status': 'failed',
-                    'error': str(e),
-                    'date_processed': datetime.now(timezone.utc).isoformat()
-                })
-    
-    # Save overall processing summary
-    summary_path = os.path.join(output_dir_smb, '2_processing_summary.json').replace('\\', '/')
-    write_json_to_nas(summary_path, {
-        'stage': 'stage2_process_transcripts',
-        'processed_count': len([m for m in all_transcripts_metadata if m.get('status') == 'completed']),
-        'failed_count': len([m for m in all_transcripts_metadata if m.get('status') == 'failed']),
-        'total_files': len(files_to_process),
-        'processing_timestamp': datetime.now(timezone.utc).isoformat(),
-        'transcripts': all_transcripts_metadata
-    })
-    
-    logger.info("=" * 60)
-    logger.info("Stage 2 completed successfully!")
-    logger.info("=" * 60)
+                print(f"   [ERROR] Unexpected error processing file {file_info.get('file_name', 'N/A')}: {e}")
+                file_has_error = True
+            finally:
+                # --- Cleanup ---
+                if local_file_path and os.path.exists(local_file_path):
+                    try:
+                        os.remove(local_file_path)
+                        # print(f"   Cleaned up temporary file: {local_file_path}") # Optional verbosity
+                    except OSError as e:
+                        print(f"   [WARNING] Failed to remove temporary file {local_file_path}: {e}")
+                if local_chunk_paths:
+                    for chunk_path in local_chunk_paths:
+                         if os.path.exists(chunk_path):
+                            try:
+                                os.remove(chunk_path)
+                                # print(f"   Cleaned up temporary chunk: {chunk_path}") # Optional verbosity
+                            except OSError as e:
+                                print(f"   [WARNING] Failed to remove temporary chunk {chunk_path}: {e}")
+
+                # --- Update Counters ---
+                if file_has_error:
+                    error_count += 1
+                    print(f"--- Finished file {i+1} (ERROR) ---")
+                else:
+                    processed_count += 1
+                    print(f"--- Finished file {i+1} (Success) ---")
+                end_time = time.time()
+                print(f"--- Time taken: {end_time - start_time:.2f} seconds ---")
+
+
+    # --- Final Summary ---
+    print("\n" + "="*60)
+    print(f"--- Stage 2 Processing Summary ---")
+    print(f"   Total files attempted: {len(files_to_process)}")
+    print(f"   Successfully processed: {processed_count}")
+    print(f"   Errors encountered: {error_count}")
+    print("="*60 + "\n")
+
+    if error_count > 0:
+        print(f"[WARNING] {error_count} files encountered errors during processing. Check logs above.")
+        # Optionally exit with error code if any file failed
+        # sys.exit(1)
+
+    print(f"--- Stage 2 Completed ---")
+    print(f"--- End of Main Processing for Stage 2 ---")
+
+# ==============================================================================
+# --- Script Entry Point ---
+# ==============================================================================
 
 if __name__ == "__main__":
-    main()
+    print("\n" + "="*60)
+    print(f"--- Running Stage 2: Process Documents with Document Intelligence ---")
+    print(f"--- Document Source: {DOCUMENT_SOURCE} ---")
+    print("="*60 + "\n")
+
+    # --- Initialize Clients ---
+    print("[1] Initializing Clients...")
+    if not initialize_smb_client():
+        sys.exit(1) # Exit if SMB client fails
+
+    di_client = None # Initialize to None
+    try:
+        di_client = DocumentIntelligenceClient(
+            endpoint=AZURE_DI_ENDPOINT, credential=AzureKeyCredential(AZURE_DI_KEY)
+        )
+        print("Document Intelligence client initialized successfully.")
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize Document Intelligence client: {e}")
+        sys.exit(1) # Exit if DI client fails
+    print("-" * 60)
+
+    # --- Define Paths ---
+    print("[2] Defining NAS Paths...")
+    # Base output directory from Stage 1
+    stage1_output_dir_relative = os.path.join(NAS_OUTPUT_FOLDER_PATH, DOCUMENT_SOURCE).replace('\\', '/')
+    stage1_output_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{stage1_output_dir_relative}"
+    # Input JSON file from Stage 1
+    files_to_process_json_smb = os.path.join(stage1_output_dir_smb, '1C_nas_files_to_process.json').replace('\\', '/')
+    # Base output directory for Stage 2 results
+    stage2_output_dir_relative = os.path.join(stage1_output_dir_relative, '2A_processed_files').replace('\\', '/')
+    stage2_output_dir_smb = f"//{NAS_PARAMS['ip']}/{NAS_PARAMS['share']}/{stage2_output_dir_relative}"
+
+    print(f"   Stage 1 Output Dir (SMB): {stage1_output_dir_smb}")
+    print(f"   Input JSON File (SMB): {files_to_process_json_smb}")
+    print(f"   Stage 2 Output Base Dir (SMB): {stage2_output_dir_smb}")
+
+    # Ensure base Stage 2 output directory exists
+    if not create_nas_directory(stage2_output_dir_smb):
+        print("[CRITICAL ERROR] Could not create base Stage 2 output directory on NAS. Exiting.")
+        sys.exit(1)
+    print("-" * 60)
+
+    # --- Check for Skip Flag from Stage 1 ---
+    print("[3] Checking for skip flag from Stage 1...")
+    skip_flag_file_name = '_SKIP_SUBSEQUENT_STAGES.flag'
+    skip_flag_smb_path = os.path.join(stage1_output_dir_smb, skip_flag_file_name).replace('\\', '/')
+    print(f"   Checking for flag file: {skip_flag_smb_path}")
+    should_skip = False
+    try:
+        # Ensure SMB client is configured (should be from step [1])
+        if smbclient.path.exists(skip_flag_smb_path):
+            print(f"   Skip flag file found. Stage 1 indicated no files to process.")
+            should_skip = True
+        else:
+            print(f"   Skip flag file not found. Proceeding with Stage 2.")
+    except Exception as e:
+        print(f"   [WARNING] Unexpected error checking for skip flag file '{skip_flag_smb_path}': {e}")
+        print(f"   Proceeding with Stage 2.")
+        # Continue execution if flag check fails
+    print("-" * 60)
+
+    # --- Execute Main Processing if Not Skipped ---
+    if should_skip:
+        print("\n" + "="*60)
+        print(f"--- Stage 2 Skipped (No files to process from Stage 1) ---")
+        print("="*60 + "\n")
+    else:
+        # Call the main processing function only if not skipping
+        main_processing_stage2(di_client, files_to_process_json_smb, stage2_output_dir_smb)
+
+    # Script ends naturally here if skipped or after main_processing completes
