@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Model UI - Phase 2 Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 206, 84, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            color: white;
+            margin-bottom: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            color: #b8c3f0;
+        }
+
+        /* Highlights Section */
+        .highlights-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .highlights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .highlights-header h2 {
+            color: #fff;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .expand-btn {
+            background: linear-gradient(135deg, #6a5acd 0%, #4b0082 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        .expand-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        .highlights-banner {
+            padding: 25px;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        .highlights-banner::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .highlights-banner::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .highlights-banner::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .highlight-tile {
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .highlight-tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .highlight-tile:hover::before {
+            opacity: 1;
+        }
+
+        .highlight-tile:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .highlight-tile.event {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 50, 120, 0.2) 100%);
+            border-color: rgba(255, 107, 107, 0.3);
+        }
+
+        .highlight-tile.trend {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%);
+            border-color: rgba(79, 172, 254, 0.3);
+        }
+
+        .highlight-tile.key {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .highlight-tile h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .highlight-tile h3 .icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .highlight-tile p {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .highlight-tile .ai-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Catalog Section */
+        .catalog-expanded {
+            padding: 0 25px 25px;
+            display: none;
+        }
+
+        .week-section {
+            margin-bottom: 35px;
+        }
+
+        .week-header {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .week-header::before {
+            content: '📅';
+            font-size: 1.1rem;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .catalog-tile {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            color: white;
+        }
+
+        .catalog-tile:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(106, 90, 205, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .catalog-tile.selected {
+            background: rgba(106, 90, 205, 0.2);
+            border-color: rgba(106, 90, 205, 0.6);
+            box-shadow: 0 0 20px rgba(106, 90, 205, 0.3);
+        }
+
+        .catalog-tile input[type="checkbox"] {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #6a5acd;
+        }
+
+        .catalog-tile h4 {
+            color: #fff;
+            margin-bottom: 10px;
+            padding-right: 35px;
+            font-size: 1.1rem;
+        }
+
+        .catalog-tile p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .catalog-tile .date {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .catalog-tile .date::before {
+            content: '🕐';
+            font-size: 0.9rem;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-header h2 {
+            color: #fff;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-content {
+            display: none;
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, rgba(106, 90, 205, 0.8) 0%, rgba(75, 0, 130, 0.8) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        .message.agent .message-content {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .message.system {
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .message.system .message-content {
+            background: rgba(255, 206, 84, 0.2);
+            border: 1px solid rgba(255, 206, 84, 0.4);
+            color: #ffce54;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        .chat-input {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            font-size: 1rem;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .chat-input input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(106, 90, 205, 0.5);
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, #6a5acd 0%, #4b0082 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+
+        /* Reports Section */
+        .reports-section {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .reports-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .reports-header h2 {
+            color: #fff;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reports-content {
+            padding: 25px;
+            display: none;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .report-tile {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-tile::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(106, 90, 205, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .report-tile:hover::before {
+            opacity: 1;
+        }
+
+        .report-tile:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(106, 90, 205, 0.5);
+        }
+
+        .report-tile .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .report-tile h3 {
+            color: #fff;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
+        }
+
+        .report-tile p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* Expanded state */
+        .expanded {
+            display: block !important;
+        }
+
+        /* Selected documents indicator */
+        .selected-count {
+            background: linear-gradient(135deg, #6a5acd 0%, #4b0082 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        /* Floating action button */
+        .floating-action {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #6a5acd 0%, #4b0082 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 30px;
+            box-shadow: 0 8px 25px rgba(106, 90, 205, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            z-index: 1000;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .floating-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(106, 90, 205, 0.5);
+        }
+
+        .floating-action.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .floating-action .icon {
+            font-size: 1.2rem;
+        }
+
+        .floating-action .badge {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+
+        /* Chat with documents button */
+        .chat-documents-btn {
+            background: linear-gradient(135deg, #6a5acd 0%, #4b0082 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+        }
+
+        .chat-documents-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AEGIS Intelligence Platform</h1>
+            <p>AI-Powered Financial Analysis & Insights</p>
+        </div>
+
+        <!-- Highlights Section -->
+        <div class="highlights-section">
+            <div class="highlights-header" onclick="toggleSection('highlights')">
+                <h2>📊 Market Highlights & Updates</h2>
+                <button class="expand-btn">Expand</button>
+            </div>
+            
+            <div class="highlights-banner">
+                <div class="highlight-tile event" data-doc-id="td-q3-earnings" onclick="selectHighlightDoc('td-q3-earnings')">
+                    <span class="ai-badge">✨ AI</span>
+                    <h3><span class="icon">📈</span>Event</h3>
+                    <p>TD Bank Q3 Earnings Released - Revenue beats expectations by 5%</p>
+                </div>
+                <div class="highlight-tile key" data-doc-id="rbc-ai-investment" onclick="selectHighlightDoc('rbc-ai-investment')">
+                    <span class="ai-badge">✨ AI</span>
+                    <h3><span class="icon">💡</span>Key Highlight</h3>
+                    <p>RBC invests $100M in AI infrastructure for enhanced customer service</p>
+                </div>
+                <div class="highlight-tile trend" data-doc-id="digital-trends" onclick="selectHighlightDoc('digital-trends')">
+                    <span class="ai-badge">✨ AI</span>
+                    <h3><span class="icon">📊</span>Market Trend</h3>
+                    <p>Canadian banks report 12% average growth in digital adoption</p>
+                </div>
+                <div class="highlight-tile event" data-doc-id="scotia-product" onclick="selectHighlightDoc('scotia-product')">
+                    <span class="ai-badge">✨ AI</span>
+                    <h3><span class="icon">🏠</span>Event</h3>
+                    <p>ScotiaBank launches new mortgage product with flexible terms</p>
+                </div>
+                <div class="highlight-tile trend" data-doc-id="rate-decision" onclick="selectHighlightDoc('rate-decision')">
+                    <span class="ai-badge">✨ AI</span>
+                    <h3><span class="icon">📉</span>Trend</h3>
+                    <p>Prime rate lowered to 6.95% - impact on lending strategies</p>
+                </div>
+            </div>
+
+            <div id="highlights-expanded" class="catalog-expanded">
+                <div class="week-section">
+                    <h3 class="week-header">Week of November 18-22, 2024</h3>
+                    <div class="catalog-grid">
+                        <div class="catalog-tile" data-doc-id="td-q3-earnings" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>TD Q3 2024 Earnings Report</h4>
+                            <p>Comprehensive analysis of TD's quarterly performance, including revenue breakdown, net income, and forward guidance.</p>
+                            <div class="date">Nov 21, 2024</div>
+                        </div>
+                        <div class="catalog-tile" data-doc-id="rbc-ai-investment" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>RBC AI Investment Announcement</h4>
+                            <p>Details on RBC's strategic $100M investment in artificial intelligence infrastructure and expected ROI.</p>
+                            <div class="date">Nov 20, 2024</div>
+                        </div>
+                        <div class="catalog-tile" data-doc-id="digital-trends" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>Banking Sector Digital Trends Report</h4>
+                            <p>Industry-wide analysis of digital transformation initiatives across major Canadian banks.</p>
+                            <div class="date">Nov 19, 2024</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="week-section">
+                    <h3 class="week-header">Week of November 11-15, 2024</h3>
+                    <div class="catalog-grid">
+                        <div class="catalog-tile" data-doc-id="rate-decision" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>Bank of Canada Rate Decision</h4>
+                            <p>Analysis of the latest prime rate adjustment and its implications for lending and investment strategies.</p>
+                            <div class="date">Nov 15, 2024</div>
+                        </div>
+                        <div class="catalog-tile" data-doc-id="scotia-product" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>ScotiaBank Product Launch</h4>
+                            <p>Detailed overview of ScotiaBank's new flexible mortgage product and market positioning.</p>
+                            <div class="date">Nov 14, 2024</div>
+                        </div>
+                        <div class="catalog-tile" onclick="toggleTile(this)">
+                            <input type="checkbox" onclick="event.stopPropagation()">
+                            <h4>Q3 Banking Sector Summary</h4>
+                            <p>Consolidated analysis of Q3 performance across major Canadian financial institutions.</p>
+                            <div class="date">Nov 13, 2024</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    <span class="selected-count">0 documents selected</span>
+                    <button class="chat-documents-btn" onclick="chatWithDocuments()" style="display: none;">
+                        💬 Chat with Selected Documents
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header" onclick="toggleSection('chat')">
+                <h2>💬 AEGIS Agent - Financial Analysis Assistant</h2>
+                <button class="expand-btn">Expand</button>
+            </div>
+            
+            <div id="chat-expanded" class="chat-content">
+                <div class="chat-messages">
+                    <div class="message agent">
+                        <div class="message-content">
+                            <p>Hello! I'm the AEGIS Agent. I can help you analyze data from our RTS, benchmarking, and transcripts databases. How can I assist you today?</p>
+                        </div>
+                    </div>
+                    <div class="message user">
+                        <div class="message-content">
+                            <p>What was TD's revenue growth compared to last quarter?</p>
+                        </div>
+                    </div>
+                    <div class="message agent">
+                        <div class="message-content">
+                            <p>Based on the Q3 2024 earnings report, TD reported revenue of $12.8B, representing a 7.3% increase from Q2 2024. The growth was primarily driven by strong performance in retail banking (+9.2%) and wealth management (+6.1%).</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Ask about RTS, benchmarking, or transcript data...">
+                    <button>Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="reports-section">
+            <div class="reports-header" onclick="toggleSection('reports')">
+                <h2>📈 Automated Reports</h2>
+                <button class="expand-btn">Expand</button>
+            </div>
+            
+            <div id="reports-expanded" class="reports-content">
+                <div class="reports-grid">
+                    <div class="report-tile" onclick="requestReport('performance')">
+                        <div class="icon">📊</div>
+                        <h3>Performance Analysis</h3>
+                        <p>Generate comprehensive performance reports comparing multiple financial institutions across key metrics.</p>
+                    </div>
+                    <div class="report-tile" onclick="requestReport('transcript')">
+                        <div class="icon">📝</div>
+                        <h3>Transcript Summary</h3>
+                        <p>Create detailed summaries of earnings calls and investor meetings with key takeaways highlighted.</p>
+                    </div>
+                    <div class="report-tile" onclick="requestReport('benchmark')">
+                        <div class="icon">📈</div>
+                        <h3>Benchmark Report</h3>
+                        <p>Compare institution performance against industry benchmarks and peer groups.</p>
+                    </div>
+                    <div class="report-tile" onclick="requestReport('trend')">
+                        <div class="icon">📉</div>
+                        <h3>Trend Analysis</h3>
+                        <p>Analyze historical trends and patterns across multiple quarters or years.</p>
+                    </div>
+                    <div class="report-tile" onclick="requestReport('risk')">
+                        <div class="icon">⚠️</div>
+                        <h3>Risk Assessment</h3>
+                        <p>Evaluate risk factors and compliance metrics across selected institutions.</p>
+                    </div>
+                    <div class="report-tile" onclick="requestReport('custom')">
+                        <div class="icon">🔧</div>
+                        <h3>Custom Report</h3>
+                        <p>Build a custom report with your specific requirements and data points.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="floating-action" onclick="chatWithDocuments()">
+        <span class="icon">💬</span>
+        <span>Chat with Documents</span>
+        <span class="badge" id="float-badge">0</span>
+    </button>
+
+    <script>
+        function toggleSection(section) {
+            const expandedId = section + '-expanded';
+            const element = document.getElementById(expandedId);
+            element.classList.toggle('expanded');
+            
+            // Update button text
+            const button = event.target;
+            if (button.tagName === 'BUTTON') {
+                button.textContent = element.classList.contains('expanded') ? 'Collapse' : 'Expand';
+            }
+        }
+
+        function toggleTile(tile) {
+            tile.classList.toggle('selected');
+            const checkbox = tile.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const selected = document.querySelectorAll('.catalog-tile.selected').length;
+            const countElement = document.querySelector('.selected-count');
+            countElement.textContent = `${selected} documents selected`;
+            
+            // Update floating action button
+            const floatBadge = document.getElementById('float-badge');
+            const floatButton = document.querySelector('.floating-action');
+            floatBadge.textContent = selected;
+            
+            // Update chat button in catalog
+            const chatBtn = document.querySelector('.chat-documents-btn');
+            
+            if (selected > 0) {
+                floatButton.classList.add('show');
+                if (chatBtn) chatBtn.style.display = 'inline-block';
+            } else {
+                floatButton.classList.remove('show');
+                if (chatBtn) chatBtn.style.display = 'none';
+            }
+        }
+
+        function selectHighlightDoc(docId) {
+            // Expand the catalog section
+            const catalogSection = document.getElementById('highlights-expanded');
+            if (!catalogSection.classList.contains('expanded')) {
+                catalogSection.classList.add('expanded');
+                const expandBtn = document.querySelector('.highlights-header .expand-btn');
+                expandBtn.textContent = 'Collapse';
+            }
+
+            // Find and select the matching document
+            const targetTile = document.querySelector(`.catalog-tile[data-doc-id="${docId}"]`);
+            if (targetTile && !targetTile.classList.contains('selected')) {
+                toggleTile(targetTile);
+                
+                // Scroll to the selected tile
+                setTimeout(() => {
+                    targetTile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Add a highlight animation
+                    targetTile.style.animation = 'pulse 1s ease-in-out';
+                    setTimeout(() => {
+                        targetTile.style.animation = '';
+                    }, 1000);
+                }, 300);
+            }
+        }
+
+        function chatWithDocuments() {
+            const selectedDocs = document.querySelectorAll('.catalog-tile.selected');
+            if (selectedDocs.length === 0) return;
+
+            // Expand chat section
+            const chatContent = document.getElementById('chat-expanded');
+            if (!chatContent.classList.contains('expanded')) {
+                chatContent.classList.add('expanded');
+                const chatButton = document.querySelector('.chat-header .expand-btn');
+                chatButton.textContent = 'Collapse';
+            }
+
+            // Get document titles
+            const docTitles = Array.from(selectedDocs).map(doc => doc.querySelector('h4').textContent);
+            
+            // Add system message to chat
+            const messagesContainer = document.querySelector('.chat-messages');
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'message system';
+            systemMessage.innerHTML = `
+                <div class="message-content">
+                    <p>🤖 AI Agent activated for ${selectedDocs.length} selected document${selectedDocs.length > 1 ? 's' : ''}: ${docTitles.join(', ')}</p>
+                </div>
+            `;
+            messagesContainer.appendChild(systemMessage);
+
+            // Add agent message
+            const agentMessage = document.createElement('div');
+            agentMessage.className = 'message agent';
+            agentMessage.innerHTML = `
+                <div class="message-content">
+                    <p>I'm now ready to analyze the selected documents. You can ask me questions about: ${docTitles.join(', ')}. What would you like to know?</p>
+                </div>
+            `;
+            messagesContainer.appendChild(agentMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Update input placeholder
+            const chatInput = document.querySelector('.chat-input input');
+            chatInput.placeholder = `Ask about the ${selectedDocs.length} selected document${selectedDocs.length > 1 ? 's' : ''}...`;
+            chatInput.focus();
+        }
+
+        function requestReport(reportType) {
+            // Expand chat section if not already expanded
+            const chatContent = document.getElementById('chat-expanded');
+            if (!chatContent.classList.contains('expanded')) {
+                chatContent.classList.add('expanded');
+                const chatButton = document.querySelector('.chat-header .expand-btn');
+                chatButton.textContent = 'Collapse';
+            }
+
+            // Add automated message to chat
+            const messagesContainer = document.querySelector('.chat-messages');
+            const reportMessages = {
+                'performance': 'I can help you generate a Performance Analysis report. Please specify: 1) Which institutions to compare, 2) Time period, and 3) Key metrics of interest.',
+                'transcript': 'I\'ll create a Transcript Summary for you. Please provide: 1) Company name, 2) Date range or specific call date, and 3) Any specific topics to focus on.',
+                'benchmark': 'Let\'s create a Benchmark Report. I need: 1) Institution(s) to benchmark, 2) Peer group or industry segment, and 3) Metrics to compare.',
+                'trend': 'I\'ll generate a Trend Analysis report. Please specify: 1) Institutions to analyze, 2) Time period for analysis, and 3) Specific trends or metrics to track.',
+                'risk': 'I can prepare a Risk Assessment report. Please provide: 1) Institutions to assess, 2) Risk categories of interest, and 3) Reporting period.',
+                'custom': 'Let\'s build a Custom Report together. Please describe: 1) Your specific requirements, 2) Data sources needed, and 3) Desired output format.'
+            };
+
+            // Add system message
+            const systemMessage = document.createElement('div');
+            systemMessage.className = 'message system';
+            systemMessage.innerHTML = `
+                <div class="message-content">
+                    <p>📊 Report Generator activated for: ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report</p>
+                </div>
+            `;
+            messagesContainer.appendChild(systemMessage);
+
+            const newMessage = document.createElement('div');
+            newMessage.className = 'message agent';
+            newMessage.innerHTML = `
+                <div class="message-content">
+                    <p>${reportMessages[reportType]}</p>
+                </div>
+            `;
+            messagesContainer.appendChild(newMessage);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Handle chat input
+        document.querySelector('.chat-input button').addEventListener('click', function() {
+            const input = document.querySelector('.chat-input input');
+            const message = input.value.trim();
+            if (message) {
+                const messagesContainer = document.querySelector('.chat-messages');
+                
+                // Add user message
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message user';
+                userMessage.innerHTML = `
+                    <div class="message-content">
+                        <p>${message}</p>
+                    </div>
+                `;
+                messagesContainer.appendChild(userMessage);
+                
+                // Clear input
+                input.value = '';
+                
+                // Simulate agent response
+                setTimeout(() => {
+                    const agentMessage = document.createElement('div');
+                    agentMessage.className = 'message agent';
+                    agentMessage.innerHTML = `
+                        <div class="message-content">
+                            <p>I'm processing your request: "${message}". In the full implementation, I would analyze the relevant databases and provide detailed insights.</p>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(agentMessage);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 1000);
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+
+        // Handle enter key in chat
+        document.querySelector('.chat-input input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.querySelector('.chat-input button').click();
+            }
+        });
+
+        // Add pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(106, 90, 205, 0.7); }
+                70% { box-shadow: 0 0 0 20px rgba(106, 90, 205, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(106, 90, 205, 0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
