@@ -233,43 +233,49 @@ class TranscriptProcessor:
         prompt = f"""# AEGIS Research Planning Task
 
 ## Objective
-Create a comprehensive research plan for systematic content extraction from an earnings call transcript.
+Create a concise research plan that guides systematic content extraction from an earnings call transcript. Focus on planning strategy and approach, NOT on extracting actual content.
 
 ## Section Focus
 {section_context}
 
-## Task Instructions
-Analyze the provided transcript and create a detailed research plan that identifies:
+## Critical Instructions
+- DO NOT include specific numbers, quotes, or detailed facts from the transcript
+- DO NOT extract content - only plan how to extract it
+- Keep the plan focused and concise (target 200-400 words)
+- The analyst using this plan will have direct access to the full transcript
 
-1. **Available Information Assessment**
-   - What relevant information is present in this transcript for this section
-   - Key discussion points, metrics, and insights available
-   - Quality and depth of information for each focus area
+## Task: Create a strategic research plan covering:
 
-2. **Content Extraction Strategy**
-   - Specific quotes, data points, and passages to extract
-   - How to structure and organize the extracted content
-   - Prioritization of information based on importance and relevance
+1. **Content Availability Assessment** (2-3 sentences)
+   - Rate the richness of relevant information in this transcript for this section
+   - Note any gaps or limitations in available content
 
-3. **Analysis Framework**
-   - How to present the information for maximum clarity
-   - Integration opportunities with other sections
-   - Key relationships and patterns to highlight
+2. **Extraction Strategy** (bullet points)
+   - Which transcript sections/speakers to prioritize
+   - What types of information to look for (without including the actual content)
+   - Recommended extraction sequence/approach
 
-4. **Implementation Notes**
-   - Specific transcript sections/pages to focus on
-   - Potential challenges in extraction or interpretation
-   - Recommended approach for comprehensive coverage
+3. **Organization Framework** (brief structure)
+   - How to structure the extracted content for clarity
+   - Key themes or categories to organize around
+   - Integration touchpoints with other sections
 
-## Output Format
-Provide a structured research plan in markdown format with clear sections and actionable steps.{prior_context}
+4. **Research Notes** (practical guidance)
+   - Any transcript-specific challenges or opportunities
+   - Contextual factors that will aid interpretation
+   - Recommended focus areas based on what's uniquely available
+
+## Output Requirements
+- Maximum 400 words
+- Focus on HOW to research, not WHAT was found
+- Provide strategic guidance for the content extraction phase{prior_context}
 
 ## Transcript Content
 {transcript_text}
 
 ---
 
-Create a detailed research plan for the "{section_name}" section based on the available transcript content."""
+Create a concise strategic research plan for "{section_name}" that guides efficient content extraction without including actual content."""
 
         return prompt
     
