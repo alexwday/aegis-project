@@ -1,0 +1,12 @@
+{
+  "oauth_endpoint": "your-oauth-endpoint",
+  "client_id": "your-client-id",
+  "client_secret": "your-client-secret",
+  "ssl_cert_path": "rbc-ca-bundle.cer",
+  "openai_model": "gpt-4",
+  "max_tokens": 4000,
+  "temperature": 0.1,
+  "input_folder": "input_transcript",
+  "output_folder": "research_plans",
+  "section_prompts_folder": "section_prompts"
+}
