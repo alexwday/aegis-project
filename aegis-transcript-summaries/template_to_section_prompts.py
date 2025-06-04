@@ -252,7 +252,7 @@ def main():
     import sys
     
     if len(sys.argv) < 2:
-        config_file = Path(__file__).parent / "earnings_config_template.html"
+        config_file = Path(__file__).parent / "summary_template.html"
     else:
         config_file = sys.argv[1]
     
