@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Standalone transcript processing script for AEGIS earnings call analysis.
-Processes PDF transcripts iteratively through configured sections using RBC infrastructure.
+Transcript processing script for AEGIS earnings call analysis.
+Processes PDF transcripts through configured sections to generate research plans.
 """
 
 import os
@@ -9,7 +9,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import requests
 from openai import OpenAI
 from cryptography import x509
@@ -17,62 +17,27 @@ from cryptography.hazmat.backends import default_backend
 import datetime
 import PyPDF2
 
-# Import our custom modules
-from master_prompt_template import generate_master_prompt, load_section_context_from_file
-from config_to_prompt import ConfigToPromptConverter
+from template_to_section_prompts import ConfigToPromptConverter
 
 
 class TranscriptProcessor:
-    """Standalone transcript processor with RBC-specific authentication and SSL."""
+    """Transcript processor with configurable authentication and processing."""
     
-    def __init__(self, config_file: str = None, 
-                 input_folder: str = None,
-                 output_folder: str = None):
-        """Initialize processor with RBC environment settings from config file."""
+    def __init__(self, config_path: str = "config.json"):
+        """Initialize processor with configuration from JSON file."""
         
-        # Import RBC configuration
-        try:
-            from rbc_config import (
-                ENVIRONMENT, IS_RBC_ENV, SSL_CERT_FILENAME, CHECK_CERT_EXPIRY,
-                CERT_EXPIRY_WARNING_DAYS, USE_SSL, OAUTH_ENDPOINT, CLIENT_ID,
-                CLIENT_SECRET, OAUTH_TIMEOUT, OAUTH_RETRIES, OAUTH_RETRY_DELAY,
-                USE_OAUTH, RBC_BASE_URL, BASE_URL, MODEL_CONFIG,
-                DEFAULT_INPUT_FOLDER, DEFAULT_OUTPUT_FOLDER, DEFAULT_CONFIG_FILE
-            )
-        except ImportError:
-            raise ImportError("rbc_config.py not found. Please create this file with your RBC-specific settings.")
+        # Load configuration
+        self.config_path = Path(config_path)
+        if not self.config_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
         
-        # Apply configuration
-        self.ENVIRONMENT = ENVIRONMENT
-        self.IS_RBC_ENV = IS_RBC_ENV
+        with open(self.config_path, 'r') as f:
+            self.config = json.load(f)
         
-        # SSL Configuration
-        self.SSL_CERT_FILENAME = SSL_CERT_FILENAME
-        self.SSL_CERT_DIR = Path(__file__).parent
-        self.SSL_CERT_PATH = self.SSL_CERT_DIR / self.SSL_CERT_FILENAME
-        self.CHECK_CERT_EXPIRY = CHECK_CERT_EXPIRY
-        self.CERT_EXPIRY_WARNING_DAYS = CERT_EXPIRY_WARNING_DAYS
-        self.USE_SSL = USE_SSL
-        
-        # OAuth Configuration
-        self.OAUTH_ENDPOINT = OAUTH_ENDPOINT
-        self.CLIENT_ID = CLIENT_ID
-        self.CLIENT_SECRET = CLIENT_SECRET
-        self.OAUTH_TIMEOUT = OAUTH_TIMEOUT
-        self.OAUTH_RETRIES = OAUTH_RETRIES
-        self.OAUTH_RETRY_DELAY = OAUTH_RETRY_DELAY
-        self.USE_OAUTH = USE_OAUTH
-        
-        # OpenAI Configuration
-        self.RBC_BASE_URL = RBC_BASE_URL
-        self.BASE_URL = BASE_URL
-        self.MODEL_CONFIG = MODEL_CONFIG
-        
-        # Paths (use defaults from config if not provided)
-        self.config_file = Path(config_file or DEFAULT_CONFIG_FILE)
-        self.input_folder = Path(input_folder or DEFAULT_INPUT_FOLDER)
-        self.output_folder = Path(output_folder or DEFAULT_OUTPUT_FOLDER)
-        self.section_prompts_dir = Path("section_prompts")
+        # Set up paths
+        self.input_folder = Path(self.config["input_folder"])
+        self.output_folder = Path(self.config["output_folder"])
+        self.section_prompts_folder = Path(self.config["section_prompts_folder"])
         
         # Create directories
         self.input_folder.mkdir(exist_ok=True)
@@ -99,58 +64,44 @@ class TranscriptProcessor:
         )
         return logging.getLogger(__name__)
     
-    def setup_ssl(self) -> str:
-        """Setup SSL certificate configuration (copied from AEGIS)."""
-        if not self.USE_SSL:
-            return "SSL certificate not required"
+    def setup_ssl(self) -> Optional[str]:
+        """Setup SSL certificate if configured."""
+        ssl_cert_path = self.config.get("ssl_cert_path")
+        if not ssl_cert_path:
+            self.logger.info("No SSL certificate configured")
+            return None
         
-        self.logger.info("Setting up SSL certificate...")
+        cert_path = Path(ssl_cert_path)
+        if not cert_path.exists():
+            self.logger.warning(f"SSL certificate not found at {cert_path}")
+            return None
         
-        # Verify certificate exists
-        if not os.path.exists(self.SSL_CERT_PATH):
-            raise FileNotFoundError(f"SSL certificate not found at {self.SSL_CERT_PATH}")
+        self.logger.info(f"Using SSL certificate: {cert_path}")
+        os.environ["SSL_CERT_FILE"] = str(cert_path)
+        os.environ["REQUESTS_CA_BUNDLE"] = str(cert_path)
         
-        # Check certificate expiry if enabled
-        if self.CHECK_CERT_EXPIRY:
-            try:
-                with open(self.SSL_CERT_PATH, 'rb') as cert_file:
-                    cert_data = cert_file.read()
-                    cert = x509.load_pem_x509_certificate(cert_data, default_backend())
-                    
-                    # Check expiry
-                    days_until_expiry = (cert.not_valid_after - datetime.datetime.now()).days
-                    if days_until_expiry <= 0:
-                        raise ValueError(f"SSL certificate expired on {cert.not_valid_after}")
-                    elif days_until_expiry <= self.CERT_EXPIRY_WARNING_DAYS:
-                        self.logger.warning(f"SSL certificate expires in {days_until_expiry} days")
-                    
-                    self.logger.info(f"SSL certificate valid until {cert.not_valid_after}")
-            except Exception as e:
-                self.logger.warning(f"Could not validate certificate expiry: {e}")
-        
-        # Configure SSL environment variables
-        os.environ["SSL_CERT_FILE"] = str(self.SSL_CERT_PATH)
-        os.environ["REQUESTS_CA_BUNDLE"] = str(self.SSL_CERT_PATH)
-        
-        self.logger.info(f"SSL certificate configured: {self.SSL_CERT_PATH}")
-        return str(self.SSL_CERT_PATH)
+        return str(cert_path)
     
-    def setup_oauth(self) -> str:
-        """Setup OAuth authentication (copied from AEGIS)."""
-        if not self.USE_OAUTH:
-            raise ValueError("OAuth is required for RBC environment")
+    def setup_oauth(self) -> Optional[str]:
+        """Setup OAuth authentication if configured."""
+        oauth_endpoint = self.config.get("oauth_endpoint")
+        client_id = self.config.get("client_id")
+        client_secret = self.config.get("client_secret")
+        
+        if not all([oauth_endpoint, client_id, client_secret]):
+            self.logger.info("OAuth not configured - skipping authentication")
+            return None
+        
+        if any(val.startswith("your-") for val in [oauth_endpoint, client_id, client_secret]):
+            self.logger.warning("OAuth appears to be using placeholder values")
+            return None
         
         self.logger.info("Setting up OAuth authentication...")
         
-        # Validate OAuth configuration
-        if self.OAUTH_ENDPOINT == "x" or self.CLIENT_ID == "x" or self.CLIENT_SECRET == "x":
-            raise ValueError("OAuth configuration not properly set. Please update CLIENT_ID, CLIENT_SECRET, and OAUTH_ENDPOINT")
-        
-        # Prepare OAuth request
         payload = {
             "grant_type": "client_credentials",
-            "client_id": self.CLIENT_ID,
-            "client_secret": self.CLIENT_SECRET,
+            "client_id": client_id,
+            "client_secret": client_secret,
         }
         
         headers = {
@@ -158,66 +109,56 @@ class TranscriptProcessor:
             "Accept": "application/json"
         }
         
-        # Retry logic
-        for attempt in range(self.OAUTH_RETRIES):
-            try:
-                self.logger.info(f"OAuth attempt {attempt + 1}/{self.OAUTH_RETRIES}")
+        try:
+            response = requests.post(
+                oauth_endpoint,
+                data=payload,
+                headers=headers,
+                timeout=30,
+                verify=self.config.get("ssl_cert_path") if self.config.get("ssl_cert_path") else True
+            )
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                access_token = token_data.get("access_token")
                 
-                response = requests.post(
-                    self.OAUTH_ENDPOINT,
-                    data=payload,
-                    headers=headers,
-                    timeout=self.OAUTH_TIMEOUT,
-                    verify=str(self.SSL_CERT_PATH) if self.USE_SSL else True
-                )
-                
-                if response.status_code == 200:
-                    token_data = response.json()
-                    access_token = token_data.get("access_token")
-                    
-                    if not access_token:
-                        raise ValueError("No access token in OAuth response")
-                    
-                    # Log token preview for debugging (first 10 chars)
+                if access_token:
                     token_preview = access_token[:10] + "..." if len(access_token) > 10 else access_token
                     self.logger.info(f"OAuth successful. Token preview: {token_preview}")
-                    
                     return access_token
                 else:
-                    error_msg = f"OAuth failed with status {response.status_code}: {response.text}"
-                    self.logger.error(error_msg)
-                    
-                    if attempt < self.OAUTH_RETRIES - 1:
-                        self.logger.info(f"Retrying in {self.OAUTH_RETRY_DELAY} seconds...")
-                        time.sleep(self.OAUTH_RETRY_DELAY)
-                    else:
-                        raise Exception(error_msg)
-                        
-            except requests.exceptions.RequestException as e:
-                error_msg = f"OAuth request failed: {e}"
-                self.logger.error(error_msg)
+                    raise ValueError("No access token in OAuth response")
+            else:
+                self.logger.error(f"OAuth failed with status {response.status_code}: {response.text}")
+                return None
                 
-                if attempt < self.OAUTH_RETRIES - 1:
-                    self.logger.info(f"Retrying in {self.OAUTH_RETRY_DELAY} seconds...")
-                    time.sleep(self.OAUTH_RETRY_DELAY)
-                else:
-                    raise Exception(error_msg)
-        
-        raise Exception("OAuth authentication failed after all retries")
+        except Exception as e:
+            self.logger.error(f"OAuth authentication failed: {e}")
+            return None
     
     def initialize_openai_client(self) -> OpenAI:
-        """Initialize OpenAI client with RBC configuration."""
-        if not self.oauth_token:
-            raise ValueError("OAuth token required before initializing OpenAI client")
-        
+        """Initialize OpenAI client with configuration."""
         self.logger.info("Initializing OpenAI client...")
         
-        client = OpenAI(
-            api_key=self.oauth_token,
-            base_url=self.BASE_URL
-        )
+        # Use OAuth token if available, otherwise expect API key in environment
+        api_key = self.oauth_token if self.oauth_token else os.getenv("OPENAI_API_KEY")
         
-        self.logger.info(f"OpenAI client initialized with base URL: {self.BASE_URL}")
+        if not api_key:
+            raise ValueError("No API key available (OAuth token or OPENAI_API_KEY environment variable)")
+        
+        # Use base_url from config if provided
+        base_url = self.config.get("base_url")
+        if base_url and base_url.startswith("your-"):
+            base_url = None  # Don't use placeholder values
+        
+        client_params = {"api_key": api_key}
+        if base_url:
+            client_params["base_url"] = base_url
+            self.logger.info(f"Using custom base URL: {base_url}")
+        
+        client = OpenAI(**client_params)
+        
+        self.logger.info("OpenAI client initialized successfully")
         return client
     
     def extract_pdf_text(self, pdf_path: Path) -> str:
@@ -249,7 +190,6 @@ class TranscriptProcessor:
     
     def setup_analysis_folder(self, transcript_name: str) -> Path:
         """Create analysis folder for current transcript."""
-        # Clean transcript name for folder
         clean_name = "".join(c for c in transcript_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
         clean_name = clean_name.replace(' ', '_')
         
@@ -262,30 +202,97 @@ class TranscriptProcessor:
         self.logger.info(f"Created analysis folder: {analysis_folder}")
         return analysis_folder
     
-    def call_llm(self, messages: List[Dict], **kwargs) -> str:
-        """Make LLM API call with RBC configuration."""
+    def load_section_context_from_file(self, file_path: str) -> str:
+        """Load section context from markdown file."""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract the section context XML from the markdown
+        lines = content.split('\n')
+        in_context = False
+        context_lines = []
+        
+        for line in lines:
+            if '<section_context>' in line:
+                in_context = True
+                context_lines.append(line)
+            elif '</section_context>' in line:
+                context_lines.append(line)
+                break
+            elif in_context:
+                context_lines.append(line)
+        
+        return '\n'.join(context_lines)
+    
+    def generate_research_prompt(self, section_name: str, section_context: str, 
+                                transcript_text: str, prior_research: str = "") -> str:
+        """Generate research planning prompt for a section."""
+        
+        prior_context = f"\n\n## Prior Research Plans\n{prior_research}" if prior_research else ""
+        
+        prompt = f"""# AEGIS Research Planning Task
+
+## Objective
+Create a comprehensive research plan for systematic content extraction from an earnings call transcript.
+
+## Section Focus
+{section_context}
+
+## Task Instructions
+Analyze the provided transcript and create a detailed research plan that identifies:
+
+1. **Available Information Assessment**
+   - What relevant information is present in this transcript for this section
+   - Key discussion points, metrics, and insights available
+   - Quality and depth of information for each focus area
+
+2. **Content Extraction Strategy**
+   - Specific quotes, data points, and passages to extract
+   - How to structure and organize the extracted content
+   - Prioritization of information based on importance and relevance
+
+3. **Analysis Framework**
+   - How to present the information for maximum clarity
+   - Integration opportunities with other sections
+   - Key relationships and patterns to highlight
+
+4. **Implementation Notes**
+   - Specific transcript sections/pages to focus on
+   - Potential challenges in extraction or interpretation
+   - Recommended approach for comprehensive coverage
+
+## Output Format
+Provide a structured research plan in markdown format with clear sections and actionable steps.{prior_context}
+
+## Transcript Content
+{transcript_text}
+
+---
+
+Create a detailed research plan for the "{section_name}" section based on the available transcript content."""
+
+        return prompt
+    
+    def call_llm(self, prompt: str) -> str:
+        """Make LLM API call."""
         if not self.openai_client:
             raise ValueError("OpenAI client not initialized")
         
         self.logger.info("Making LLM API call...")
         
-        # Prepare parameters
-        params = {
-            "model": self.MODEL_CONFIG["name"],
-            "messages": messages,
-            "max_tokens": self.MODEL_CONFIG.get("max_tokens", 32768),
-            "temperature": self.MODEL_CONFIG.get("temperature", 0.1),
-            "top_p": self.MODEL_CONFIG.get("top_p", 0.95),
-            **kwargs
-        }
+        messages = [{"role": "user", "content": prompt}]
         
         try:
-            response = self.openai_client.chat.completions.create(**params)
+            response = self.openai_client.chat.completions.create(
+                model=self.config.get("openai_model", "gpt-4"),
+                messages=messages,
+                max_tokens=self.config.get("max_tokens", 4000),
+                temperature=self.config.get("temperature", 0.1)
+            )
             
             if response.choices and response.choices[0].message:
                 content = response.choices[0].message.content
                 
-                # Log usage if available
                 if hasattr(response, 'usage') and response.usage:
                     self.logger.info(f"Token usage - Prompt: {response.usage.prompt_tokens}, "
                                    f"Completion: {response.usage.completion_tokens}, "
@@ -315,85 +322,67 @@ class TranscriptProcessor:
         with open(transcript_file, 'w', encoding='utf-8') as f:
             f.write(transcript_text)
         
-        # Load section configurations
-        converter = ConfigToPromptConverter(str(self.config_file))
-        config_data = converter.parse_html_config()
-        section_prompts = converter.generate_individual_section_prompts(config_data)
+        # Find available section prompts
+        section_files = list(self.section_prompts_folder.glob("*.md"))
         
-        self.logger.info(f"Processing {len(section_prompts)} sections")
+        if not section_files:
+            raise ValueError(f"No section prompt files found in {self.section_prompts_folder}")
+        
+        self.logger.info(f"Processing {len(section_files)} sections")
         
         # Reset analysis state
         self.completed_research_plans = []
         
-        # Generate research plans for each section iteratively
-        for i, section_info in enumerate(section_prompts, 1):
-            self.logger.info(f"Creating research plan {i}/{len(section_prompts)}: {section_info['section_name']}")
+        # Generate research plans for each section
+        for i, section_file in enumerate(section_files, 1):
+            section_id = section_file.stem
+            section_name = section_id.replace('_', ' ').title()
+            
+            self.logger.info(f"Creating research plan {i}/{len(section_files)}: {section_name}")
             
             try:
-                research_plan = self._generate_research_plan(
-                    section_info, 
-                    transcript_text, 
-                    i, 
-                    len(section_prompts)
+                # Load section context
+                section_context = self.load_section_context_from_file(str(section_file))
+                
+                # Format prior research context
+                prior_context = self._format_prior_research_context()
+                
+                # Generate research prompt
+                research_prompt = self.generate_research_prompt(
+                    section_name, section_context, transcript_text, prior_context
                 )
                 
+                # Save prompt for debugging
+                prompt_file = self.current_analysis_folder / f"{section_id}_research_prompt.txt"
+                with open(prompt_file, 'w', encoding='utf-8') as f:
+                    f.write(research_prompt)
+                
+                # Make LLM call
+                research_plan = self.call_llm(research_prompt)
+                
                 # Save research plan
-                plan_file = self.current_analysis_folder / f"{section_info['section_id']}_research_plan.md"
+                plan_file = self.current_analysis_folder / f"{section_id}_research_plan.md"
                 with open(plan_file, 'w', encoding='utf-8') as f:
                     f.write(research_plan)
                 
                 # Add to completed plans for context
                 self.completed_research_plans.append({
-                    'section_name': section_info['section_name'],
-                    'section_id': section_info['section_id'],
+                    'section_name': section_name,
+                    'section_id': section_id,
                     'research_plan': research_plan
                 })
                 
-                self.logger.info(f"Research plan completed: {section_info['section_name']}")
+                self.logger.info(f"Research plan completed: {section_name}")
                 
             except Exception as e:
-                self.logger.error(f"Failed to create research plan for {section_info['section_name']}: {e}")
+                self.logger.error(f"Failed to create research plan for {section_name}: {e}")
                 raise
         
-        # Generate final summary of research plans
+        # Generate final summary
         self._generate_research_plans_summary()
         
         self.logger.info(f"Research planning completed. Results in: {self.current_analysis_folder}")
         return self.current_analysis_folder
-    
-    def _generate_research_plan(self, section_info: Dict, transcript_text: str, 
-                               section_num: int, total_sections: int) -> str:
-        """Generate a research plan for a single section."""
-        
-        # Load section context from file
-        section_file = self.section_prompts_dir / f"{section_info['section_id']}.md"
-        if not section_file.exists():
-            raise FileNotFoundError(f"Section prompt file not found: {section_file}")
-        
-        section_context = load_section_context_from_file(str(section_file))
-        
-        # Format prior research context
-        prior_context = self._format_prior_research_context()
-        
-        # Generate master prompt
-        master_prompt = generate_master_prompt(
-            section_name=section_info['section_name'],
-            section_context=section_context,
-            transcript_text=transcript_text,
-            enabled_widgets=section_info['enabled_widgets'],
-            prior_research_plans=prior_context
-        )
-        
-        # Save master prompt for debugging
-        prompt_file = self.current_analysis_folder / f"{section_info['section_id']}_master_prompt.txt"
-        with open(prompt_file, 'w', encoding='utf-8') as f:
-            f.write(master_prompt)
-        
-        # Make LLM call
-        messages = [{"role": "user", "content": master_prompt}]
-        research_plan = self.call_llm(messages)
-        
-        return research_plan
     
     def _format_prior_research_context(self) -> str:
         """Format completed research plans as context."""
@@ -453,13 +442,12 @@ The research plans serve as a roadmap for comprehensive analysis execution.
     def run(self):
         """Main processing workflow."""
         try:
-            # Initialize RBC environment
             self.logger.info("Initializing AEGIS Transcript Processor...")
             
-            # Setup SSL
-            cert_path = self.setup_ssl()
+            # Setup SSL if configured
+            self.setup_ssl()
             
-            # Setup OAuth
+            # Setup OAuth if configured
             self.oauth_token = self.setup_oauth()
             
             # Initialize OpenAI client
@@ -496,13 +484,9 @@ def main():
     """Main entry point."""
     import sys
     
-    # Command line arguments (all optional now, defaults come from rbc_config.py)
-    config_file = sys.argv[1] if len(sys.argv) > 1 else None
-    input_folder = sys.argv[2] if len(sys.argv) > 2 else None
-    output_folder = sys.argv[3] if len(sys.argv) > 3 else None
+    config_file = sys.argv[1] if len(sys.argv) > 1 else "config.json"
     
-    # Create and run processor
-    processor = TranscriptProcessor(config_file, input_folder, output_folder)
+    processor = TranscriptProcessor(config_file)
     processor.run()
 
 
