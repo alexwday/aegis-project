@@ -1,0 +1,23 @@
+# RBC-specific configuration (contains sensitive credentials)
+rbc_config.py
+
+# SSL certificates
+*.cer
+*.crt
+*.pem
+
+# Analysis results and logs
+analysis_results/
+*.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+
+# OS files
+.DS_Store
+Thumbs.db

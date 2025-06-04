@@ -25,48 +25,53 @@ from config_to_prompt import ConfigToPromptConverter
 class TranscriptProcessor:
     """Standalone transcript processor with RBC-specific authentication and SSL."""
     
-    def __init__(self, config_file: str = "earnings_config_template.html", 
-                 input_folder: str = "input_transcripts",
-                 output_folder: str = "analysis_results"):
-        """Initialize processor with RBC environment settings."""
+    def __init__(self, config_file: str = None, 
+                 input_folder: str = None,
+                 output_folder: str = None):
+        """Initialize processor with RBC environment settings from config file."""
         
-        # RBC Environment Configuration
-        self.ENVIRONMENT = "rbc"
-        self.IS_RBC_ENV = True
+        # Import RBC configuration
+        try:
+            from rbc_config import (
+                ENVIRONMENT, IS_RBC_ENV, SSL_CERT_FILENAME, CHECK_CERT_EXPIRY,
+                CERT_EXPIRY_WARNING_DAYS, USE_SSL, OAUTH_ENDPOINT, CLIENT_ID,
+                CLIENT_SECRET, OAUTH_TIMEOUT, OAUTH_RETRIES, OAUTH_RETRY_DELAY,
+                USE_OAUTH, RBC_BASE_URL, BASE_URL, MODEL_CONFIG,
+                DEFAULT_INPUT_FOLDER, DEFAULT_OUTPUT_FOLDER, DEFAULT_CONFIG_FILE
+            )
+        except ImportError:
+            raise ImportError("rbc_config.py not found. Please create this file with your RBC-specific settings.")
         
-        # SSL Configuration (copied from AEGIS)
-        self.SSL_CERT_FILENAME = "rbc-ca-bundle.cer"
+        # Apply configuration
+        self.ENVIRONMENT = ENVIRONMENT
+        self.IS_RBC_ENV = IS_RBC_ENV
+        
+        # SSL Configuration
+        self.SSL_CERT_FILENAME = SSL_CERT_FILENAME
         self.SSL_CERT_DIR = Path(__file__).parent
         self.SSL_CERT_PATH = self.SSL_CERT_DIR / self.SSL_CERT_FILENAME
-        self.CHECK_CERT_EXPIRY = True
-        self.CERT_EXPIRY_WARNING_DAYS = 30
-        self.USE_SSL = True
+        self.CHECK_CERT_EXPIRY = CHECK_CERT_EXPIRY
+        self.CERT_EXPIRY_WARNING_DAYS = CERT_EXPIRY_WARNING_DAYS
+        self.USE_SSL = USE_SSL
         
-        # OAuth Configuration (copied from AEGIS)
-        self.OAUTH_ENDPOINT = "x"  # Replace with actual RBC OAuth endpoint
-        self.CLIENT_ID = "x"       # Replace with actual client ID
-        self.CLIENT_SECRET = "x"   # Replace with actual client secret
-        self.OAUTH_TIMEOUT = 180
-        self.OAUTH_RETRIES = 3
-        self.OAUTH_RETRY_DELAY = 2
-        self.USE_OAUTH = True
+        # OAuth Configuration
+        self.OAUTH_ENDPOINT = OAUTH_ENDPOINT
+        self.CLIENT_ID = CLIENT_ID
+        self.CLIENT_SECRET = CLIENT_SECRET
+        self.OAUTH_TIMEOUT = OAUTH_TIMEOUT
+        self.OAUTH_RETRIES = OAUTH_RETRIES
+        self.OAUTH_RETRY_DELAY = OAUTH_RETRY_DELAY
+        self.USE_OAUTH = USE_OAUTH
         
-        # OpenAI Configuration (RBC-specific)
-        self.RBC_BASE_URL = "https://perf-apigw-int.saifg.rbc.com/JLCO/llm-control-stack/v1"
-        self.BASE_URL = self.RBC_BASE_URL
+        # OpenAI Configuration
+        self.RBC_BASE_URL = RBC_BASE_URL
+        self.BASE_URL = BASE_URL
+        self.MODEL_CONFIG = MODEL_CONFIG
         
-        # Model Configuration (RBC)
-        self.MODEL_CONFIG = {
-            "name": "gpt-4o-2024-08-06",
-            "max_tokens": 32768,
-            "temperature": 0.1,
-            "top_p": 0.95
-        }
-        
-        # Paths
-        self.config_file = Path(config_file)
-        self.input_folder = Path(input_folder)
-        self.output_folder = Path(output_folder)
+        # Paths (use defaults from config if not provided)
+        self.config_file = Path(config_file or DEFAULT_CONFIG_FILE)
+        self.input_folder = Path(input_folder or DEFAULT_INPUT_FOLDER)
+        self.output_folder = Path(output_folder or DEFAULT_OUTPUT_FOLDER)
         self.section_prompts_dir = Path("section_prompts")
         
         # Create directories
@@ -491,10 +496,10 @@ def main():
     """Main entry point."""
     import sys
     
-    # Command line arguments
-    config_file = sys.argv[1] if len(sys.argv) > 1 else "earnings_config_template.html"
-    input_folder = sys.argv[2] if len(sys.argv) > 2 else "input_transcripts"
-    output_folder = sys.argv[3] if len(sys.argv) > 3 else "analysis_results"
+    # Command line arguments (all optional now, defaults come from rbc_config.py)
+    config_file = sys.argv[1] if len(sys.argv) > 1 else None
+    input_folder = sys.argv[2] if len(sys.argv) > 2 else None
+    output_folder = sys.argv[3] if len(sys.argv) > 3 else None
     
     # Create and run processor
     processor = TranscriptProcessor(config_file, input_folder, output_folder)

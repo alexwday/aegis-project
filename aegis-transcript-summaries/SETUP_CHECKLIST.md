@@ -6,13 +6,16 @@ All components are implemented and tested. The system is ready for production us
 
 ## 📋 Pre-Deployment Configuration Required
 
-Before running in production, update these RBC-specific settings in `transcript_processor.py`:
+Before running in production, create your RBC configuration file:
 
-```python
-# Lines 46-48: Replace placeholder values
-self.OAUTH_ENDPOINT = "x"  # → Replace with actual RBC OAuth endpoint
-self.CLIENT_ID = "x"       # → Replace with actual client ID  
-self.CLIENT_SECRET = "x"   # → Replace with actual client secret
+```bash
+# Copy template to create your config
+cp rbc_config_template.py rbc_config.py
+
+# Edit rbc_config.py with actual values:
+OAUTH_ENDPOINT = "your-actual-oauth-endpoint"
+CLIENT_ID = "your-actual-client-id"  
+CLIENT_SECRET = "your-actual-client-secret"
 ```
 
 ## 📁 Required Files

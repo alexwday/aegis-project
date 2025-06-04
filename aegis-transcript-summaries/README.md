@@ -82,6 +82,30 @@ Generated section contexts are XML-structured for master prompt integration:
 </section_context>
 ```
 
+## Setup
+
+### 1. Configure RBC Settings
+Create your configuration file from the template:
+
+```bash
+# Copy template to create your config
+cp rbc_config_template.py rbc_config.py
+
+# Edit rbc_config.py with your actual RBC credentials:
+# - OAUTH_ENDPOINT
+# - CLIENT_ID  
+# - CLIENT_SECRET
+```
+
+### 2. Add SSL Certificate
+Place your `rbc-ca-bundle.cer` file in the same directory
+
+### 3. Install Dependencies (if not done)
+```bash
+source ../venv/bin/activate
+pip install beautifulsoup4 PyPDF2 requests openai cryptography
+```
+
 ## Complete Processing Workflow
 
 ### Automated Transcript Processing
