@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #003087;
+            color: white;
+            padding: 20px 30px;
+            text-align: left;
+            border-bottom: 3px solid #002060;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        /* Controls Bar */
+        .controls-bar {
+            background-color: #f8f9fa;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .controls-left {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background-color: #003087;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #002060;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: #003087;
+            border: 1px solid #003087;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f0f4f8;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        /* Table Layout for Perfect Alignment */
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        
+        .config-table th,
+        .config-table td {
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .config-table th {
+            background-color: #f8f9fa;
+            padding: 15px 8px;
+            font-weight: 600;
+            color: #003087;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        
+        .config-table th.section-header {
+            text-align: center;
+            padding: 15px 20px;
+            width: 40%;
+        }
+        
+        .config-table th.widget-header {
+            width: 60px;
+        }
+        
+        .config-table th.edit-header {
+            width: 80px;
+        }
+        
+        .widget-header-title {
+            font-size: 13px;
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        
+        .widget-header-desc {
+            font-size: 10px;
+            color: #666;
+            font-weight: normal;
+            line-height: 1.3;
+            text-align: center;
+        }
+        
+        .section-row {
+            background-color: white;
+            transition: all 0.2s;
+        }
+        
+        .section-row:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .section-row.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        
+        .section-row.drag-over {
+            border-top: 3px solid #003087;
+        }
+        
+        .section-cell {
+            padding: 15px 20px;
+            text-align: left;
+            border-right: 1px solid #e0e0e0;
+            cursor: move;
+        }
+        
+        .section-cell.core {
+            border-left: 4px solid #003087;
+        }
+        
+        .section-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .drag-handle {
+            color: #bbb;
+            font-size: 18px;
+            cursor: move;
+        }
+        
+        .drag-handle:hover {
+            color: #003087;
+        }
+        
+        .section-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .section-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .section-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #003087;
+            margin-bottom: 4px;
+            text-align: left;
+        }
+        
+        .section-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            text-align: left;
+            white-space: pre-line;
+        }
+        
+        .widget-cell {
+            padding: 15px 8px;
+            text-align: center;
+        }
+        
+        .widget-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin-bottom: 4px;
+        }
+        
+        .widget-checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .widget-label {
+            font-size: 10px;
+            font-weight: 500;
+            color: #666;
+            display: block;
+        }
+        
+        .edit-cell {
+            padding: 15px 8px;
+            text-align: center;
+        }
+        
+        .edit-btn {
+            padding: 6px 12px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .edit-btn:hover {
+            background-color: #f0f4f8;
+            border-color: #003087;
+            color: #003087;
+        }
+        
+        /* Expanded Details */
+        .section-details-row {
+            display: none;
+        }
+        
+        .section-expanded .section-details-row {
+            display: table-row;
+        }
+        
+        .section-details-cell {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .detail-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .detail-textarea:focus {
+            outline: none;
+            border-color: #003087;
+            box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+        }
+        
+        /* Add Section */
+        .add-section {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #999;
+            margin: 20px;
+        }
+        
+        .add-section:hover {
+            border-color: #003087;
+            background-color: #f8f9fa;
+            color: #003087;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+            color: #003087;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #003087;
+            box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .config-table th.widget-header {
+                width: 50px;
+                padding: 10px 4px;
+            }
+            
+            .widget-header-title {
+                font-size: 11px;
+            }
+            
+            .widget-header-desc {
+                font-size: 9px;
+            }
+            
+            .widget-cell {
+                padding: 10px 4px;
+            }
+            
+            .widget-label {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AEGIS: Finance Assist for External Research and Insights</h1>
+            <p>Investor Relations Earnings Call Summary Tool</p>
+        </div>
+        
+        <!-- Controls Bar -->
+        <div class="controls-bar">
+            <div class="controls-left">
+                <button class="btn btn-secondary" onclick="selectAll()">
+                    <span>✓</span> Select All
+                </button>
+                <button class="btn btn-secondary" onclick="deselectAll()">
+                    <span>✗</span> Deselect All
+                </button>
+                <button class="btn btn-secondary" onclick="resetToDefault()">
+                    <span>↺</span> Reset to Default
+                </button>
+            </div>
+            <button class="btn btn-success" onclick="saveConfiguration()">
+                <span>💾</span> Save Configuration
+            </button>
+        </div>
+        
+        <!-- Configuration Table -->
+        <table class="config-table" id="configTable">
+            <thead>
+                <tr>
+                    <th class="section-header">
+                        <div class="widget-header-title">Section</div>
+                        <div class="widget-header-desc">Content areas to extract</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Summary</div>
+                        <div class="widget-header-desc">Key points overview</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Q&A</div>
+                        <div class="widget-header-desc">Analyst Q&A highlights</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Exec</div>
+                        <div class="widget-header-desc">Mgmt commentary</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Data</div>
+                        <div class="widget-header-desc">Tables & figures</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Highlights</div>
+                        <div class="widget-header-desc">Key metric boxes</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Trend</div>
+                        <div class="widget-header-desc">Historical comparison</div>
+                    </th>
+                    <th class="widget-header">
+                        <div class="widget-header-title">Peer</div>
+                        <div class="widget-header-desc">Industry benchmarking</div>
+                    </th>
+                    <th class="edit-header">Edit</th>
+                </tr>
+            </thead>
+            <tbody id="sectionsContainer">
+                <!-- Core Sections -->
+                <tr class="section-row" draggable="true" data-section-id="macro">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Macro Environment</div>
+                                <div class="section-desc">1. Economic outlook statements and market condition assessments
+2. Regulatory environment commentary and policy impact discussions
+3. Geopolitical or external factor mentions affecting business strategy
+4. Management's confidence indicators about macro trends
+5. Competitive landscape observations and industry-wide challenges</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Economic outlook statements and market condition assessments
+2. Regulatory environment commentary and policy impact discussions
+3. Geopolitical or external factor mentions affecting business strategy
+4. Management's confidence indicators about macro trends
+5. Competitive landscape observations and industry-wide challenges</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="outlook">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Outlook</div>
+                                <div class="section-desc">1. Quantitative guidance for next quarter/year (revenue, expenses, growth rates)
+2. Strategic initiative announcements and timeline commitments
+3. Management confidence language and certainty indicators
+4. Long-term objective statements and investment priorities
+5. Risk factors that could impact future performance</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Quantitative guidance for next quarter/year (revenue, expenses, growth rates)
+2. Strategic initiative announcements and timeline commitments
+3. Management confidence language and certainty indicators
+4. Long-term objective statements and investment priorities
+5. Risk factors that could impact future performance</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="capital">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Capital</div>
+                                <div class="section-desc">1. Current capital ratio metrics and regulatory buffer discussions
+2. Dividend and share buyback plans or changes
+3. Capital allocation prioritization between growth and returns
+4. Stress test results and regulatory capital planning
+5. Management commentary on capital adequacy and future requirements</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights" checked>
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Current capital ratio metrics and regulatory buffer discussions
+2. Dividend and share buyback plans or changes
+3. Capital allocation prioritization between growth and returns
+4. Stress test results and regulatory capital planning
+5. Management commentary on capital adequacy and future requirements</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="credit">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Credit</div>
+                                <div class="section-desc">1. Credit loss provision changes and underlying drivers
+2. Portfolio quality metrics and early warning indicators
+3. Lending standard adjustments and underwriting criteria changes
+4. Sector-specific credit exposure commentary (CRE, consumer, etc.)
+5. Forward-looking credit environment assessments and stress scenarios</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Credit loss provision changes and underlying drivers
+2. Portfolio quality metrics and early warning indicators
+3. Lending standard adjustments and underwriting criteria changes
+4. Sector-specific credit exposure commentary (CRE, consumer, etc.)
+5. Forward-looking credit environment assessments and stress scenarios</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="expenses">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Expenses</div>
+                                <div class="section-desc">1. Operating leverage trends and efficiency ratio targets
+2. Technology and automation investment impacts on costs
+3. Headcount and compensation expense changes
+4. Branch optimization and real estate rationalization plans
+5. Expense guidance and cost-saving initiative progress</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights" checked>
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Operating leverage trends and efficiency ratio targets
+2. Technology and automation investment impacts on costs
+3. Headcount and compensation expense changes
+4. Branch optimization and real estate rationalization plans
+5. Expense guidance and cost-saving initiative progress</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="nim">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">NIM - All-bank, U.S., and Canadian NIM</div>
+                                <div class="section-desc">1. NIM trend explanations and quarterly/YoY changes by geography
+2. Asset yield versus funding cost component analysis
+3. Interest rate sensitivity modeling and beta discussions
+4. Deposit pricing strategy and competitive pressure commentary
+5. Forward guidance on NIM trajectory and optimization levers</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. NIM trend explanations and quarterly/YoY changes by geography
+2. Asset yield versus funding cost component analysis
+3. Interest rate sensitivity modeling and beta discussions
+4. Deposit pricing strategy and competitive pressure commentary
+5. Forward guidance on NIM trajectory and optimization levers</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="deposits">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Deposits</div>
+                                <div class="section-desc">1. Deposit growth rates by category (demand, savings, term) and market
+2. Customer acquisition costs and retention strategy effectiveness
+3. Deposit pricing decisions and competitive response strategies
+4. Digital adoption impact on deposit gathering
+5. Seasonal patterns and customer behavior shifts affecting funding stability</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Deposit growth rates by category (demand, savings, term) and market
+2. Customer acquisition costs and retention strategy effectiveness
+3. Deposit pricing decisions and competitive response strategies
+4. Digital adoption impact on deposit gathering
+5. Seasonal patterns and customer behavior shifts affecting funding stability</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="loan">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Loan</div>
+                                <div class="section-desc">1. Loan growth rates by category (residential, commercial, consumer) and geography
+2. Demand pipeline strength and competitive win rates
+3. Pricing discipline and spread management decisions
+4. Underwriting standard changes and risk appetite adjustments
+5. Market share goals and expansion opportunities by lending segment</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Loan growth rates by category (residential, commercial, consumer) and geography
+2. Demand pipeline strength and competitive win rates
+3. Pricing discipline and spread management decisions
+4. Underwriting standard changes and risk appetite adjustments
+5. Market share goals and expansion opportunities by lending segment</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="segments">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Segments - Wealth, Capital Markets, Personal Banking, Commercial Banking</div>
+                                <div class="section-desc">1. Revenue and margin trends for Wealth Management, Capital Markets, Personal Banking, and Commercial Banking
+2. Client acquisition metrics and fee income drivers by segment
+3. Market share positioning and competitive differentiation strategies
+4. Investment priorities and resource allocation between business lines
+5. Cross-selling opportunities and client relationship deepening initiatives</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data" checked>
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights" checked>
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Revenue and margin trends for Wealth Management, Capital Markets, Personal Banking, and Commercial Banking
+2. Client acquisition metrics and fee income drivers by segment
+3. Market share positioning and competitive differentiation strategies
+4. Investment priorities and resource allocation between business lines
+5. Cross-selling opportunities and client relationship deepening initiatives</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="digital">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Digital Initiatives</div>
+                                <div class="section-desc">1. Digital platform enhancement milestones and customer adoption metrics
+2. Technology infrastructure investment levels and modernization timelines
+3. AI and automation implementation progress and efficiency gains
+4. Mobile and online banking feature rollouts and user engagement
+5. Fintech partnership strategies and competitive response to digital disruption</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa" checked>
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec" checked>
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights" checked>
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Digital platform enhancement milestones and customer adoption metrics
+2. Technology infrastructure investment levels and modernization timelines
+3. AI and automation implementation progress and efficiency gains
+4. Mobile and online banking feature rollouts and user engagement
+5. Fintech partnership strategies and competitive response to digital disruption</textarea>
+                    </td>
+                </tr>
+                
+                <!-- Optional Sections -->
+                <tr class="section-row" draggable="true" data-section-id="esg">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">ESG & Sustainability</div>
+                                <div class="section-desc">1. Environmental, social, and governance initiatives
+2. Sustainability commitments
+3. Responsible banking practices
+4. Stakeholder engagement efforts
+5. Management's approach to long-term value creation</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Environmental, social, and governance initiatives
+2. Sustainability commitments
+3. Responsible banking practices
+4. Stakeholder engagement efforts
+5. Management's approach to long-term value creation</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="risk-management">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">Risk Management</div>
+                                <div class="section-desc">1. Operational risk discussions
+2. Market risk assessments
+3. Liquidity risk management
+4. Regulatory compliance updates
+5. Stress testing results
+6. Enterprise risk management frameworks</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Operational risk discussions
+2. Market risk assessments
+3. Liquidity risk management
+4. Regulatory compliance updates
+5. Stress testing results
+6. Enterprise risk management frameworks</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="regulatory">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">Regulatory Environment</div>
+                                <div class="section-desc">1. Regulatory changes commentary
+2. Compliance initiatives
+3. Supervisory feedback
+4. Policy impacts
+5. Management's response to evolving regulatory landscape</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Regulatory changes commentary
+2. Compliance initiatives
+3. Supervisory feedback
+4. Policy impacts
+5. Management's response to evolving regulatory landscape</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="market-conditions">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">Market Conditions</div>
+                                <div class="section-desc">1. Market volatility impacts
+2. Trading revenue discussions
+3. Investment performance
+4. Market positioning
+5. Management's view on market opportunities and challenges</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Market volatility impacts
+2. Trading revenue discussions
+3. Investment performance
+4. Market positioning
+5. Management's view on market opportunities and challenges</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="acquisitions">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">Acquisitions & Partnerships</div>
+                                <div class="section-desc">1. Merger and acquisition activity discussions
+2. Strategic partnerships
+3. Integration progress
+4. Synergy realization
+5. Inorganic growth opportunities</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Merger and acquisition activity discussions
+2. Strategic partnerships
+3. Integration progress
+4. Synergy realization
+5. Inorganic growth opportunities</textarea>
+                    </td>
+                </tr>
+                
+                <tr class="section-row" draggable="true" data-section-id="customer-experience">
+                    <td class="section-cell">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox">
+                            <div class="section-details">
+                                <div class="section-name">Customer Experience</div>
+                                <div class="section-desc">1. Customer satisfaction initiatives
+2. Service delivery improvements
+3. Client retention strategies
+4. Customer acquisition efforts
+5. Experience enhancement programs</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                        <label class="widget-label">Summary</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                        <label class="widget-label">Q&A</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                        <label class="widget-label">Exec</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="data">
+                        <label class="widget-label">Data</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                        <label class="widget-label">Highlights</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                        <label class="widget-label">Trend</label>
+                    </td>
+                    <td class="widget-cell">
+                        <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                        <label class="widget-label">Peer</label>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="9" class="section-details-cell">
+                        <textarea class="detail-textarea">1. Customer satisfaction initiatives
+2. Service delivery improvements
+3. Client retention strategies
+4. Customer acquisition efforts
+5. Experience enhancement programs</textarea>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Add Section Button -->
+        <div class="add-section" onclick="showAddModal()">
+            <div style="font-size: 24px; margin-bottom: 8px;">+</div>
+            <div>Add Custom Section</div>
+        </div>
+    </div>
+    
+    <!-- Add Section Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Section</h3>
+            </div>
+            <div class="form-group">
+                <label>Section Name:</label>
+                <input type="text" id="newSectionName" placeholder="e.g., Competitive Analysis">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addNewSection()">Add Section</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <span>✓</span>
+        <span>Configuration saved successfully!</span>
+    </div>
+    
+    <!-- Embedded Configuration (Auto-updated when saved) -->
+    <script type="application/json" id="saved_config">
+{
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "sections": []
+}
+    </script>
+    
+    <script>
+        let draggedElement = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+            // Load embedded configuration
+            loadEmbeddedConfiguration();
+        });
+        
+        // Drag and Drop
+        function initializeDragAndDrop() {
+            const sections = document.querySelectorAll('.section-row');
+            const container = document.getElementById('sectionsContainer');
+            
+            sections.forEach(section => {
+                section.addEventListener('dragstart', handleDragStart);
+                section.addEventListener('dragend', handleDragEnd);
+            });
+            
+            container.addEventListener('dragover', handleDragOver);
+            container.addEventListener('drop', handleDrop);
+        }
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+        
+        function handleDragEnd(e) {
+            this.style.opacity = '';
+            this.classList.remove('dragging');
+            
+            // Clean up any remaining dragging classes
+            document.querySelectorAll('.section-row').forEach(row => {
+                row.classList.remove('dragging');
+            });
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            const container = document.getElementById('sectionsContainer');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            
+            if (draggedElement) {
+                // Get the detail row that follows the dragged element
+                const detailRow = draggedElement.nextElementSibling;
+                const hasDetailRow = detailRow && detailRow.classList.contains('section-details-row');
+                
+                if (afterElement == null) {
+                    // Move to end
+                    container.appendChild(draggedElement);
+                    if (hasDetailRow) {
+                        container.appendChild(detailRow);
+                    }
+                } else {
+                    // Insert before afterElement
+                    container.insertBefore(draggedElement, afterElement);
+                    if (hasDetailRow) {
+                        container.insertBefore(detailRow, afterElement);
+                    }
+                }
+                
+                draggedElement.style.opacity = '';
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+            }
+            
+            return false;
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.section-row:not(.dragging)')]
+                .filter(element => element !== draggedElement);
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Expand/Collapse sections
+        function toggleExpand(button) {
+            const row = button.closest('.section-row');
+            const nextRow = row.nextElementSibling;
+            
+            if (nextRow && nextRow.classList.contains('section-details-row')) {
+                if (nextRow.style.display === 'none' || !nextRow.style.display) {
+                    // Opening - show the edit area
+                    nextRow.style.display = 'table-row';
+                    button.textContent = 'Close';
+                } else {
+                    // Closing - update the section description and hide
+                    const textarea = nextRow.querySelector('.detail-textarea');
+                    const sectionDescElement = row.querySelector('.section-desc');
+                    
+                    if (textarea && sectionDescElement) {
+                        // Update the visible description with the edited content
+                        sectionDescElement.textContent = textarea.value;
+                    }
+                    
+                    nextRow.style.display = 'none';
+                    button.textContent = 'Edit';
+                }
+            }
+        }
+        
+        // Control functions
+        function selectAll() {
+            document.querySelectorAll('.section-checkbox').forEach(cb => cb.checked = true);
+        }
+        
+        function deselectAll() {
+            document.querySelectorAll('.section-checkbox').forEach(cb => cb.checked = false);
+        }
+        
+        function resetToDefault() {
+            if (confirm('This will reset all sections to default settings. Continue?')) {
+                location.reload();
+            }
+        }
+        
+        // Modal functions
+        function showAddModal() {
+            document.getElementById('addModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('newSectionName').value = '';
+        }
+        
+        function addNewSection() {
+            const name = document.getElementById('newSectionName').value;
+            if (!name) {
+                alert('Please enter a section name');
+                return;
+            }
+            
+            const container = document.getElementById('sectionsContainer');
+            const newRow = document.createElement('tr');
+            newRow.className = 'section-row';
+            newRow.draggable = true;
+            newRow.setAttribute('data-section-id', name.toLowerCase().replace(/\s+/g, '-'));
+            
+            newRow.innerHTML = `
+                <td class="section-cell">
+                    <div class="section-info">
+                        <div class="drag-handle">⋮⋮</div>
+                        <input type="checkbox" class="section-checkbox">
+                        <div class="section-details">
+                            <div class="section-name">${name}</div>
+                            <div class="section-desc">Click Edit to add description</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="summary" checked disabled>
+                    <label class="widget-label">Summary</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="qa">
+                    <label class="widget-label">Q&A</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="exec">
+                    <label class="widget-label">Exec</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="data">
+                    <label class="widget-label">Data</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="highlights">
+                    <label class="widget-label">Highlights</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="trend">
+                    <label class="widget-label">Trend</label>
+                </td>
+                <td class="widget-cell">
+                    <input type="checkbox" class="widget-checkbox" data-widget="peer">
+                    <label class="widget-label">Peer</label>
+                </td>
+                <td class="edit-cell">
+                    <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                </td>
+            `;
+            
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'section-details-row';
+            detailsRow.innerHTML = `
+                <td colspan="9" class="section-details-cell">
+                    <textarea class="detail-textarea" placeholder="Add detailed instructions for this section..."></textarea>
+                </td>
+            `;
+            
+            container.appendChild(newRow);
+            container.appendChild(detailsRow);
+            
+            // Add event listeners
+            newRow.addEventListener('dragstart', handleDragStart);
+            newRow.addEventListener('dragend', handleDragEnd);
+            
+            closeModal();
+        }
+        
+        // Save configuration
+        async function saveConfiguration() {
+            const config = {
+                timestamp: new Date().toISOString(),
+                sections: []
+            };
+            
+            document.querySelectorAll('.section-row').forEach((row, index) => {
+                const sectionId = row.getAttribute('data-section-id');
+                const isEnabled = row.querySelector('.section-checkbox').checked;
+                const name = row.querySelector('.section-name').textContent;
+                const detailsRow = row.nextElementSibling;
+                const description = detailsRow ? detailsRow.querySelector('.detail-textarea').value : '';
+                
+                const widgets = {};
+                row.querySelectorAll('.widget-checkbox').forEach(checkbox => {
+                    const widgetName = checkbox.getAttribute('data-widget');
+                    widgets[widgetName] = checkbox.checked;
+                });
+                
+                config.sections.push({
+                    id: sectionId,
+                    name: name,
+                    enabled: isEnabled,
+                    order: index,
+                    description: description,
+                    widgets: widgets
+                });
+            });
+            
+            // Update the embedded configuration in the HTML
+            const configScript = document.getElementById('saved_config');
+            configScript.textContent = '\n' + JSON.stringify(config, null, 2) + '\n    ';
+            
+            // Also save to localStorage
+            localStorage.setItem('aegis_config', JSON.stringify(config));
+            
+            // Get the entire HTML document with the updated configuration
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Try to use File System Access API for save dialog (Chrome/Edge)
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: 'earnings_config_template.html',
+                        types: [{
+                            description: 'HTML Files',
+                            accept: {'text/html': ['.html']}
+                        }]
+                    });
+                    
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(htmlContent);
+                    await writable.close();
+                    
+                    showNotification('Configuration saved successfully!');
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error saving file:', err);
+                        // Fall through to download fallback
+                    } else {
+                        // User cancelled, don't show error
+                        return;
+                    }
+                }
+            }
+            
+            // Fallback: Create a blob and download the updated HTML file
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'earnings_config_template.html';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Configuration downloaded! Please replace the original file with the downloaded version.');
+        }
+        
+        
+        function showNotification(message = 'Configuration saved successfully!') {
+            const notification = document.getElementById('notification');
+            const messageSpan = notification.querySelector('span:last-child');
+            messageSpan.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Load embedded configuration on page load
+        function loadEmbeddedConfiguration() {
+            const configScript = document.getElementById('saved_config');
+            if (configScript) {
+                try {
+                    const config = JSON.parse(configScript.textContent);
+                    if (config && config.sections && config.sections.length > 0) {
+                        applyConfiguration(config);
+                    }
+                } catch (err) {
+                    console.error('Error loading embedded configuration:', err);
+                }
+            }
+        }
+        
+        // Apply loaded configuration to the UI
+        function applyConfiguration(config) {
+            if (!config || !config.sections) return;
+            
+            // Store the current section rows for reordering
+            const container = document.getElementById('sectionsContainer');
+            const allRows = Array.from(container.querySelectorAll('.section-row'));
+            const detailRows = new Map();
+            
+            // Store detail rows
+            allRows.forEach(row => {
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('section-details-row')) {
+                    detailRows.set(row, nextRow);
+                }
+            });
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Add sections in the order specified in config
+            config.sections.forEach(section => {
+                // Find the matching row
+                const matchingRow = allRows.find(row => 
+                    row.getAttribute('data-section-id') === section.id ||
+                    row.querySelector('.section-name').textContent === section.name
+                );
+                
+                if (matchingRow) {
+                    // Update section state
+                    matchingRow.querySelector('.section-checkbox').checked = section.enabled;
+                    
+                    // Update widgets
+                    if (section.widgets) {
+                        Object.entries(section.widgets).forEach(([widget, checked]) => {
+                            const checkbox = matchingRow.querySelector(`.widget-checkbox[data-widget="${widget}"]`);
+                            if (checkbox && !checkbox.disabled) {
+                                checkbox.checked = checked;
+                            }
+                        });
+                    }
+                    
+                    // Add row back to container
+                    container.appendChild(matchingRow);
+                    
+                    // Add detail row if it exists
+                    const detailRow = detailRows.get(matchingRow);
+                    if (detailRow) {
+                        container.appendChild(detailRow);
+                        // Update description if provided
+                        if (section.description) {
+                            const textarea = detailRow.querySelector('.detail-textarea');
+                            if (textarea) {
+                                textarea.value = section.description;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Add any remaining rows that weren't in the config
+            allRows.forEach(row => {
+                if (!container.contains(row)) {
+                    container.appendChild(row);
+                    const detailRow = detailRows.get(row);
+                    if (detailRow) {
+                        container.appendChild(detailRow);
+                    }
+                }
+            });
+            
+            // Re-initialize drag and drop
+            initializeDragAndDrop();
+        }
+        
+        
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('addModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
