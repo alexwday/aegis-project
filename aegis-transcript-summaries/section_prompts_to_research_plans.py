@@ -233,49 +233,55 @@ class TranscriptProcessor:
         prompt = f"""# AEGIS Research Planning Task
 
 ## Objective
-Create a concise research plan that guides systematic content extraction from an earnings call transcript. Focus on planning strategy and approach, NOT on extracting actual content.
+Create a detailed research plan that provides specific instructions for content extraction from THIS earnings call transcript. Identify exactly what content is available and provide precise guidance on what to extract and how to use it.
 
 ## Section Focus
 {section_context}
 
 ## Critical Instructions
-- DO NOT include specific numbers, quotes, or detailed facts from the transcript
-- DO NOT extract content - only plan how to extract it
-- Keep the plan focused and concise (target 200-400 words)
-- The analyst using this plan will have direct access to the full transcript
+- Reference specific statements, quotes, and discussions from THIS transcript
+- Identify key speakers and their relevant contributions
+- Point to specific sections/pages where important content is located
+- Provide concrete extraction instructions, not generic guidance
+- The researcher will use this plan to know exactly what to extract and reference
 
-## Task: Create a strategic research plan covering:
+## Task: Create a transcript-specific research plan covering:
 
-1. **Content Availability Assessment** (2-3 sentences)
-   - Rate the richness of relevant information in this transcript for this section
-   - Note any gaps or limitations in available content
+1. **Available Content Assessment**
+   - What specific information is present in this transcript for this section
+   - Key speakers who address this topic and their main points
+   - Quality and depth of coverage for each focus area
 
-2. **Extraction Strategy** (bullet points)
-   - Which transcript sections/speakers to prioritize
-   - What types of information to look for (without including the actual content)
-   - Recommended extraction sequence/approach
+2. **Specific Content References**
+   - Direct references to key statements/quotes to extract (identify by speaker/context)
+   - Specific data points, metrics, or figures mentioned
+   - Important Q&A exchanges or management commentary to highlight
+   - Page numbers or transcript sections where key content appears
 
-3. **Organization Framework** (brief structure)
-   - How to structure the extracted content for clarity
-   - Key themes or categories to organize around
-   - Integration touchpoints with other sections
+3. **Extraction Instructions**
+   - Which specific quotes or statements should be featured prominently
+   - How to structure the content (e.g., "lead with CEO's comment about X, follow with CFO's data on Y")
+   - What context or background information to include with each extract
+   - Integration points with content from other sections
 
-4. **Research Notes** (practical guidance)
-   - Any transcript-specific challenges or opportunities
-   - Contextual factors that will aid interpretation
-   - Recommended focus areas based on what's uniquely available
+4. **Content Organization Guide**
+   - Recommended flow and structure for presenting the extracted information
+   - Which information should be emphasized vs. supporting detail
+   - How to connect different pieces of information from the transcript
+   - Specific formatting or presentation recommendations
 
 ## Output Requirements
-- Maximum 400 words
-- Focus on HOW to research, not WHAT was found
-- Provide strategic guidance for the content extraction phase{prior_context}
+- Be specific about what content exists and where to find it
+- Provide actionable extraction and organization instructions
+- Reference actual transcript content without fully extracting it
+- Guide the researcher to the most valuable content for this section{prior_context}
 
 ## Transcript Content
 {transcript_text}
 
 ---
 
-Create a concise strategic research plan for "{section_name}" that guides efficient content extraction without including actual content."""
+Create a detailed, transcript-specific research plan for "{section_name}" that tells the researcher exactly what content to extract and how to use it."""
 
         return prompt
     
