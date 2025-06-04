@@ -226,15 +226,15 @@ class TranscriptProcessor:
         return analysis_folder
 
     def load_section_context_from_file(self, file_path: str) -> str:
-        """Load section context from markdown file, extracting only focus areas."""
+        """Load section context from markdown file, extracting section name and description."""
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Extract only the section name and focus areas, skip detailed widget instructions
+        # Extract section name and description from the new simplified format
         lines = content.split("\n")
         section_name = ""
-        focus_areas = []
-        in_focus_areas = False
+        section_description = ""
+        in_description = False
 
         for line in lines:
             if "<section_name>" in line:
@@ -243,17 +243,16 @@ class TranscriptProcessor:
                     .replace("</section_name>", "")
                     .strip()
                 )
-            elif "<focus_areas>" in line:
-                in_focus_areas = True
-            elif "</focus_areas>" in line:
+            elif "<section_description>" in line:
+                in_description = True
+            elif "</section_description>" in line:
                 break
-            elif in_focus_areas and line.strip().startswith("-"):
-                focus_areas.append(line.strip())
+            elif in_description and line.strip():
+                section_description += line.strip() + " "
 
-        # Return clean section context without widget instruction examples
+        # Return clean section context
         return f"""Section: {section_name}
-Focus Areas:
-{chr(10).join(focus_areas)}"""
+Content Description: {section_description.strip()}"""
 
     def generate_research_prompt(
         self,
@@ -272,29 +271,35 @@ Focus Areas:
 
 {section_context}
 
-Analyze this transcript and create specific extraction instructions covering:
+Analyze this transcript to create a detailed extraction plan that identifies the most material content for this section. Focus on creating a plan that will produce business-quality analysis similar to professional earnings summaries.
 
-1. **Available Content Assessment**
-   - What specific information is present in this transcript for this section
-   - Key speakers who address this topic and their main points
-   - Quality and depth of coverage for each focus area
+## Research Plan Requirements
 
-2. **Specific Content References**
-   - Direct references to key statements/quotes to extract (identify by speaker/context)
-   - Specific data points, metrics, or figures mentioned
-   - Important Q&A exchanges or management commentary to highlight
-   - Page numbers or transcript sections where key content appears
+1. **Material Content Identification**
+   - Identify the most significant developments, announcements, or changes discussed
+   - Locate specific metrics, figures, guidance, and quantitative data points
+   - Find key management statements that reveal strategy, confidence levels, or concerns
+   - Prioritize content by materiality and business impact
 
-3. **Extraction Instructions**
-   - Which specific quotes or statements should be featured prominently
-   - How to structure the content flow
-   - What context or background information to include with each extract
-   - Integration points with content from other sections
+2. **Content Structure Strategy**
+   - Organize content by materiality: major developments first, then supporting details
+   - Group related information logically (e.g., all reserve-building discussion together)
+   - Plan how to synthesize information rather than just extract quotes
+   - Identify where paraphrasing vs. direct quotes would be most effective
 
-4. **Content Organization Guide**
-   - Recommended flow and structure for presenting the extracted information
-   - Which information should be emphasized vs. supporting detail
-   - How to connect different pieces of information from the transcript{prior_context}
+3. **Specific Extraction Targets**
+   - Key metrics with specific numbers, percentages, timeframes, and context
+   - Management guidance, targets, ranges, and forward-looking statements
+   - Important rationale or explanations behind major decisions
+   - Comparative information (vs. prior periods, vs. expectations, vs. peers)
+
+4. **Business-Style Presentation Planning**
+   - Plan clear subheadings that reflect business priorities
+   - Identify content that should be emphasized through formatting
+   - Plan how to present complex information in digestible, actionable insights
+   - Consider integration with related content from other sections{prior_context}
+
+Create a research plan that will enable generation of professional, business-quality analysis that emphasizes synthesis and actionable insights over academic extraction.
 
 ## Transcript Content
 {transcript_text}

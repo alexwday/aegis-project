@@ -237,7 +237,7 @@ class FinalSectionGenerator:
             else ""
         )
 
-        prompt = f"""You are creating a concise, focused section for an earnings call analysis.
+        prompt = f"""You are creating a professional earnings call analysis section similar to what business analysts produce.
 
 ## Section: {section_name}
 
@@ -245,28 +245,31 @@ class FinalSectionGenerator:
 {research_plan}
 
 ## Content Guidelines
-Execute the research plan above to create a well-structured summary that:
+Execute the research plan above to create a business-quality section that follows professional earnings summary format:
 
-**Style & Approach:**
-- Paraphrases and synthesizes information rather than extensively quoting
-- Uses direct quotes sparingly and only when they add significant value
-- Combines related points into coherent, flowing paragraphs
-- Focuses on the most material and actionable insights
-- Maintains a professional, analytical tone
+**Content Style (Match Business Format):**
+- Lead with major developments and material announcements
+- Synthesize information into coherent narratives, not bullet lists of facts
+- Use strategic direct quotes only when they add significant insight or emphasis
+- Present specific metrics, figures, and timeframes prominently 
+- Group related information under clear, business-relevant subheadings
+- Prioritize actionable insights over comprehensive coverage
 
-**Content Focus:**
-- Emphasize key developments, trends, and management guidance
-- Include specific metrics, figures, and data points where relevant
-- Highlight significant changes from previous periods
-- Present information in order of materiality and relevance
+**Professional Structure:**
+- Start with the most material content first
+- Use descriptive subheadings that reflect business priorities
+- Combine quantitative data with qualitative context
+- Include management rationale and strategic thinking
+- Present information in logical flow that tells a coherent story
 
-**Structure Requirements:**
-- Lead with the most important information
-- Group related concepts logically within the section
-- Use clear, direct language that conveys essential points efficiently
-- Ensure the section provides substantive value without unnecessary length
+**Business-Quality Output Requirements:**
+- Write concise, direct paragraphs focused on key insights
+- Include specific numbers, percentages, timeframes, and context
+- Capture management confidence levels and guidance
+- Highlight risks, opportunities, and forward-looking statements
+- Maintain analytical tone while being accessible to business readers
 
-Create a focused summary that captures the essential information for this section while maintaining analytical depth and readability.{prior_context}
+Create a section that reads like professional business analysis - substantive, well-organized, and immediately actionable for decision-makers.{prior_context}
 
 ## Transcript Content
 {transcript_text}"""
