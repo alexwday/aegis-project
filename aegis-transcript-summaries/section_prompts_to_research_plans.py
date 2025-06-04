@@ -203,26 +203,30 @@ class TranscriptProcessor:
         return analysis_folder
     
     def load_section_context_from_file(self, file_path: str) -> str:
-        """Load section context from markdown file."""
+        """Load section context from markdown file, extracting only focus areas."""
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Extract the section context XML from the markdown
+        # Extract only the section name and focus areas, skip detailed widget instructions
         lines = content.split('\n')
-        in_context = False
-        context_lines = []
+        section_name = ""
+        focus_areas = []
+        in_focus_areas = False
         
         for line in lines:
-            if '<section_context>' in line:
-                in_context = True
-                context_lines.append(line)
-            elif '</section_context>' in line:
-                context_lines.append(line)
+            if '<section_name>' in line:
+                section_name = line.replace('<section_name>', '').replace('</section_name>', '').strip()
+            elif '<focus_areas>' in line:
+                in_focus_areas = True
+            elif '</focus_areas>' in line:
                 break
-            elif in_context:
-                context_lines.append(line)
+            elif in_focus_areas and line.strip().startswith('-'):
+                focus_areas.append(line.strip())
         
-        return '\n'.join(context_lines)
+        # Return clean section context without widget instruction examples
+        return f"""Section: {section_name}
+Focus Areas:
+{chr(10).join(focus_areas)}"""
     
     def generate_research_prompt(self, section_name: str, section_context: str, 
                                 transcript_text: str, prior_research: str = "") -> str:
@@ -230,22 +234,11 @@ class TranscriptProcessor:
         
         prior_context = f"\n\n## Prior Research Plans\n{prior_research}" if prior_research else ""
         
-        prompt = f"""# AEGIS Research Planning Task
+        prompt = f"""You are creating a research plan for extracting content from this specific earnings call transcript.
 
-## Objective
-Create a detailed research plan that provides specific instructions for content extraction from THIS earnings call transcript. Identify exactly what content is available and provide precise guidance on what to extract and how to use it.
-
-## Section Focus
 {section_context}
 
-## Critical Instructions
-- Reference specific statements, quotes, and discussions from THIS transcript
-- Identify key speakers and their relevant contributions
-- Point to specific sections/pages where important content is located
-- Provide concrete extraction instructions, not generic guidance
-- The researcher will use this plan to know exactly what to extract and reference
-
-## Task: Create a transcript-specific research plan covering:
+Analyze this transcript and create specific extraction instructions covering:
 
 1. **Available Content Assessment**
    - What specific information is present in this transcript for this section
@@ -260,28 +253,17 @@ Create a detailed research plan that provides specific instructions for content 
 
 3. **Extraction Instructions**
    - Which specific quotes or statements should be featured prominently
-   - How to structure the content (e.g., "lead with CEO's comment about X, follow with CFO's data on Y")
+   - How to structure the content flow
    - What context or background information to include with each extract
    - Integration points with content from other sections
 
 4. **Content Organization Guide**
    - Recommended flow and structure for presenting the extracted information
    - Which information should be emphasized vs. supporting detail
-   - How to connect different pieces of information from the transcript
-   - Specific formatting or presentation recommendations
-
-## Output Requirements
-- Be specific about what content exists and where to find it
-- Provide actionable extraction and organization instructions
-- Reference actual transcript content without fully extracting it
-- Guide the researcher to the most valuable content for this section{prior_context}
+   - How to connect different pieces of information from the transcript{prior_context}
 
 ## Transcript Content
 {transcript_text}
-
----
-
-Create a detailed, transcript-specific research plan for "{section_name}" that tells the researcher exactly what content to extract and how to use it."""
 
         return prompt
     
