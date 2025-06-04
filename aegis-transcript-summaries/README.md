@@ -43,17 +43,26 @@ This creates section prompt files from `summary_template.html`.
 ### 2. Add Transcript PDFs
 Place your PDF transcripts in the `input_transcript/` folder.
 
-### 3. Process Transcripts
+### 3. Generate Research Plans
 ```bash
 python section_prompts_to_research_plans.py
 ```
 
+### 4. Generate Final Sections
+```bash
+python research_plans_to_final_sections.py
+```
+
 ## Output
 
-Results are saved in `research_plans/TranscriptName_timestamp/`:
+**Research Plans** are saved in `research_plans/TranscriptName_timestamp/`:
 - `transcript.txt` - Extracted PDF text
 - `{section}_research_plan.md` - Strategic research plan for each section
 - `research_plans_summary.md` - Combined overview
+
+**Final Sections** are saved in `final_sections/TranscriptName_timestamp/`:
+- `{section}_final_section.md` - Final formatted section content
+- `complete_earnings_analysis.md` - Full analysis report
 
 ## File Structure
 ```
@@ -61,8 +70,10 @@ aegis-transcript-summaries/
 ├── config.json                           # Configuration settings
 ├── summary_template.html                 # Section configuration interface
 ├── template_to_section_prompts.py        # Generate section prompts
-├── section_prompts_to_research_plans.py  # Main processing script
+├── section_prompts_to_research_plans.py  # Generate research plans
+├── research_plans_to_final_sections.py   # Generate final sections
 ├── section_prompts/                      # Generated section prompts
 ├── input_transcript/                     # PDF input folder
-└── research_plans/                       # Output folder
+├── research_plans/                       # Research plans output
+└── final_sections/                       # Final analysis output
 ```

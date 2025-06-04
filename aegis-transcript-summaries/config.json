@@ -9,5 +9,6 @@
   "temperature": 0.1,
   "input_folder": "input_transcript",
   "output_folder": "research_plans",
+  "final_sections_folder": "final_sections",
   "section_prompts_folder": "section_prompts"
 }
