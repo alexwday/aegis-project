@@ -385,26 +385,23 @@ Analyze this transcript and create specific extraction instructions covering:
         
         context_parts = []
         for plan in self.completed_research_plans:
-            context_parts.append(f"""## {plan['section_name']} Research Plan
-
-{plan['research_plan']}""")
+            context_parts.append(f"## {plan['section_name']} Research Plan\n\n{plan['research_plan']}")
         
         return "\n\n".join(context_parts)
     
     def _generate_research_plans_summary(self):
         """Generate summary of all research plans."""
-        summary_content = f"""# Earnings Call Research Plans Summary
-
-**Planning Date:** {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-**Research Plans Created:** {len(self.completed_research_plans)}
-
-## Research Planning Overview
-
-This document contains the research plans for systematic content extraction and analysis. These plans identify what information is available in the transcript and how it should be structured for comprehensive analysis.
-
-## Section Research Plans
-
-"""
+        # Build summary content
+        planning_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        num_plans = len(self.completed_research_plans)
+        
+        summary_content = f"# Earnings Call Research Plans Summary\n\n"
+        summary_content += f"**Planning Date:** {planning_date}\n"
+        summary_content += f"**Research Plans Created:** {num_plans}\n\n"
+        summary_content += "## Research Planning Overview\n\n"
+        summary_content += "This document contains the research plans for systematic content extraction and analysis. "
+        summary_content += "These plans identify what information is available in the transcript and how it should be structured for comprehensive analysis.\n\n"
+        summary_content += "## Section Research Plans\n\n"
         
         for i, plan in enumerate(self.completed_research_plans, 1):
             summary_content += f"{i}. **{plan['section_name']}** (`{plan['section_id']}`)\n"
@@ -414,18 +411,14 @@ This document contains the research plans for systematic content extraction and 
         for plan in self.completed_research_plans:
             summary_content += f"### {plan['section_name']}\n\n{plan['research_plan']}\n\n---\n\n"
         
-        summary_content += """
-## Next Steps
-
-Use these research plans to systematically extract and analyze content from the transcript. Each plan provides:
-- Available information assessment
-- Content extraction strategy  
-- Structural organization approach
-- Integration opportunities with other sections
-- Key transcript reference points
-
-The research plans serve as a roadmap for comprehensive analysis execution.
-"""
+        summary_content += "## Next Steps\n\n"
+        summary_content += "Use these research plans to systematically extract and analyze content from the transcript. Each plan provides:\n"
+        summary_content += "- Available information assessment\n"
+        summary_content += "- Content extraction strategy\n"
+        summary_content += "- Structural organization approach\n"
+        summary_content += "- Integration opportunities with other sections\n"
+        summary_content += "- Key transcript reference points\n\n"
+        summary_content += "The research plans serve as a roadmap for comprehensive analysis execution.\n"
         
         summary_file = self.current_analysis_folder / "research_plans_summary.md"
         with open(summary_file, 'w', encoding='utf-8') as f:
@@ -465,21 +458,13 @@ The research plans serve as a roadmap for comprehensive analysis execution.
                     
                 except Exception as e:
                     self.logger.error(f"Failed to process {pdf_file.name}: {e}")
-                    continue
-            
-            self.logger.info("All transcripts processed successfully")
-            
-        except Exception as e:
-            self.logger.error(f"Processing failed: {e}")
-            raise
-
 
 def main():
     """Main entry point."""
     import sys
-    
+
     config_file = sys.argv[1] if len(sys.argv) > 1 else "config.json"
-    
+
     processor = TranscriptProcessor(config_file)
     processor.run()
 
