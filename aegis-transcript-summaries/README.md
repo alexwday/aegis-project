@@ -100,10 +100,10 @@ python3 transcript_processor.py
 **The processor will:**
 1. Initialize RBC SSL and OAuth authentication
 2. Extract text from all PDF files in `input_transcripts/`
-3. Process each transcript through all configured sections iteratively
-4. Generate master prompts with accumulated context
-5. Call LLM for each section analysis
-6. Save individual research plans and complete summary
+3. Generate research plans for each configured section iteratively
+4. Build master prompts with accumulated planning context
+5. Call LLM to create systematic research plans (not full analysis)
+6. Save individual research plans and planning summary
 
 **Output Structure:**
 ```
@@ -111,12 +111,14 @@ analysis_results/
 └── TranscriptName_20241201_143022/
     ├── transcript.txt                    # Extracted PDF text
     ├── macro_environment_master_prompt.txt
-    ├── macro_environment_research_plan.md
+    ├── macro_environment_research_plan.md  # Research plan (not full analysis)
     ├── outlook_master_prompt.txt
-    ├── outlook_research_plan.md
+    ├── outlook_research_plan.md         # Research plan (not full analysis)
     ├── ...
-    └── complete_analysis_summary.md      # Final consolidated report
+    └── research_plans_summary.md        # Combined research plans overview
 ```
+
+**Note:** This phase creates **research plans** that identify available information and plan the extraction strategy. The actual content analysis would be a separate subsequent phase.
 
 ## Dependencies
 

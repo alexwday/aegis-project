@@ -10,37 +10,40 @@ MASTER_PROMPT_TEMPLATE = """<context>
 </context>
 
 <objective>
-Analyze the provided earnings call transcript to extract and synthesize information for the specified section. Build upon previous research plans to create comprehensive, interconnected insights that contribute to a holistic view of the company's performance and outlook.
+Create a detailed research plan for the specified section based on what information is available in the earnings call transcript. This is a planning phase - you are NOT extracting the actual content yet, but rather identifying what content is available and planning how to structure the final analysis.
 </objective>
 
 <style>
-Expert financial analyst providing institutional-grade equity research analysis. Emphasize quantitative data, specific metrics, and actionable insights. Use precise financial terminology and maintain objectivity in assessments.
+Expert financial analyst creating a systematic research plan. Focus on identifying transcript locations, available information, and structural organization for future content extraction.
 </style>
 
 <tone>
-Professional, analytical, data-driven. Present findings with confidence while acknowledging uncertainties. Use clear, direct language appropriate for sophisticated institutional investors.
+Strategic and methodical. Use planning language ("will analyze", "found in", "plan to extract") rather than analytical conclusions.
 </tone>
 
 <audience>
-Institutional investors, equity research professionals, and portfolio managers requiring detailed earnings analysis for investment decision-making. Assume advanced financial knowledge and preference for specific, actionable insights over general commentary.
+Research team who will use this plan to systematically extract and analyze content in the next phase of work.
 </audience>
 
 <response_format>
-## {section_name} Analysis
+## Research Plan for {section_name}
 
-### Executive Summary
-[2-3 sentences summarizing the most critical findings and their implications]
+### Available Information Assessment
+[What {section_name}-related information is present in this transcript and where it's located]
 
-### Key Points
-[3-5 bullet points highlighting specific insights with supporting data/quotes]
+### Content Extraction Strategy  
+[Detailed plan for what specific information to extract and from which parts of the transcript]
 
 {widget_sections}
 
-### Integration with Prior Research
-[Brief note on how this section's findings connect to or build upon previous sections' insights]
+### Structural Organization Plan
+[How the final analysis will be organized and presented]
 
-### Strategic Implications
-[1-2 sentences on what these findings mean for the company's outlook or investment thesis]
+### Integration Opportunities
+[How this section's content will connect with previous research plans]
+
+### Key Transcript References
+[Note specific sections, speakers, or topics that contain relevant information - references only, not full content]
 </response_format>
 
 <section_instructions>
@@ -52,7 +55,7 @@ Institutional investors, equity research professionals, and portfolio managers r
 </transcript_content>
 
 <task_reminder>
-Using the section instructions above, analyze the transcript content to extract relevant information. Incorporate context from prior research plans where applicable. Generate your analysis following the exact response format specified above, ensuring each widget section is properly structured and all findings are grounded in specific transcript content.
+Your goal is to create a RESEARCH PLAN, not perform the actual analysis. Review the transcript to identify what {section_name}-related information is available, where it's located, and how you would structure the extraction and analysis. Reference specific parts of the transcript but do not extract or analyze the content itself - that will be done in a later phase.
 </task_reminder>"""
 
 
@@ -71,22 +74,22 @@ Use this context to ensure consistency and identify connections between this sec
 
 
 def format_widget_sections(enabled_widgets: list) -> str:
-    """Format widget sections for the response format based on enabled widgets."""
+    """Format widget sections for research planning based on enabled widgets."""
     widget_formats = {
-        'summary': """### Summary
-[Structured overview with key points and context]""",
-        'qa': """### Q&A Highlights
-[Significant analyst questions and management responses]""",
-        'exec': """### Management Commentary
-[Direct executive quotes and strategic insights]""",
-        'data': """### Key Metrics & Data
-[Quantitative information in structured format]""",
-        'highlights': """### Performance Highlights
-[Standout metrics and achievements]""",
-        'trend': """### Trend Analysis
-[Historical comparisons and directional insights]""",
-        'peer': """### Competitive Positioning
-[Industry benchmarking and competitive analysis]"""
+        'summary': """### Summary Content Plan
+[Plan for structured overview - what key points will be included and where they're found in transcript]""",
+        'qa': """### Q&A Analysis Plan
+[Which analyst questions and management responses to highlight - identify specific Q&A exchanges by speaker/topic]""",
+        'exec': """### Management Commentary Plan
+[Which executive quotes and strategic insights to extract - note speakers and topics without full quotes]""",
+        'data': """### Data Extraction Plan
+[What quantitative information is available and where - identify metrics, tables, figures by transcript location]""",
+        'highlights': """### Performance Highlights Plan
+[Which standout metrics to feature - note what achievements or concerns are mentioned and where]""",
+        'trend': """### Trend Analysis Plan
+[What historical comparisons are available - identify trend discussions and their transcript locations]""",
+        'peer': """### Competitive Analysis Plan
+[What competitive/industry information is present - note competitive mentions and market positioning discussions]"""
     }
     
     sections = []

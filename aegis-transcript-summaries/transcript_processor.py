@@ -320,12 +320,12 @@ class TranscriptProcessor:
         # Reset analysis state
         self.completed_research_plans = []
         
-        # Process each section iteratively
+        # Generate research plans for each section iteratively
         for i, section_info in enumerate(section_prompts, 1):
-            self.logger.info(f"Processing Section {i}/{len(section_prompts)}: {section_info['section_name']}")
+            self.logger.info(f"Creating research plan {i}/{len(section_prompts)}: {section_info['section_name']}")
             
             try:
-                research_plan = self._process_section(
+                research_plan = self._generate_research_plan(
                     section_info, 
                     transcript_text, 
                     i, 
@@ -344,21 +344,21 @@ class TranscriptProcessor:
                     'research_plan': research_plan
                 })
                 
-                self.logger.info(f"Completed section: {section_info['section_name']}")
+                self.logger.info(f"Research plan completed: {section_info['section_name']}")
                 
             except Exception as e:
-                self.logger.error(f"Failed to process section {section_info['section_name']}: {e}")
+                self.logger.error(f"Failed to create research plan for {section_info['section_name']}: {e}")
                 raise
         
-        # Generate final summary
-        self._generate_final_summary()
+        # Generate final summary of research plans
+        self._generate_research_plans_summary()
         
-        self.logger.info(f"Transcript processing completed. Results in: {self.current_analysis_folder}")
+        self.logger.info(f"Research planning completed. Results in: {self.current_analysis_folder}")
         return self.current_analysis_folder
     
-    def _process_section(self, section_info: Dict, transcript_text: str, 
-                        section_num: int, total_sections: int) -> str:
-        """Process a single section through the LLM."""
+    def _generate_research_plan(self, section_info: Dict, transcript_text: str, 
+                               section_num: int, total_sections: int) -> str:
+        """Generate a research plan for a single section."""
         
         # Load section context from file
         section_file = self.section_prompts_dir / f"{section_info['section_id']}.md"
@@ -403,30 +403,47 @@ class TranscriptProcessor:
         
         return "\n\n".join(context_parts)
     
-    def _generate_final_summary(self):
-        """Generate final analysis summary."""
-        summary_content = f"""# Earnings Call Transcript Analysis Summary
+    def _generate_research_plans_summary(self):
+        """Generate summary of all research plans."""
+        summary_content = f"""# Earnings Call Research Plans Summary
 
-**Analysis Date:** {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-**Sections Processed:** {len(self.completed_research_plans)}
+**Planning Date:** {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+**Research Plans Created:** {len(self.completed_research_plans)}
 
-## Section Overview
+## Research Planning Overview
+
+This document contains the research plans for systematic content extraction and analysis. These plans identify what information is available in the transcript and how it should be structured for comprehensive analysis.
+
+## Section Research Plans
 
 """
         
         for i, plan in enumerate(self.completed_research_plans, 1):
             summary_content += f"{i}. **{plan['section_name']}** (`{plan['section_id']}`)\n"
         
-        summary_content += "\n## Complete Analysis Results\n\n"
+        summary_content += "\n## Complete Research Plans\n\n"
         
         for plan in self.completed_research_plans:
             summary_content += f"### {plan['section_name']}\n\n{plan['research_plan']}\n\n---\n\n"
         
-        summary_file = self.current_analysis_folder / "complete_analysis_summary.md"
+        summary_content += """
+## Next Steps
+
+Use these research plans to systematically extract and analyze content from the transcript. Each plan provides:
+- Available information assessment
+- Content extraction strategy  
+- Structural organization approach
+- Integration opportunities with other sections
+- Key transcript reference points
+
+The research plans serve as a roadmap for comprehensive analysis execution.
+"""
+        
+        summary_file = self.current_analysis_folder / "research_plans_summary.md"
         with open(summary_file, 'w', encoding='utf-8') as f:
             f.write(summary_content)
         
-        self.logger.info(f"Generated final summary: {summary_file}")
+        self.logger.info(f"Generated research plans summary: {summary_file}")
     
     def run(self):
         """Main processing workflow."""
