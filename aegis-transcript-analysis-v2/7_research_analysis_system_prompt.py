@@ -50,20 +50,8 @@ class ResearchAnalysisPromptGenerator:
         # Get CO-STAR methodology from research_analysis_prompt
         costar_prompt = self._get_costar_methodology()
 
-        # Construct full prompt
-        prompt = f"""{self.base_instructions}
-
-{costar_prompt}
-
-{prior_analyses_section}
-
-{current_section_part}
-
-## TRANSCRIPT CONTENT
-
-{transcript_text}
-
-## INSTRUCTIONS FOR CURRENT SECTION ANALYSIS
+        # Build the main sections
+        instructions_section = """## INSTRUCTIONS FOR CURRENT SECTION ANALYSIS
 
 Execute the research plan for the CURRENT SECTION above. Your analysis should:
 
@@ -75,9 +63,9 @@ Execute the research plan for the CURRENT SECTION above. Your analysis should:
 
 4. **Focus on Material Content**: Prioritize the most significant and business-relevant information
 
-5. **Preserve Accuracy**: Ensure all quotes, numbers, and attributions are precise
+5. **Preserve Accuracy**: Ensure all quotes, numbers, and attributions are precise"""
 
-## RESPONSE FORMAT
+        format_section = """## RESPONSE FORMAT
 
 Use the JSON extraction tool to structure your response according to the transcript JSON format schema. Your response MUST follow this exact structure from TRANSCRIPT_JSON_FORMAT.md:
 
@@ -91,7 +79,7 @@ Use the JSON extraction tool to structure your response according to the transcr
       "subsection": "Subsection Name (e.g., 'Reserve Strategy and Credit Quality')",
       "quotes": [
         {
-          "quote_text": "Exact quote with <span class=\"highlight-keyword\">keywords</span> and <span class=\"highlight-figure\">$500MM</span> highlighted",
+          "quote_text": "Exact quote with <span class=\\"highlight-keyword\\">keywords</span> and <span class=\\"highlight-figure\\">$500MM</span> highlighted",
           "context": "Additional clarifying information or null",
           "speaker": {
             "name": "Gabriel Dechaine",
@@ -134,7 +122,24 @@ Use the JSON extraction tool to structure your response according to the transcr
 ### Key Metrics Format:
 Include dollar amounts, percentages, ratios, time periods, guidance ranges in original units with context (e.g., "30 million shares repurchased", "141% LCR")
 
-Remember: You are executing a precise research plan. Focus on accuracy, materiality, and professional business analysis standards.
+Remember: You are executing a precise research plan. Focus on accuracy, materiality, and professional business analysis standards."""
+
+        # Construct full prompt
+        prompt = f"""{self.base_instructions}
+
+{costar_prompt}
+
+{prior_analyses_section}
+
+{current_section_part}
+
+## TRANSCRIPT CONTENT
+
+{transcript_text}
+
+{instructions_section}
+
+{format_section}
 """
 
         return prompt
@@ -254,8 +259,12 @@ Financial analysts and reporting systems that will use the extracted JSON data f
         sections_text += "The following sections have already been analyzed. Use this context for cross-referencing and to avoid duplication:\n\n"
 
         for i, analysis in enumerate(completed_analyses, 1):
-            sections_text += f"### {i}. {analysis.get('section_name', 'Unknown Section')}\n"
-            sections_text += f"**Section ID**: {analysis.get('section_id', 'unknown')}\n\n"
+            sections_text += (
+                f"### {i}. {analysis.get('section_name', 'Unknown Section')}\n"
+            )
+            sections_text += (
+                f"**Section ID**: {analysis.get('section_id', 'unknown')}\n\n"
+            )
 
             # Include key extracted content highlights
             extracted_content = analysis.get("extracted_content", {})
@@ -264,17 +273,19 @@ Financial analysts and reporting systems that will use the extracted JSON data f
                 key_quotes = extracted_content.get("key_quotes", [])
                 numerical_data = extracted_content.get("numerical_data", [])
                 themes = extracted_content.get("thematic_synthesis", [])
-                
+
                 sections_text += f"**Extracted Elements**:\n"
                 sections_text += f"- Key Quotes: {len(key_quotes)}\n"
                 sections_text += f"- Numerical Data Points: {len(numerical_data)}\n"
                 sections_text += f"- Synthesized Themes: {len(themes)}\n"
-                
+
                 # Include first theme as example if available
                 if themes:
                     first_theme = themes[0]
-                    sections_text += f"\n**Sample Theme**: {first_theme.get('theme', 'N/A')}\n"
-            
+                    sections_text += (
+                        f"\n**Sample Theme**: {first_theme.get('theme', 'N/A')}\n"
+                    )
+
             # Include completeness assessment if available
             completeness = analysis.get("completeness_assessment", {})
             if completeness:
@@ -285,45 +296,55 @@ Financial analysts and reporting systems that will use the extracted JSON data f
 
         return sections_text
 
-    def _format_current_section(self, current_section: Dict, research_plan: Dict) -> str:
+    def _format_current_section(
+        self, current_section: Dict, research_plan: Dict
+    ) -> str:
         """Format the current section and its research plan."""
         sections_text = "## CURRENT SECTION (EXECUTE ANALYSIS FOR THIS SECTION)\n\n"
         sections_text += f"**Section Name**: {current_section.get('section_name', 'Unknown Section')}\n"
-        sections_text += f"**Section ID**: {current_section.get('section_id', 'unknown')}\n"
-        sections_text += f"**Status**: ACTIVE - Execute research plan for this section\n\n"
-        
+        sections_text += (
+            f"**Section ID**: {current_section.get('section_id', 'unknown')}\n"
+        )
+        sections_text += (
+            f"**Status**: ACTIVE - Execute research plan for this section\n\n"
+        )
+
         sections_text += "**Section Requirements**:\n"
-        sections_text += f"{current_section.get('description', 'No description available')}\n\n"
-        
+        sections_text += (
+            f"{current_section.get('description', 'No description available')}\n\n"
+        )
+
         sections_text += "### RESEARCH PLAN TO EXECUTE\n\n"
-        
+
         # Format the research plan based on its structure
         if isinstance(research_plan, dict):
             # Handle structured research plan
             plan_details = research_plan.get("research_plan", research_plan)
-            
+
             if isinstance(plan_details, dict):
                 # Extract key elements from structured plan
                 content_avail = plan_details.get("content_availability", {})
                 extraction_strategy = plan_details.get("extraction_strategy", {})
                 organization = plan_details.get("organization_structure", {})
-                
+
                 sections_text += "**Content Availability Assessment**:\n"
                 high_priority = content_avail.get("high_priority_content", [])
                 if high_priority:
                     sections_text += f"- High Priority: {', '.join(high_priority)}\n"
-                
+
                 sections_text += "\n**Extraction Strategy**:\n"
                 key_quotes = extraction_strategy.get("key_quotes", [])
                 numerical_data = extraction_strategy.get("numerical_data", [])
                 sections_text += f"- Key Quotes to Extract: {len(key_quotes)}\n"
                 sections_text += f"- Numerical Data Points: {len(numerical_data)}\n"
-                
+
                 sections_text += "\n**Organization Structure**:\n"
                 primary_subsections = organization.get("primary_subsections", [])
                 if primary_subsections:
                     sections_text += "- Subsections: "
-                    sections_text += ", ".join([s.get("subsection_name", "N/A") for s in primary_subsections])
+                    sections_text += ", ".join(
+                        [s.get("subsection_name", "N/A") for s in primary_subsections]
+                    )
                     sections_text += "\n"
             else:
                 # Handle text-based research plan
@@ -331,7 +352,7 @@ Financial analysts and reporting systems that will use the extracted JSON data f
         else:
             # Fallback for string research plans
             sections_text += str(research_plan)
-        
+
         sections_text += "\n"
         return sections_text
 
@@ -378,7 +399,11 @@ if __name__ == "__main__":
         "section_name": "Credit Section",
         "research_plan": {
             "content_availability": {
-                "high_priority_content": ["PCL ratios", "Reserve build", "Credit quality metrics"]
+                "high_priority_content": [
+                    "PCL ratios",
+                    "Reserve build",
+                    "Credit quality metrics",
+                ]
             },
             "extraction_strategy": {
                 "key_quotes": [
@@ -386,7 +411,7 @@ if __name__ == "__main__":
                         "content_description": "CEO commentary on credit outlook",
                         "speaker_attribution": "CEO",
                         "approximate_location": "Prepared remarks",
-                        "priority": "high"
+                        "priority": "high",
                     }
                 ],
                 "numerical_data": [
@@ -394,11 +419,11 @@ if __name__ == "__main__":
                         "metric_description": "PCL ratio",
                         "expected_format": "basis points",
                         "comparative_context": "vs Q1 2024",
-                        "priority": "high"
+                        "priority": "high",
                     }
-                ]
-            }
-        }
+                ],
+            },
+        },
     }
 
     completed_analyses = [
@@ -408,12 +433,12 @@ if __name__ == "__main__":
             "extracted_content": {
                 "key_quotes": [{"quote_text": "Economic outlook remains uncertain..."}],
                 "numerical_data": [{"metric": "GDP growth", "value": "2.5%"}],
-                "thematic_synthesis": [{"theme": "Regulatory challenges"}]
+                "thematic_synthesis": [{"theme": "Regulatory challenges"}],
             },
             "completeness_assessment": {
                 "coverage_percentage": 90,
-                "confidence_level": "high"
-            }
+                "confidence_level": "high",
+            },
         }
     ]
 

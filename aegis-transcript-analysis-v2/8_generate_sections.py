@@ -3,7 +3,7 @@
 Section Generation Script
 
 This script iteratively processes sections from 6_research_plan.json to generate
-structured analysis following the transcript JSON format. It builds context 
+structured analysis following the transcript JSON format. It builds context
 progressively as each section is analyzed.
 
 Flow:
@@ -214,7 +214,7 @@ class SectionGenerator:
             data = json.load(f)
 
         research_plans = data.get("research_plans", [])
-        
+
         self.logger.info(f"Loaded {len(research_plans)} research plans")
         return research_plans
 
@@ -304,14 +304,14 @@ class SectionGenerator:
 
         section_name = current_research_plan.get("section_name", "Unknown Section")
         section_id = current_research_plan.get("section_id", "unknown")
-        
+
         self.logger.info(f"Generating analysis for: {section_name}")
 
         # Prepare current section info (extract from research plan)
         current_section = {
             "section_id": section_id,
             "section_name": section_name,
-            "description": self._extract_section_description(current_research_plan)
+            "description": self._extract_section_description(current_research_plan),
         }
 
         # Generate system prompt using 7_research_analysis_system_prompt.py
@@ -338,7 +338,9 @@ class SectionGenerator:
             section_analysis = json.loads(json_text)
 
         except json.JSONDecodeError as e:
-            self.logger.warning(f"Failed to parse JSON response, creating structured fallback: {e}")
+            self.logger.warning(
+                f"Failed to parse JSON response, creating structured fallback: {e}"
+            )
             # Create structured fallback following transcript JSON format
             section_analysis = {
                 "section_name": section_name,
@@ -350,20 +352,24 @@ class SectionGenerator:
                         "quotes": [
                             {
                                 "quote_text": "Analysis could not be parsed as JSON",
-                                "context": response[:500] + "..." if len(response) > 500 else response,
+                                "context": (
+                                    response[:500] + "..."
+                                    if len(response) > 500
+                                    else response
+                                ),
                                 "speaker": {
                                     "name": "System",
                                     "title": "Parser",
-                                    "company": "AEGIS"
+                                    "company": "AEGIS",
                                 },
                                 "sentiment": "neutral",
                                 "sentiment_rationale": "Raw text output",
-                                "key_metrics": []
+                                "key_metrics": [],
                             }
-                        ]
+                        ],
                     }
                 ],
-                "processing_note": "JSON parsing failed, review response format"
+                "processing_note": "JSON parsing failed, review response format",
             }
 
         self.logger.info(f"Section analysis generated for: {section_name}")
@@ -374,14 +380,14 @@ class SectionGenerator:
         # Try to find description in various locations
         if "description" in research_plan:
             return research_plan["description"]
-        
+
         plan_details = research_plan.get("research_plan", {})
         if isinstance(plan_details, dict):
             quality_considerations = plan_details.get("quality_considerations", {})
             business_relevance = quality_considerations.get("business_relevance", "")
             if business_relevance:
                 return business_relevance
-        
+
         # Fallback
         return f"Analysis of {research_plan.get('section_name', 'unknown')} section content"
 
@@ -390,7 +396,9 @@ class SectionGenerator:
         research_plans = self.research_plans
         completed_analyses = []
 
-        self.logger.info(f"Starting iterative processing of {len(research_plans)} sections")
+        self.logger.info(
+            f"Starting iterative processing of {len(research_plans)} sections"
+        )
 
         for i, current_research_plan in enumerate(research_plans):
             section_name = current_research_plan.get("section_name", f"Section {i+1}")
@@ -432,7 +440,7 @@ class SectionGenerator:
                 "transcript_source_folder": str(self.transcript_input_folder),
                 "total_sections_processed": len(section_analyses),
                 "processing_approach": "iterative_context_building",
-                "format_specification": "TRANSCRIPT_JSON_FORMAT.md"
+                "format_specification": "TRANSCRIPT_JSON_FORMAT.md",
             },
             "sections": section_analyses,
         }
