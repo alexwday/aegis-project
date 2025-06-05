@@ -183,23 +183,25 @@ class ResearchPlanCreator:
         """Initialize OpenAI client with configuration."""
         self.logger.info("Initializing OpenAI client...")
 
-        # Use OAuth token if available, otherwise expect API key in environment
-        api_key = self.oauth_token if self.oauth_token else os.getenv("OPENAI_API_KEY")
-
-        if not api_key:
+        # Use OAuth token as API key - this is required for corporate proxy
+        if not self.oauth_token:
             raise ValueError(
-                "No API key available (OAuth token or OPENAI_API_KEY environment variable)"
+                "OAuth token is required for API access. Please configure OAuth in config.json"
             )
 
-        # Use base_url from config if provided
+        # Use base_url from config - this is required for corporate proxy
         base_url = self.config.get("base_url")
-        if base_url and base_url.startswith("your-"):
-            base_url = None  # Don't use placeholder values
+        if not base_url or base_url.startswith("your-"):
+            raise ValueError(
+                "base_url is required in config.json for corporate API access"
+            )
 
-        client_params = {"api_key": api_key}
-        if base_url:
-            client_params["base_url"] = base_url
-            self.logger.info(f"Using custom base URL: {base_url}")
+        client_params = {
+            "api_key": self.oauth_token,
+            "base_url": base_url
+        }
+        
+        self.logger.info(f"Using corporate API endpoint: {base_url}")
 
         client = OpenAI(**client_params)
 

@@ -116,10 +116,12 @@ This approach:
 }
 ```
 
-### Authentication Options
-1. **OAuth**: Configure oauth_endpoint, client_id, client_secret
-2. **Direct API Key**: Set OPENAI_API_KEY environment variable
-3. **SSL**: Place certificate file and update ssl_cert_path
+### Authentication Requirements
+1. **OAuth (Required)**: Configure oauth_endpoint, client_id, client_secret in config.json
+2. **Corporate Base URL (Required)**: Set base_url to your corporate API proxy endpoint
+3. **SSL Certificate (Required)**: Place certificate file and update ssl_cert_path
+
+**Note**: This system uses corporate OAuth authentication with a proxy endpoint, NOT direct OpenAI API keys.
 
 ## Usage Instructions
 
