@@ -11,4 +11,3 @@
   "section_instructions_file": "2_section_instructions.json",
   "output_file": "6_research_plan.json"
 }
-EOF < /dev/null
