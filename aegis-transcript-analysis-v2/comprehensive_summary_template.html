@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Earnings Call Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c5aa0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 4px solid #2c5aa0;
+            background-color: #f9f9f9;
+        }
+        .section-title {
+            color: #2c5aa0;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .subsection {
+            margin: 15px 0;
+        }
+        .subsection-title {
+            color: #1a3d6b;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .metric-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .metric-table th, .metric-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .metric-table th {
+            background-color: #2c5aa0;
+            color: white;
+        }
+        .quote-box {
+            background-color: #e8f0fe;
+            border-left: 4px solid #4285f4;
+            padding: 10px;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        .bullet-point {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{BANK_NAME}} Earnings Call Analysis</h1>
+            <h2>{{QUARTER}} {{YEAR}} Results</h2>
+            <p><strong>Date:</strong> {{CALL_DATE}} | <strong>Duration:</strong> {{DURATION}}</p>
+        </div>
+
+        <!-- FINANCIAL PERFORMANCE SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_1_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Key Financial Metrics</div>
+                {{SECTION_1_KEY_METRICS}}
+                <table class="metric-table">
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current Quarter</th>
+                        <th>Previous Quarter</th>
+                        <th>Year-over-Year</th>
+                        <th>Change</th>
+                    </tr>
+                    {{SECTION_1_METRICS_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Revenue Analysis</div>
+                {{SECTION_1_REVENUE_ANALYSIS}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Profitability Trends</div>
+                {{SECTION_1_PROFITABILITY}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_1_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- CREDIT QUALITY & RISK MANAGEMENT SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_2_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Credit Portfolio Overview</div>
+                {{SECTION_2_PORTFOLIO_OVERVIEW}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Loan Loss Provisions & NPLs</div>
+                {{SECTION_2_PROVISIONS}}
+                <table class="metric-table">
+                    <tr>
+                        <th>Credit Metric</th>
+                        <th>Current</th>
+                        <th>Previous</th>
+                        <th>Change</th>
+                    </tr>
+                    {{SECTION_2_CREDIT_METRICS_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Risk Management Updates</div>
+                {{SECTION_2_RISK_MANAGEMENT}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_2_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- CAPITAL & LIQUIDITY SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_3_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Capital Ratios & Requirements</div>
+                {{SECTION_3_CAPITAL_RATIOS}}
+                <table class="metric-table">
+                    <tr>
+                        <th>Capital Metric</th>
+                        <th>Current</th>
+                        <th>Target/Requirement</th>
+                        <th>Status</th>
+                    </tr>
+                    {{SECTION_3_CAPITAL_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Liquidity Position</div>
+                {{SECTION_3_LIQUIDITY}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Regulatory Updates</div>
+                {{SECTION_3_REGULATORY}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_3_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- BUSINESS SEGMENTS SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_4_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Consumer Banking</div>
+                {{SECTION_4_CONSUMER_BANKING}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Commercial Banking</div>
+                {{SECTION_4_COMMERCIAL_BANKING}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Investment Banking & Wealth Management</div>
+                {{SECTION_4_INVESTMENT_WEALTH}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Segment Performance Comparison</div>
+                <table class="metric-table">
+                    <tr>
+                        <th>Business Segment</th>
+                        <th>Revenue</th>
+                        <th>Net Income</th>
+                        <th>ROE</th>
+                        <th>Growth Rate</th>
+                    </tr>
+                    {{SECTION_4_SEGMENT_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_4_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- NET INTEREST MARGIN & DEPOSITS SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_5_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Net Interest Margin Analysis</div>
+                {{SECTION_5_NIM_ANALYSIS}}
+                <table class="metric-table">
+                    <tr>
+                        <th>NIM Component</th>
+                        <th>Current Quarter</th>
+                        <th>Previous Quarter</th>
+                        <th>Change (bps)</th>
+                    </tr>
+                    {{SECTION_5_NIM_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Deposit Composition & Trends</div>
+                {{SECTION_5_DEPOSITS}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Interest Rate Environment Impact</div>
+                {{SECTION_5_RATE_ENVIRONMENT}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_5_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- DIGITAL INITIATIVES & TECHNOLOGY SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_6_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Digital Transformation Progress</div>
+                {{SECTION_6_DIGITAL_TRANSFORMATION}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Technology Investments</div>
+                {{SECTION_6_TECH_INVESTMENTS}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Customer Experience Enhancements</div>
+                {{SECTION_6_CUSTOMER_EXPERIENCE}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Digital Metrics & KPIs</div>
+                <table class="metric-table">
+                    <tr>
+                        <th>Digital Metric</th>
+                        <th>Current</th>
+                        <th>Previous</th>
+                        <th>Target</th>
+                    </tr>
+                    {{SECTION_6_DIGITAL_METRICS_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_6_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- MACRO ENVIRONMENT & OUTLOOK SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_7_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Economic Environment Assessment</div>
+                {{SECTION_7_ECONOMIC_ENVIRONMENT}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Regulatory Environment</div>
+                {{SECTION_7_REGULATORY_ENVIRONMENT}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Forward Guidance</div>
+                {{SECTION_7_FORWARD_GUIDANCE}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Strategic Priorities</div>
+                {{SECTION_7_STRATEGIC_PRIORITIES}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_7_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- OPERATIONAL EFFICIENCY & RESTRUCTURING SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_8_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Cost Management Initiatives</div>
+                {{SECTION_8_COST_MANAGEMENT}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Restructuring Progress</div>
+                {{SECTION_8_RESTRUCTURING}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Efficiency Metrics</div>
+                <table class="metric-table">
+                    <tr>
+                        <th>Efficiency Metric</th>
+                        <th>Current</th>
+                        <th>Target</th>
+                        <th>Progress</th>
+                    </tr>
+                    {{SECTION_8_EFFICIENCY_TABLE}}
+                </table>
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Commentary</div>
+                <div class="quote-box">
+                    {{SECTION_8_MANAGEMENT_QUOTES}}
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALYST Q&A HIGHLIGHTS SECTION -->
+        <div class="section">
+            <div class="section-title">{{SECTION_9_TITLE}}</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Key Questions & Responses</div>
+                {{SECTION_9_QA_HIGHLIGHTS}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Forward-Looking Statements</div>
+                {{SECTION_9_FORWARD_LOOKING}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Management Clarifications</div>
+                <div class="quote-box">
+                    {{SECTION_9_CLARIFICATIONS}}
+                </div>
+            </div>
+        </div>
+
+        <!-- APPENDIX SECTION -->
+        <div class="section">
+            <div class="section-title">Appendix</div>
+            
+            <div class="subsection">
+                <div class="subsection-title">Non-GAAP Reconciliations</div>
+                {{APPENDIX_NON_GAAP}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Additional Metrics</div>
+                {{APPENDIX_ADDITIONAL_METRICS}}
+            </div>
+
+            <div class="subsection">
+                <div class="subsection-title">Glossary of Terms</div>
+                {{APPENDIX_GLOSSARY}}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #003087;
+            color: white;
+            padding: 20px 30px;
+            text-align: left;
+            border-bottom: 3px solid #002060;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        /* Controls Bar */
+        .controls-bar {
+            background-color: #f8f9fa;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .controls-left {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background-color: #003087;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #002060;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-secondary {
+            background-color: white;
+            color: #003087;
+            border: 1px solid #003087;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f0f4f8;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        /* Table Layout for Perfect Alignment */
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        
+        .config-table th,
+        .config-table td {
+            border: 1px solid #e0e0e0;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .config-table th {
+            background-color: #f8f9fa;
+            padding: 15px 8px;
+            font-weight: 600;
+            color: #003087;
+            font-size: 12px;
+            vertical-align: top;
+        }
+        
+        .config-table th.section-header {
+            text-align: center;
+            padding: 15px 20px;
+            width: 85%;
+        }
+        
+        .config-table th.edit-header {
+            width: 60px;
+            max-width: 60px;
+            min-width: 60px;
+        }
+        
+        .section-row {
+            background-color: white;
+            transition: all 0.2s;
+        }
+        
+        .section-row:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .section-row.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        
+        .section-row.drag-over {
+            border-top: 3px solid #003087;
+        }
+        
+        .section-cell {
+            padding: 15px 20px;
+            text-align: left;
+            border-right: 1px solid #e0e0e0;
+            cursor: move;
+        }
+        
+        .section-cell.core {
+            border-left: 4px solid #003087;
+        }
+        
+        .section-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .drag-handle {
+            color: #bbb;
+            font-size: 18px;
+            cursor: move;
+        }
+        
+        .drag-handle:hover {
+            color: #003087;
+        }
+        
+        .section-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .section-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .section-name {
+            font-size: 15px;
+            font-weight: 500;
+            color: #003087;
+            margin-bottom: 4px;
+            text-align: left;
+        }
+        
+        .section-desc {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            text-align: left;
+            white-space: pre-line;
+        }
+        
+        .edit-cell {
+            padding: 4px 2px;
+            text-align: center;
+        }
+        
+        .edit-btn {
+            padding: 4px 6px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .edit-btn:hover {
+            background-color: #f0f4f8;
+            border-color: #003087;
+            color: #003087;
+        }
+        
+        /* Expanded Details */
+        .section-details-row {
+            display: none;
+        }
+        
+        .section-expanded .section-details-row {
+            display: table-row;
+        }
+        
+        .section-details-cell {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .detail-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+        
+        .detail-textarea:focus {
+            outline: none;
+            border-color: #003087;
+            box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+        }
+        
+        /* Add Section */
+        .add-section {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #999;
+            margin: 20px;
+        }
+        
+        .add-section:hover {
+            border-color: #003087;
+            background-color: #f8f9fa;
+            color: #003087;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+            color: #003087;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #003087;
+            box-shadow: 0 0 0 3px rgba(0,48,135,0.1);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AEGIS: Finance Assist for External Research and Insights</h1>
+            <p>Investor Relations Earnings Call Summary Tool - Section Configuration</p>
+        </div>
+        
+        <!-- Controls Bar -->
+        <div class="controls-bar">
+            <div class="controls-left">
+                <button class="btn btn-secondary" onclick="selectAll()">
+                    <span>✓</span> Select All
+                </button>
+                <button class="btn btn-secondary" onclick="deselectAll()">
+                    <span>✗</span> Deselect All
+                </button>
+                <button class="btn btn-secondary" onclick="resetToDefault()">
+                    <span>↺</span> Reset to Default
+                </button>
+            </div>
+            <button class="btn btn-success" onclick="saveConfiguration()">
+                <span>💾</span> Save Configuration
+            </button>
+        </div>
+        
+        <!-- Configuration Table -->
+        <table class="config-table" id="configTable">
+            <thead>
+                <tr>
+                    <th class="section-header">
+                        <div>Section</div>
+                        <div style="font-size: 11px; color: #666; font-weight: normal;">Content areas to extract from earnings call transcripts</div>
+                    </th>
+                    <th class="edit-header">Edit</th>
+                </tr>
+            </thead>
+            <tbody id="sectionsContainer">
+                <!-- Macro Environment Section -->
+                <tr class="section-row" draggable="true" data-section-id="macro-environment">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Macro Environment Section</div>
+                                <div class="section-desc">Purpose: Analyze management's assessment of economic conditions, regulatory environment, and competitive landscape.
+
+Content Extraction Focus:
+- Economic Outlook: GDP growth expectations, recession probability assessment, regional economic conditions
+- Regulatory Environment: Policy impact analysis, compliance cost implications, regulatory relationship
+- Competitive Landscape: Industry consolidation trends, competitive pressure assessment, market dynamics
+- External Risk Factors: Geopolitical considerations, trade policy impacts, systemic risk assessment
+- Strategic Response: Management's adaptation strategies, scenario planning, risk mitigation approaches
+
+Key Quote Types to Extract:
+- Economic outlook statements and recession probability assessments
+- Regulatory policy impact analysis and compliance implications
+- Competitive landscape evolution and strategic positioning
+- Geopolitical risk assessment and business impact analysis
+- Scenario planning approach and risk mitigation strategies
+
+Subsection Organization:
+- Economic Environment Assessment
+- Regulatory Landscape and Policy Impact
+- Competitive Industry Dynamics
+- Geopolitical and External Risk Factors
+- Strategic Response to External Environment
+
+Sentiment Guidelines:
+- Cautious: Economic uncertainty, regulatory challenges, competitive pressure
+- Neutral: Balanced economic assessment, manageable regulatory environment
+- Confident: Favorable positioning regardless of environment, strategic advantages</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze management's assessment of economic conditions, regulatory environment, and competitive landscape.
+
+Content Extraction Focus:
+- Economic Outlook: GDP growth expectations, recession probability assessment, regional economic conditions
+- Regulatory Environment: Policy impact analysis, compliance cost implications, regulatory relationship
+- Competitive Landscape: Industry consolidation trends, competitive pressure assessment, market dynamics
+- External Risk Factors: Geopolitical considerations, trade policy impacts, systemic risk assessment
+- Strategic Response: Management's adaptation strategies, scenario planning, risk mitigation approaches
+
+Key Quote Types to Extract:
+- Economic outlook statements and recession probability assessments
+- Regulatory policy impact analysis and compliance implications
+- Competitive landscape evolution and strategic positioning
+- Geopolitical risk assessment and business impact analysis
+- Scenario planning approach and risk mitigation strategies
+
+Subsection Organization:
+- Economic Environment Assessment
+- Regulatory Landscape and Policy Impact
+- Competitive Industry Dynamics
+- Geopolitical and External Risk Factors
+- Strategic Response to External Environment
+
+Sentiment Guidelines:
+- Cautious: Economic uncertainty, regulatory challenges, competitive pressure
+- Neutral: Balanced economic assessment, manageable regulatory environment
+- Confident: Favorable positioning regardless of environment, strategic advantages</textarea>
+                    </td>
+                </tr>
+
+                <!-- Outlook Section -->
+                <tr class="section-row" draggable="true" data-section-id="outlook">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Outlook Section</div>
+                                <div class="section-desc">Purpose: Analyze forward-looking guidance, strategic priorities, and management confidence indicators.
+
+Content Extraction Focus:
+- Quantitative Guidance: Revenue, expense, and growth rate expectations for upcoming periods
+- Strategic Initiative Timeline: Major program milestones, investment commitments, expected outcomes
+- Risk Factor Assessment: Key uncertainties affecting guidance, scenario dependencies
+- Long-term Objectives: Multi-year strategic goals, transformation targets, market position aspirations
+- Management Confidence: Certainty indicators, conviction levels, strategic commitment language
+
+Key Quote Types to Extract:
+- Specific financial guidance ranges and targets
+- Strategic initiative announcements and timelines
+- Management confidence language and certainty indicators
+- Long-term objective statements and success metrics
+- Risk factors that could impact future performance
+
+Subsection Organization:
+- Quantitative Financial Guidance
+- Strategic Initiative Timeline and Commitments
+- Risk Assessment and Scenario Dependencies
+- Long-term Strategic Objectives
+- Management Confidence and Conviction Indicators
+
+Sentiment Guidelines:
+- Confident: Clear guidance, strong conviction, definitive strategic commitments
+- Optimistic: Positive trajectory expectations, growth opportunity confidence
+- Cautious: Qualified guidance, uncertainty acknowledgment, scenario dependencies</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze forward-looking guidance, strategic priorities, and management confidence indicators.
+
+Content Extraction Focus:
+- Quantitative Guidance: Revenue, expense, and growth rate expectations for upcoming periods
+- Strategic Initiative Timeline: Major program milestones, investment commitments, expected outcomes
+- Risk Factor Assessment: Key uncertainties affecting guidance, scenario dependencies
+- Long-term Objectives: Multi-year strategic goals, transformation targets, market position aspirations
+- Management Confidence: Certainty indicators, conviction levels, strategic commitment language
+
+Key Quote Types to Extract:
+- Specific financial guidance ranges and targets
+- Strategic initiative announcements and timelines
+- Management confidence language and certainty indicators
+- Long-term objective statements and success metrics
+- Risk factors that could impact future performance
+
+Subsection Organization:
+- Quantitative Financial Guidance
+- Strategic Initiative Timeline and Commitments
+- Risk Assessment and Scenario Dependencies
+- Long-term Strategic Objectives
+- Management Confidence and Conviction Indicators
+
+Sentiment Guidelines:
+- Confident: Clear guidance, strong conviction, definitive strategic commitments
+- Optimistic: Positive trajectory expectations, growth opportunity confidence
+- Cautious: Qualified guidance, uncertainty acknowledgment, scenario dependencies</textarea>
+                    </td>
+                </tr>
+
+                <!-- Capital Section -->
+                <tr class="section-row" draggable="true" data-section-id="capital">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Capital Section</div>
+                                <div class="section-desc">Purpose: Analyze capital strength, deployment strategies, and liquidity management.
+
+Content Extraction Focus:
+- Capital Deployment Strategy: Share buybacks, dividend policies, organic growth investment priorities
+- Strategic Capital Allocation: M&A considerations, business line investments, asset sales
+- Regulatory Capital Management: Buffer strategies, stress test results, capital planning
+- Liquidity Management: LCR targets, funding strategies, deposit composition optimization
+- Future Capital Philosophy: Long-term capital allocation framework, stakeholder return priorities
+
+Key Quote Types to Extract:
+- Share buyback amounts and timelines
+- Capital ratio targets and current levels
+- Strategic review outcomes affecting capital allocation
+- Liquidity coverage ratio management and targets
+- Organic growth investment commitments
+
+Subsection Organization:
+- Share Buyback Execution and Strategy
+- Strategic Capital Allocation Priorities
+- Regulatory Capital Management
+- Liquidity Coverage and Management
+- Long-term Capital Framework
+
+Sentiment Guidelines:
+- Confident: Strong capital position, clear deployment strategy, regulatory comfort
+- Cautious: Maintaining elevated buffers, uncertain economic environment considerations
+- Optimistic: Growth investment opportunities, shareholder return enhancement</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze capital strength, deployment strategies, and liquidity management.
+
+Content Extraction Focus:
+- Capital Deployment Strategy: Share buybacks, dividend policies, organic growth investment priorities
+- Strategic Capital Allocation: M&A considerations, business line investments, asset sales
+- Regulatory Capital Management: Buffer strategies, stress test results, capital planning
+- Liquidity Management: LCR targets, funding strategies, deposit composition optimization
+- Future Capital Philosophy: Long-term capital allocation framework, stakeholder return priorities
+
+Key Quote Types to Extract:
+- Share buyback amounts and timelines
+- Capital ratio targets and current levels
+- Strategic review outcomes affecting capital allocation
+- Liquidity coverage ratio management and targets
+- Organic growth investment commitments
+
+Subsection Organization:
+- Share Buyback Execution and Strategy
+- Strategic Capital Allocation Priorities
+- Regulatory Capital Management
+- Liquidity Coverage and Management
+- Long-term Capital Framework
+
+Sentiment Guidelines:
+- Confident: Strong capital position, clear deployment strategy, regulatory comfort
+- Cautious: Maintaining elevated buffers, uncertain economic environment considerations
+- Optimistic: Growth investment opportunities, shareholder return enhancement</textarea>
+                    </td>
+                </tr>
+
+                <!-- Credit Section -->
+                <tr class="section-row" draggable="true" data-section-id="credit">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Credit Section</div>
+                                <div class="section-desc">Purpose: Analyze credit quality developments, reserve strategies, and portfolio risk management.
+
+Content Extraction Focus:
+- Reserve Strategy: How management builds reserves, economic scenarios used, methodology explanations
+- Portfolio Risk Assessment: Specific industry/geographic exposures, borrower-by-borrower analysis approaches
+- Credit Quality Trends: Watch list developments, impaired asset metrics, charge-off patterns
+- Forward-Looking Indicators: Management's confidence in credit outlook, guidance on credit costs
+- Stress Testing: Economic scenarios modeled, downside case assumptions, macro factor integration
+
+Key Quote Types to Extract:
+- Reserve building rationale with specific dollar amounts
+- Industry exposure percentages and risk assessment methodology
+- Credit quality improvement/deterioration indicators
+- Economic scenario assumptions and probability weightings
+- Guidance on provision expense ranges
+
+Subsection Organization:
+- Reserve Methodology and Philosophy
+- Economic Scenario Modeling
+- Industry and Geographic Risk Assessment
+- Credit Quality Performance Metrics
+- Forward-Looking Credit Guidance
+
+Sentiment Guidelines:
+- Cautious: Reserve building, elevated risk acknowledgment, economic uncertainty
+- Positive: Improving credit trends, reduced charge-offs, stable portfolio performance
+- Confident: Strong underwriting standards, proven risk management capabilities</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze credit quality developments, reserve strategies, and portfolio risk management.
+
+Content Extraction Focus:
+- Reserve Strategy: How management builds reserves, economic scenarios used, methodology explanations
+- Portfolio Risk Assessment: Specific industry/geographic exposures, borrower-by-borrower analysis approaches
+- Credit Quality Trends: Watch list developments, impaired asset metrics, charge-off patterns
+- Forward-Looking Indicators: Management's confidence in credit outlook, guidance on credit costs
+- Stress Testing: Economic scenarios modeled, downside case assumptions, macro factor integration
+
+Key Quote Types to Extract:
+- Reserve building rationale with specific dollar amounts
+- Industry exposure percentages and risk assessment methodology
+- Credit quality improvement/deterioration indicators
+- Economic scenario assumptions and probability weightings
+- Guidance on provision expense ranges
+
+Subsection Organization:
+- Reserve Methodology and Philosophy
+- Economic Scenario Modeling
+- Industry and Geographic Risk Assessment
+- Credit Quality Performance Metrics
+- Forward-Looking Credit Guidance
+
+Sentiment Guidelines:
+- Cautious: Reserve building, elevated risk acknowledgment, economic uncertainty
+- Positive: Improving credit trends, reduced charge-offs, stable portfolio performance
+- Confident: Strong underwriting standards, proven risk management capabilities</textarea>
+                    </td>
+                </tr>
+
+                <!-- Expenses Section -->
+                <tr class="section-row" draggable="true" data-section-id="expenses">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Expenses Section</div>
+                                <div class="section-desc">Purpose: Analyze expense management, operational efficiency initiatives, and cost transformation strategies.
+
+Content Extraction Focus:
+- Expense Growth Management: Total expense trends, inflation impact, productivity improvements
+- Efficiency Programs: Cost reduction initiatives, operational excellence programs, automation savings
+- Investment Spending: Technology investments, digital transformation costs, strategic initiative funding
+- Compensation and Benefits: Headcount management, salary inflation, performance-based compensation
+- Operational Leverage: Revenue growth vs expense growth dynamics, scalability achievements
+
+Key Quote Types to Extract:
+- Expense growth guidance and efficiency targets
+- Specific cost reduction program savings amounts
+- Technology investment levels and expected returns
+- Operational leverage achievements and outlook
+- Inflation impact management and mitigation strategies
+
+Subsection Organization:
+- Expense Growth and Management
+- Efficiency and Cost Reduction Programs
+- Strategic Investment Spending
+- Compensation and Workforce Management
+- Operational Leverage and Productivity
+
+Sentiment Guidelines:
+- Confident: Cost discipline success, efficiency program delivery, operational leverage
+- Cautious: Inflation pressure, investment spending needs, expense management challenges
+- Optimistic: Automation benefits, productivity improvements, scalability opportunities</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze expense management, operational efficiency initiatives, and cost transformation strategies.
+
+Content Extraction Focus:
+- Expense Growth Management: Total expense trends, inflation impact, productivity improvements
+- Efficiency Programs: Cost reduction initiatives, operational excellence programs, automation savings
+- Investment Spending: Technology investments, digital transformation costs, strategic initiative funding
+- Compensation and Benefits: Headcount management, salary inflation, performance-based compensation
+- Operational Leverage: Revenue growth vs expense growth dynamics, scalability achievements
+
+Key Quote Types to Extract:
+- Expense growth guidance and efficiency targets
+- Specific cost reduction program savings amounts
+- Technology investment levels and expected returns
+- Operational leverage achievements and outlook
+- Inflation impact management and mitigation strategies
+
+Subsection Organization:
+- Expense Growth and Management
+- Efficiency and Cost Reduction Programs
+- Strategic Investment Spending
+- Compensation and Workforce Management
+- Operational Leverage and Productivity
+
+Sentiment Guidelines:
+- Confident: Cost discipline success, efficiency program delivery, operational leverage
+- Cautious: Inflation pressure, investment spending needs, expense management challenges
+- Optimistic: Automation benefits, productivity improvements, scalability opportunities</textarea>
+                    </td>
+                </tr>
+
+                <!-- NIM - All Bank Section -->
+                <tr class="section-row" draggable="true" data-section-id="nim-all-bank">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">NIM - All Bank Section</div>
+                                <div class="section-desc">Purpose: Analyze consolidated net interest margin performance, component drivers, and optimization strategies.
+
+Content Extraction Focus:
+- Overall NIM Performance: Consolidated quarterly and year-over-year margin trends
+- Component Analysis: Total bank asset yield vs funding cost dynamics, mix shift impacts
+- Rate Sensitivity: Enterprise-wide interest rate beta analysis, repricing timelines, hedging strategies
+- Optimization Strategies: Consolidated balance sheet positioning, pricing discipline, mix management
+- Forward Guidance: Total bank NIM trajectory expectations, rate environment sensitivity
+
+Key Quote Types to Extract:
+- Consolidated NIM trend explanations and component driver analysis
+- Total bank asset yield versus funding cost evolution
+- Enterprise interest rate sensitivity and beta discussions
+- Overall pricing strategy and competitive margin dynamics
+- Forward total bank NIM guidance and optimization approach
+
+Subsection Organization:
+- Consolidated NIM Performance and Trends
+- Total Bank Asset Yield and Funding Cost Components
+- Enterprise Interest Rate Sensitivity Analysis
+- Overall Pricing Strategy and Competitive Positioning
+- Forward All-Bank NIM Guidance
+
+Sentiment Guidelines:
+- Positive: NIM expansion, successful pricing discipline, favorable rate environment impact
+- Stable: Margin maintenance, balanced component performance, manageable pressure
+- Cautious: Competitive pressure, rate environment headwinds, margin compression risk</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze consolidated net interest margin performance, component drivers, and optimization strategies.
+
+Content Extraction Focus:
+- Overall NIM Performance: Consolidated quarterly and year-over-year margin trends
+- Component Analysis: Total bank asset yield vs funding cost dynamics, mix shift impacts
+- Rate Sensitivity: Enterprise-wide interest rate beta analysis, repricing timelines, hedging strategies
+- Optimization Strategies: Consolidated balance sheet positioning, pricing discipline, mix management
+- Forward Guidance: Total bank NIM trajectory expectations, rate environment sensitivity
+
+Key Quote Types to Extract:
+- Consolidated NIM trend explanations and component driver analysis
+- Total bank asset yield versus funding cost evolution
+- Enterprise interest rate sensitivity and beta discussions
+- Overall pricing strategy and competitive margin dynamics
+- Forward total bank NIM guidance and optimization approach
+
+Subsection Organization:
+- Consolidated NIM Performance and Trends
+- Total Bank Asset Yield and Funding Cost Components
+- Enterprise Interest Rate Sensitivity Analysis
+- Overall Pricing Strategy and Competitive Positioning
+- Forward All-Bank NIM Guidance
+
+Sentiment Guidelines:
+- Positive: NIM expansion, successful pricing discipline, favorable rate environment impact
+- Stable: Margin maintenance, balanced component performance, manageable pressure
+- Cautious: Competitive pressure, rate environment headwinds, margin compression risk</textarea>
+                    </td>
+                </tr>
+
+                <!-- NIM - U.S. Operations Section -->
+                <tr class="section-row" draggable="true" data-section-id="nim-us-operations">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">NIM - U.S. Operations Section</div>
+                                <div class="section-desc">Purpose: Analyze U.S. business net interest margin performance and regional dynamics.
+
+Content Extraction Focus:
+- U.S. NIM Performance: U.S. operations margin trends and regional competitive dynamics
+- U.S. Component Analysis: U.S. asset yield vs funding cost evolution, local market impacts
+- U.S. Rate Environment: Federal Reserve policy impact, U.S. yield curve sensitivity
+- U.S. Market Competition: Regional competitive pressure, local pricing discipline
+- U.S. Forward Outlook: U.S. operations NIM guidance and market-specific factors
+
+Key Quote Types to Extract:
+- U.S. operations NIM performance and trend explanations
+- U.S. market competitive dynamics and pricing pressure
+- Federal Reserve policy impact on U.S. operations
+- U.S. business line margin performance and outlook
+- Regional market share and pricing strategy in U.S.
+
+Subsection Organization:
+- U.S. Operations NIM Performance
+- U.S. Market Competitive Dynamics
+- Federal Reserve Policy Impact
+- U.S. Business Line Margin Analysis
+- U.S. Operations Forward Outlook
+
+Sentiment Guidelines:
+- Positive: U.S. margin expansion, competitive positioning strength, market share gains
+- Cautious: U.S. competitive pressure, regulatory environment impact, regional challenges
+- Stable: Consistent U.S. performance, balanced competitive positioning</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze U.S. business net interest margin performance and regional dynamics.
+
+Content Extraction Focus:
+- U.S. NIM Performance: U.S. operations margin trends and regional competitive dynamics
+- U.S. Component Analysis: U.S. asset yield vs funding cost evolution, local market impacts
+- U.S. Rate Environment: Federal Reserve policy impact, U.S. yield curve sensitivity
+- U.S. Market Competition: Regional competitive pressure, local pricing discipline
+- U.S. Forward Outlook: U.S. operations NIM guidance and market-specific factors
+
+Key Quote Types to Extract:
+- U.S. operations NIM performance and trend explanations
+- U.S. market competitive dynamics and pricing pressure
+- Federal Reserve policy impact on U.S. operations
+- U.S. business line margin performance and outlook
+- Regional market share and pricing strategy in U.S.
+
+Subsection Organization:
+- U.S. Operations NIM Performance
+- U.S. Market Competitive Dynamics
+- Federal Reserve Policy Impact
+- U.S. Business Line Margin Analysis
+- U.S. Operations Forward Outlook
+
+Sentiment Guidelines:
+- Positive: U.S. margin expansion, competitive positioning strength, market share gains
+- Cautious: U.S. competitive pressure, regulatory environment impact, regional challenges
+- Stable: Consistent U.S. performance, balanced competitive positioning</textarea>
+                    </td>
+                </tr>
+
+                <!-- NIM - Canadian Operations Section -->
+                <tr class="section-row" draggable="true" data-section-id="nim-canadian-operations">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">NIM - Canadian Operations Section</div>
+                                <div class="section-desc">Purpose: Analyze Canadian business net interest margin performance and domestic market dynamics.
+
+Content Extraction Focus:
+- Canadian NIM Performance: Canadian operations margin trends and domestic market dynamics
+- Canadian Component Analysis: Canadian asset yield vs funding cost evolution, local market impacts
+- Canadian Rate Environment: Bank of Canada policy impact, Canadian yield curve sensitivity
+- Canadian Market Competition: Domestic competitive pressure, local pricing discipline
+- Canadian Forward Outlook: Canadian operations NIM guidance and market-specific factors
+
+Key Quote Types to Extract:
+- Canadian operations NIM performance and trend explanations
+- Canadian market competitive dynamics and pricing pressure
+- Bank of Canada policy impact on Canadian operations
+- Canadian business line margin performance and outlook
+- Domestic market share and pricing strategy in Canada
+
+Subsection Organization:
+- Canadian Operations NIM Performance
+- Canadian Market Competitive Dynamics
+- Bank of Canada Policy Impact
+- Canadian Business Line Margin Analysis
+- Canadian Operations Forward Outlook
+
+Sentiment Guidelines:
+- Positive: Canadian margin expansion, competitive positioning strength, market leadership
+- Cautious: Canadian competitive pressure, regulatory environment impact, domestic challenges
+- Stable: Consistent Canadian performance, balanced competitive positioning</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze Canadian business net interest margin performance and domestic market dynamics.
+
+Content Extraction Focus:
+- Canadian NIM Performance: Canadian operations margin trends and domestic market dynamics
+- Canadian Component Analysis: Canadian asset yield vs funding cost evolution, local market impacts
+- Canadian Rate Environment: Bank of Canada policy impact, Canadian yield curve sensitivity
+- Canadian Market Competition: Domestic competitive pressure, local pricing discipline
+- Canadian Forward Outlook: Canadian operations NIM guidance and market-specific factors
+
+Key Quote Types to Extract:
+- Canadian operations NIM performance and trend explanations
+- Canadian market competitive dynamics and pricing pressure
+- Bank of Canada policy impact on Canadian operations
+- Canadian business line margin performance and outlook
+- Domestic market share and pricing strategy in Canada
+
+Subsection Organization:
+- Canadian Operations NIM Performance
+- Canadian Market Competitive Dynamics
+- Bank of Canada Policy Impact
+- Canadian Business Line Margin Analysis
+- Canadian Operations Forward Outlook
+
+Sentiment Guidelines:
+- Positive: Canadian margin expansion, competitive positioning strength, market leadership
+- Cautious: Canadian competitive pressure, regulatory environment impact, domestic challenges
+- Stable: Consistent Canadian performance, balanced competitive positioning</textarea>
+                    </td>
+                </tr>
+
+                <!-- Deposits Section -->
+                <tr class="section-row" draggable="true" data-section-id="deposits">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Deposits Section</div>
+                                <div class="section-desc">Purpose: Analyze deposit growth strategies, pricing decisions, and funding stability.
+
+Content Extraction Focus:
+- Deposit Growth Dynamics: Growth rates by deposit type, customer acquisition effectiveness
+- Pricing Strategy: Competitive deposit pricing decisions, rate sensitivity management
+- Customer Behavior: Digital adoption impact, seasonal patterns, retention strategies
+- Funding Stability: Deposit composition optimization, relationship vs. rate-sensitive deposits
+- Cost of Funds Management: Beta analysis, pricing discipline, funding cost outlook
+
+Key Quote Types to Extract:
+- Deposit growth rates by category and geography
+- Customer acquisition costs and retention strategy effectiveness
+- Deposit pricing decisions and competitive response strategies
+- Digital adoption impact on deposit gathering efficiency
+- Funding stability metrics and relationship deposit growth
+
+Subsection Organization:
+- Deposit Growth Performance by Category
+- Customer Acquisition and Retention Strategy
+- Pricing Strategy and Competitive Positioning
+- Digital Transformation Impact on Deposits
+- Funding Stability and Cost Management
+
+Sentiment Guidelines:
+- Positive: Strong deposit growth, customer acquisition success, pricing discipline
+- Cautious: Competitive pressure, rate sensitivity concerns, market share defense
+- Confident: Relationship deposit strength, digital platform advantages</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze deposit growth strategies, pricing decisions, and funding stability.
+
+Content Extraction Focus:
+- Deposit Growth Dynamics: Growth rates by deposit type, customer acquisition effectiveness
+- Pricing Strategy: Competitive deposit pricing decisions, rate sensitivity management
+- Customer Behavior: Digital adoption impact, seasonal patterns, retention strategies
+- Funding Stability: Deposit composition optimization, relationship vs. rate-sensitive deposits
+- Cost of Funds Management: Beta analysis, pricing discipline, funding cost outlook
+
+Key Quote Types to Extract:
+- Deposit growth rates by category and geography
+- Customer acquisition costs and retention strategy effectiveness
+- Deposit pricing decisions and competitive response strategies
+- Digital adoption impact on deposit gathering efficiency
+- Funding stability metrics and relationship deposit growth
+
+Subsection Organization:
+- Deposit Growth Performance by Category
+- Customer Acquisition and Retention Strategy
+- Pricing Strategy and Competitive Positioning
+- Digital Transformation Impact on Deposits
+- Funding Stability and Cost Management
+
+Sentiment Guidelines:
+- Positive: Strong deposit growth, customer acquisition success, pricing discipline
+- Cautious: Competitive pressure, rate sensitivity concerns, market share defense
+- Confident: Relationship deposit strength, digital platform advantages</textarea>
+                    </td>
+                </tr>
+
+                <!-- Loan Section -->
+                <tr class="section-row" draggable="true" data-section-id="loan">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Loan Section</div>
+                                <div class="section-desc">Purpose: Analyze lending growth strategies, demand dynamics, and portfolio composition.
+
+Content Extraction Focus:
+- Loan Growth Performance: Growth rates by lending category, geographic expansion success
+- Demand Pipeline: Market demand indicators, competitive win rates, relationship lending success
+- Pricing Discipline: Spread management, yield optimization, competitive positioning decisions
+- Portfolio Strategy: Mix optimization, risk-adjusted returns, market opportunity assessment
+- Underwriting Standards: Credit discipline, risk appetite adjustments, portfolio quality maintenance
+
+Key Quote Types to Extract:
+- Loan growth rates by category and geography
+- Demand pipeline strength and competitive positioning
+- Pricing discipline and spread management decisions
+- Underwriting standard evolution and risk appetite
+- Market share goals and lending opportunity assessment
+
+Subsection Organization:
+- Loan Growth Performance by Category
+- Market Demand and Competitive Positioning
+- Pricing Strategy and Spread Management
+- Portfolio Mix and Risk Management
+- Growth Opportunities and Market Expansion
+
+Sentiment Guidelines:
+- Positive: Strong loan demand, market share gains, disciplined pricing success
+- Confident: Competitive lending position, relationship advantages, pipeline strength
+- Cautious: Market competition, credit discipline maintenance, selective growth approach</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze lending growth strategies, demand dynamics, and portfolio composition.
+
+Content Extraction Focus:
+- Loan Growth Performance: Growth rates by lending category, geographic expansion success
+- Demand Pipeline: Market demand indicators, competitive win rates, relationship lending success
+- Pricing Discipline: Spread management, yield optimization, competitive positioning decisions
+- Portfolio Strategy: Mix optimization, risk-adjusted returns, market opportunity assessment
+- Underwriting Standards: Credit discipline, risk appetite adjustments, portfolio quality maintenance
+
+Key Quote Types to Extract:
+- Loan growth rates by category and geography
+- Demand pipeline strength and competitive positioning
+- Pricing discipline and spread management decisions
+- Underwriting standard evolution and risk appetite
+- Market share goals and lending opportunity assessment
+
+Subsection Organization:
+- Loan Growth Performance by Category
+- Market Demand and Competitive Positioning
+- Pricing Strategy and Spread Management
+- Portfolio Mix and Risk Management
+- Growth Opportunities and Market Expansion
+
+Sentiment Guidelines:
+- Positive: Strong loan demand, market share gains, disciplined pricing success
+- Confident: Competitive lending position, relationship advantages, pipeline strength
+- Cautious: Market competition, credit discipline maintenance, selective growth approach</textarea>
+                    </td>
+                </tr>
+
+                <!-- Business Segments Section -->
+                <tr class="section-row" draggable="true" data-section-id="business-segments">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Business Segments Section</div>
+                                <div class="section-desc">Purpose: Analyze performance across major business lines including retail banking, commercial banking, wealth management, and wholesale/capital markets.
+
+Content Extraction Focus:
+- Segment Performance: Revenue growth, margin expansion, profitability trends by business line
+- Customer Metrics: Acquisition rates, retention improvements, relationship deepening success
+- Competitive Positioning: Market share dynamics, win rates, differentiation strategies
+- Cross-Business Synergies: Referral success, product penetration rates, ecosystem benefits
+- Strategic Priorities: Investment focus areas, growth initiatives, operational improvements
+
+Key Quote Types to Extract:
+- Revenue momentum and growth drivers by segment
+- Market share gains or competitive positioning improvements
+- Cross-selling success metrics and customer relationship deepening
+- Digital transformation impact on segment operations
+- Profitability outlook and strategic investment priorities
+
+Subsection Organization:
+- Personal/Retail Banking Performance and Strategy
+- Commercial Banking Growth and Positioning
+- Wealth Management and Fee Income
+- Capital Markets/Wholesale Banking Results
+- Cross-Segment Synergies and Integration
+
+Sentiment Guidelines:
+- Positive: Market share gains, revenue growth acceleration, customer satisfaction improvements
+- Bullish: Strong competitive positioning, significant growth opportunities
+- Stable: Consistent performance, maintained market position</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze performance across major business lines including retail banking, commercial banking, wealth management, and wholesale/capital markets.
+
+Content Extraction Focus:
+- Segment Performance: Revenue growth, margin expansion, profitability trends by business line
+- Customer Metrics: Acquisition rates, retention improvements, relationship deepening success
+- Competitive Positioning: Market share dynamics, win rates, differentiation strategies
+- Cross-Business Synergies: Referral success, product penetration rates, ecosystem benefits
+- Strategic Priorities: Investment focus areas, growth initiatives, operational improvements
+
+Key Quote Types to Extract:
+- Revenue momentum and growth drivers by segment
+- Market share gains or competitive positioning improvements
+- Cross-selling success metrics and customer relationship deepening
+- Digital transformation impact on segment operations
+- Profitability outlook and strategic investment priorities
+
+Subsection Organization:
+- Personal/Retail Banking Performance and Strategy
+- Commercial Banking Growth and Positioning
+- Wealth Management and Fee Income
+- Capital Markets/Wholesale Banking Results
+- Cross-Segment Synergies and Integration
+
+Sentiment Guidelines:
+- Positive: Market share gains, revenue growth acceleration, customer satisfaction improvements
+- Bullish: Strong competitive positioning, significant growth opportunities
+- Stable: Consistent performance, maintained market position</textarea>
+                    </td>
+                </tr>
+
+                <!-- Digital Initiatives Section -->
+                <tr class="section-row" draggable="true" data-section-id="digital-initiatives">
+                    <td class="section-cell core">
+                        <div class="section-info">
+                            <div class="drag-handle">⋮⋮</div>
+                            <input type="checkbox" class="section-checkbox" checked>
+                            <div class="section-details">
+                                <div class="section-name">Digital Initiatives Section</div>
+                                <div class="section-desc">Purpose: Analyze technology investments, digital transformation progress, and innovation strategies.
+
+Content Extraction Focus:
+- Platform Enhancement: Digital banking feature rollouts, user experience improvements
+- Technology Investment: Infrastructure modernization, AI/automation implementation, efficiency gains
+- Customer Adoption: Digital engagement metrics, mobile banking growth, user satisfaction
+- Competitive Response: Fintech partnership strategies, innovation pipeline, market positioning
+- Operational Impact: Automation savings, process improvements, workforce transformation
+
+Key Quote Types to Extract:
+- Digital platform milestones and customer adoption metrics
+- Technology investment levels and expected returns
+- AI and automation progress and efficiency achievements
+- Mobile banking growth and feature enhancement outcomes
+- Competitive digital strategy and partnership announcements
+
+Subsection Organization:
+- Digital Platform Enhancement and Features
+- Technology Infrastructure Investment
+- AI and Automation Implementation
+- Customer Digital Adoption and Engagement
+- Competitive Digital Strategy
+
+Sentiment Guidelines:
+- Optimistic: Strong digital adoption, technology investment returns, innovation leadership
+- Confident: Digital platform capabilities, competitive positioning, transformation progress
+- Positive: Customer engagement improvements, operational efficiency gains</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="edit-cell">
+                        <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                    </td>
+                </tr>
+                <tr class="section-details-row">
+                    <td colspan="2" class="section-details-cell">
+                        <textarea class="detail-textarea">Purpose: Analyze technology investments, digital transformation progress, and innovation strategies.
+
+Content Extraction Focus:
+- Platform Enhancement: Digital banking feature rollouts, user experience improvements
+- Technology Investment: Infrastructure modernization, AI/automation implementation, efficiency gains
+- Customer Adoption: Digital engagement metrics, mobile banking growth, user satisfaction
+- Competitive Response: Fintech partnership strategies, innovation pipeline, market positioning
+- Operational Impact: Automation savings, process improvements, workforce transformation
+
+Key Quote Types to Extract:
+- Digital platform milestones and customer adoption metrics
+- Technology investment levels and expected returns
+- AI and automation progress and efficiency achievements
+- Mobile banking growth and feature enhancement outcomes
+- Competitive digital strategy and partnership announcements
+
+Subsection Organization:
+- Digital Platform Enhancement and Features
+- Technology Infrastructure Investment
+- AI and Automation Implementation
+- Customer Digital Adoption and Engagement
+- Competitive Digital Strategy
+
+Sentiment Guidelines:
+- Optimistic: Strong digital adoption, technology investment returns, innovation leadership
+- Confident: Digital platform capabilities, competitive positioning, transformation progress
+- Positive: Customer engagement improvements, operational efficiency gains</textarea>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <!-- Add Section Button -->
+        <div class="add-section" onclick="showAddModal()">
+            <div style="font-size: 24px; margin-bottom: 8px;">+</div>
+            <div>Add Custom Section</div>
+        </div>
+    </div>
+    
+    <!-- Add Section Modal -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Custom Section</h3>
+            </div>
+            <div class="form-group">
+                <label>Section Name:</label>
+                <input type="text" id="newSectionName" placeholder="e.g., ESG & Sustainability">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="addNewSection()">Add Section</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <span>✓</span>
+        <span>Configuration saved successfully!</span>
+    </div>
+    
+    <!-- Embedded Configuration (Auto-updated when saved) -->
+    <script type="application/json" id="saved_config">
+{
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "sections": []
+}
+    </script>
+    
+    <script>
+        let draggedElement = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+            loadEmbeddedConfiguration();
+        });
+        
+        // Drag and Drop
+        function initializeDragAndDrop() {
+            const sections = document.querySelectorAll('.section-row');
+            const container = document.getElementById('sectionsContainer');
+            
+            sections.forEach(section => {
+                section.addEventListener('dragstart', handleDragStart);
+                section.addEventListener('dragend', handleDragEnd);
+            });
+            
+            container.addEventListener('dragover', handleDragOver);
+            container.addEventListener('drop', handleDrop);
+        }
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.style.opacity = '0.5';
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.outerHTML);
+        }
+        
+        function handleDragEnd(e) {
+            this.style.opacity = '';
+            this.classList.remove('dragging');
+            
+            document.querySelectorAll('.section-row').forEach(row => {
+                row.classList.remove('dragging');
+            });
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            const container = document.getElementById('sectionsContainer');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            
+            if (draggedElement) {
+                const detailRow = draggedElement.nextElementSibling;
+                const hasDetailRow = detailRow && detailRow.classList.contains('section-details-row');
+                
+                if (afterElement == null) {
+                    container.appendChild(draggedElement);
+                    if (hasDetailRow) {
+                        container.appendChild(detailRow);
+                    }
+                } else {
+                    container.insertBefore(draggedElement, afterElement);
+                    if (hasDetailRow) {
+                        container.insertBefore(detailRow, afterElement);
+                    }
+                }
+                
+                draggedElement.style.opacity = '';
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+            }
+            
+            return false;
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.section-row:not(.dragging)')]
+                .filter(element => element !== draggedElement);
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Expand/Collapse sections
+        function toggleExpand(button) {
+            const row = button.closest('.section-row');
+            const nextRow = row.nextElementSibling;
+            
+            if (nextRow && nextRow.classList.contains('section-details-row')) {
+                if (nextRow.style.display === 'none' || !nextRow.style.display) {
+                    nextRow.style.display = 'table-row';
+                    button.textContent = 'Close';
+                } else {
+                    const textarea = nextRow.querySelector('.detail-textarea');
+                    const sectionDescElement = row.querySelector('.section-desc');
+                    
+                    if (textarea && sectionDescElement) {
+                        sectionDescElement.textContent = textarea.value;
+                    }
+                    
+                    nextRow.style.display = 'none';
+                    button.textContent = 'Edit';
+                }
+            }
+        }
+        
+        // Control functions
+        function selectAll() {
+            document.querySelectorAll('.section-checkbox').forEach(cb => cb.checked = true);
+        }
+        
+        function deselectAll() {
+            document.querySelectorAll('.section-checkbox').forEach(cb => cb.checked = false);
+        }
+        
+        function resetToDefault() {
+            if (confirm('This will reset all sections to default settings. Continue?')) {
+                location.reload();
+            }
+        }
+        
+        // Modal functions
+        function showAddModal() {
+            document.getElementById('addModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('addModal').style.display = 'none';
+            document.getElementById('newSectionName').value = '';
+        }
+        
+        function addNewSection() {
+            const name = document.getElementById('newSectionName').value;
+            if (!name) {
+                alert('Please enter a section name');
+                return;
+            }
+            
+            const container = document.getElementById('sectionsContainer');
+            const newRow = document.createElement('tr');
+            newRow.className = 'section-row';
+            newRow.draggable = true;
+            newRow.setAttribute('data-section-id', name.toLowerCase().replace(/\s+/g, '-'));
+            
+            newRow.innerHTML = `
+                <td class="section-cell">
+                    <div class="section-info">
+                        <div class="drag-handle">⋮⋮</div>
+                        <input type="checkbox" class="section-checkbox">
+                        <div class="section-details">
+                            <div class="section-name">${name}</div>
+                            <div class="section-desc">Click Edit to add description for what to extract in this section</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="edit-cell">
+                    <button class="edit-btn" onclick="toggleExpand(this)">Edit</button>
+                </td>
+            `;
+            
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'section-details-row';
+            detailsRow.innerHTML = `
+                <td colspan="2" class="section-details-cell">
+                    <textarea class="detail-textarea" placeholder="Describe what content should be extracted for this section..."></textarea>
+                </td>
+            `;
+            
+            container.appendChild(newRow);
+            container.appendChild(detailsRow);
+            
+            newRow.addEventListener('dragstart', handleDragStart);
+            newRow.addEventListener('dragend', handleDragEnd);
+            
+            closeModal();
+        }
+        
+        // Save configuration
+        async function saveConfiguration() {
+            const config = {
+                timestamp: new Date().toISOString(),
+                sections: []
+            };
+            
+            document.querySelectorAll('.section-row').forEach((row, index) => {
+                const sectionId = row.getAttribute('data-section-id');
+                const isEnabled = row.querySelector('.section-checkbox').checked;
+                const name = row.querySelector('.section-name').textContent;
+                const detailsRow = row.nextElementSibling;
+                const description = detailsRow ? detailsRow.querySelector('.detail-textarea').value : '';
+                
+                config.sections.push({
+                    id: sectionId,
+                    name: name,
+                    enabled: isEnabled,
+                    order: index,
+                    description: description
+                });
+            });
+            
+            // Update the embedded configuration in the HTML
+            const configScript = document.getElementById('saved_config');
+            configScript.textContent = '\n' + JSON.stringify(config, null, 2) + '\n    ';
+            
+            // Also save to localStorage
+            localStorage.setItem('aegis_config', JSON.stringify(config));
+            
+            // Get the entire HTML document with the updated configuration
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Try to use File System Access API for save dialog (Chrome/Edge)
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const fileHandle = await window.showSaveFilePicker({
+                        suggestedName: 'summary_template.html',
+                        types: [{
+                            description: 'HTML Files',
+                            accept: {'text/html': ['.html']}
+                        }]
+                    });
+                    
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(htmlContent);
+                    await writable.close();
+                    
+                    showNotification('Configuration saved successfully!');
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error saving file:', err);
+                    } else {
+                        return;
+                    }
+                }
+            }
+            
+            // Fallback: Create a blob and download the updated HTML file
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'summary_template.html';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Configuration downloaded! Please replace the original file with the downloaded version.');
+        }
+        
+        function showNotification(message = 'Configuration saved successfully!') {
+            const notification = document.getElementById('notification');
+            const messageSpan = notification.querySelector('span:last-child');
+            messageSpan.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Load embedded configuration on page load
+        function loadEmbeddedConfiguration() {
+            const configScript = document.getElementById('saved_config');
+            if (configScript) {
+                try {
+                    const config = JSON.parse(configScript.textContent);
+                    if (config && config.sections && config.sections.length > 0) {
+                        applyConfiguration(config);
+                    }
+                } catch (err) {
+                    console.error('Error loading embedded configuration:', err);
+                }
+            }
+        }
+        
+        // Apply loaded configuration to the UI
+        function applyConfiguration(config) {
+            if (!config || !config.sections) return;
+            
+            const container = document.getElementById('sectionsContainer');
+            const allRows = Array.from(container.querySelectorAll('.section-row'));
+            const detailRows = new Map();
+            
+            allRows.forEach(row => {
+                const nextRow = row.nextElementSibling;
+                if (nextRow && nextRow.classList.contains('section-details-row')) {
+                    detailRows.set(row, nextRow);
+                }
+            });
+            
+            container.innerHTML = '';
+            
+            config.sections.forEach(section => {
+                const matchingRow = allRows.find(row => 
+                    row.getAttribute('data-section-id') === section.id ||
+                    row.querySelector('.section-name').textContent === section.name
+                );
+                
+                if (matchingRow) {
+                    matchingRow.querySelector('.section-checkbox').checked = section.enabled;
+                    
+                    container.appendChild(matchingRow);
+                    
+                    const detailRow = detailRows.get(matchingRow);
+                    if (detailRow) {
+                        container.appendChild(detailRow);
+                        if (section.description) {
+                            const textarea = detailRow.querySelector('.detail-textarea');
+                            if (textarea) {
+                                textarea.value = section.description;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            allRows.forEach(row => {
+                if (!container.contains(row)) {
+                    container.appendChild(row);
+                    const detailRow = detailRows.get(row);
+                    if (detailRow) {
+                        container.appendChild(detailRow);
+                    }
+                }
+            });
+            
+            initializeDragAndDrop();
+        }
+        
+        // Close modal on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('addModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
