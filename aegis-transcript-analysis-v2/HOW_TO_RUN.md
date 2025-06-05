@@ -30,10 +30,11 @@ Edit `config.json` with your **corporate credentials**:
 }
 ```
 
-**⚠️ Important**: This system requires:
-- **Corporate OAuth authentication** (NOT OpenAI API keys)
-- **Corporate API proxy endpoint** as base_url
-- **SSL certificate** for secure connections
+**⚠️ Important**: This system supports two authentication methods:
+1. **Corporate OAuth**: Configure oauth_endpoint, client_id, client_secret + base_url
+2. **Direct OpenAI**: Set OPENAI_API_KEY environment variable (no base_url needed)
+
+For corporate environments, OAuth + SSL + base_url are typically required.
 
 ### **3. Configure Sections (Optional)**
 ```bash
@@ -65,11 +66,20 @@ python 5_create_research_plan.py
 
 ## 📊 **Authentication Flow:**
 
-1. **SSL Setup** - Loads corporate SSL certificate
-2. **OAuth Token** - Gets access token using client credentials
+1. **SSL Setup** - Configures SSL certificate for ALL connections:
+   - Sets `SSL_CERT_FILE` environment variable (for OpenAI client)
+   - Sets `REQUESTS_CA_BUNDLE` environment variable (for OAuth requests)
+   - Both OAuth and API calls use the same SSL certificate
+
+2. **OAuth Token** - Gets access token using client credentials:
+   - Makes HTTPS request to oauth_endpoint (uses SSL)
+   - Authenticates with client_id and client_secret
+   - Returns OAuth bearer token
+
 3. **API Client** - Creates OpenAI client with:
-   - `api_key` = OAuth token (NOT OpenAI key)
-   - `base_url` = Corporate API proxy endpoint
+   - `api_key` = OAuth token (or OPENAI_API_KEY if OAuth not configured)
+   - `base_url` = Corporate API proxy endpoint (if configured)
+   - SSL certificate automatically applied via environment variables
 
 ## 📋 **Output Files:**
 
@@ -78,14 +88,16 @@ python 5_create_research_plan.py
 
 ## 🛠 **Troubleshooting:**
 
-**"OAuth token is required" Error:**
-- Verify `oauth_endpoint`, `client_id`, `client_secret` in config.json
-- Check SSL certificate path is correct
-- Ensure corporate network access
+**"No API key available" Error:**
+Either:
+- Configure OAuth: Set `oauth_endpoint`, `client_id`, `client_secret` in config.json
+- OR set environment variable: `export OPENAI_API_KEY="your-key"`
 
-**"base_url is required" Error:**
-- Set `base_url` to your corporate API proxy endpoint
-- Remove "your-" placeholder values
+**OAuth Authentication Failed:**
+- Verify `oauth_endpoint`, `client_id`, `client_secret` are correct
+- Check SSL certificate path exists and is valid
+- Ensure corporate network/VPN access
+- Test OAuth endpoint is reachable
 
 **No PDF found:**
 ```bash
