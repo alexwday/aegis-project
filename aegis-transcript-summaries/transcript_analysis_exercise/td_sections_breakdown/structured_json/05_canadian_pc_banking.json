@@ -1,0 +1,167 @@
+{
+  "section_name": "Canadian P&C Banking",
+  "section_title": "Canadian P&C Banking: Continued volume growth in loans and deposits",
+  "section_statement": "Canadian P&C Banking delivered resilient performance with record auto finance originations and double-digit growth in proprietary mortgage channels despite tariff uncertainty weighing on housing markets. The bank continues to focus on deepening customer relationships across its 15 million Canadian customers while maintaining profitability discipline.",
+  "content": [
+    {
+      "subsection": "Canadian P&C NIM Outlook",
+      "quotes": [
+        {
+          "quote_text": "We look forward to Q3, we again expect NIM to be relatively stable.",
+          "context": "Q3 NIM expectations",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "stable",
+          "sentiment_rationale": "Steady NIM performance expected",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "2.82%, up 1 bp QoQ, primarily driven by higher loan margins. Guidance for Q3 is for NIM to remain relatively stable.",
+          "context": "Net interest margin performance",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Slight improvement with stable outlook",
+          "key_metrics": ["2.82% NIM", "1 bp QoQ increase"]
+        }
+      ]
+    },
+    {
+      "subsection": "Non-Interest Income Performance",
+      "quotes": [
+        {
+          "quote_text": "We would have seen moderate foreign currency spend, both on the debit and credit side, as consumers had a little more caution, especially with cross border purchases. We saw some lower merchant acquiring revenue in the business bank, and some small timing items.",
+          "context": "QoQ decline factors",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Consumer caution affecting fee income",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Tariff Impact on Canadian Market",
+      "quotes": [
+        {
+          "quote_text": "This quarter, tariff uncertainty weighed on the Canadian housing market and we saw slower purchase activity.",
+          "context": "Housing market effects",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "External headwinds affecting market activity",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Product Performance Highlights - TD Auto Finance",
+      "quotes": [
+        {
+          "quote_text": "In TD Auto Finance, we had record Q2 originations, which may reflect customers pulling forward auto purchases in anticipation of tariffs.",
+          "context": "Record Q2 originations",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Record performance despite mixed drivers",
+          "key_metrics": ["record Q2 originations"]
+        }
+      ]
+    },
+    {
+      "subsection": "Real Estate Secured Lending",
+      "quotes": [
+        {
+          "quote_text": "In Real Estate Secured Lending, we continue to enhance speed to decision and to provide tailored customer advice by referring more complex deals to our mobile mortgage specialist. As you know, our single greatest opportunity is to deepen relationships with our more than 15 million customers in Canada. We are executing against that, with continued strong referrals to the Business Bank and wealth.",
+          "context": "Operational improvements",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Operational improvements driving customer relationships",
+          "key_metrics": ["15 million customers"]
+        }
+      ]
+    },
+    {
+      "subsection": "Mortgage Business Performance",
+      "quotes": [
+        {
+          "quote_text": "As for the drivers of the QoQ decline in the mortgage business: if I look at our specific competitive position, we're a multi-channel through the cycle lender. I would say in this market, our broker originations have moderated a little bit. We have really strong relationships and we continue to compete for profitable business.",
+          "context": "Competitive positioning",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Balanced competitive positioning with profitability focus",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Proprietary Channels Strength",
+      "quotes": [
+        {
+          "quote_text": "I'm really pleased with the strength that we've seen in our proprietary channels. So if I look at our branch and MMS, proprietary ecosystem, originations, and again, this despite the macro environment, originations in those two channels are actually up double digits year over year. And so while you see a flat average sequential growth on a spot basis, we're actually up $1.5BN quarter over quarter. So the growth is there. The profile was a little different this quarter where we had higher paydowns in January and February, but then we exited the quarter with momentum. And overall, I think the fundamentals are very good. We are highly focused on building speed in our ecosystem, ensuring we have specialization. Our branch mortgage referral ecosystem, I had shared on the Q1 call, we had tripled referrals in that ecosystem in Q1, and that has continued in Q2.",
+          "context": "Branch and MMS performance",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong proprietary channel performance despite macro headwinds",
+          "key_metrics": ["double digits YoY growth", "$1.5BN QoQ increase", "tripled referrals"]
+        },
+        {
+          "quote_text": "When asked to elaborate on the higher paydowns: our book skews slightly more premium, and so as you have customers that have more disposable income by way of year-end bonuses, for example, and more liquidity in the market, we actually saw January and February prepayments were up double digits on a year-over-year basis. So that was some of the dampness in late in Q1, and then also the jump-off point as well as early in Q2 in February. So those are perhaps a little bit more symptomatic of our premium book.",
+          "context": "Premium customer dynamics",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Premium customer behavior creating timing effects",
+          "key_metrics": ["double digit prepayments YoY"]
+        }
+      ]
+    },
+    {
+      "subsection": "Loan Growth Strategy and Profitability Focus",
+      "quotes": [
+        {
+          "quote_text": "Thoughts on approaching loan growth while protecting margins and profitability: profitability should always be a factor, and so we will compete to win profitable business and then leverage our strength in channels where we can differentiate on speed and customer experience, but profitability is important.",
+          "context": "Profitability-first approach",
+          "speaker": {
+            "name": "Raymond Chun",
+            "title": "Head of Canadian P&C",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Disciplined approach to profitable growth",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "section_name": "Wealth Management and Insurance",
+  "section_title": "Wealth Management and Insurance: Strong quarter across all the businesses, especially in Direct Investing",
+  "section_statement": "Wealth Management and Insurance delivered exceptional performance with peer-leading ROE of nearly 47%, driven by strong net asset growth in TDAM, innovation in Direct Investing with partial shares trading, and continued digital transformation in Insurance with 46% of new sales completed digitally end-to-end.",
+  "content": [
+    {
+      "subsection": "Business Performance Highlights",
+      "quotes": [
+        {
+          "quote_text": "Strong net sales in TDAM, positive traction at TD Direct Investing and solid premium growth in Insurance resulting in \"peer-leading\" ROE of nearly 47%",
+          "context": "Robust returns across segments",
+          "speaker": {
+            "name": "Riaz Ahmed",
+            "title": "Head of Wealth Management and Insurance",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Industry-leading profitability performance",
+          "key_metrics": ["47% ROE"]
+        }
+      ]
+    },
+    {
+      "subsection": "TD Asset Management",
+      "quotes": [
+        {
+          "quote_text": "TD Asset Management added $5.3BN in net institutional assets and our advice business delivered strong net asset growth.",
+          "context": "Net asset growth",
+          "speaker": {
+            "name": "Riaz Ahmed",
+            "title": "Head of Wealth Management and Insurance",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong asset growth across business lines",
+          "key_metrics": ["$5.3BN net institutional assets"]
+        }
+      ]
+    },
+    {
+      "subsection": "TD Direct Investing",
+      "quotes": [
+        {
+          "quote_text": "We continue to innovate in TD Direct Investing, the only bank-owned brokerage in Canada to offer partial shares trading. We are seeing great momentum, with an 83% increase in partial shares adoption by our GenZ and Millennial clients within the last six months.",
+          "context": "Innovation and momentum",
+          "speaker": {
+            "name": "Riaz Ahmed",
+            "title": "Head of Wealth Management and Insurance",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Market differentiation with strong adoption by younger demographics",
+          "key_metrics": ["83% increase partial shares adoption", "6 months timeframe"]
+        }
+      ]
+    },
+    {
+      "subsection": "TD Insurance",
+      "quotes": [
+        {
+          "quote_text": "TD Insurance continued its digital transformation, with over 46% of new sales this quarter completed digitally from end-to-end as we build on our position as the leading digital direct insurer in Canada.",
+          "context": "Digital transformation",
+          "speaker": {
+            "name": "Riaz Ahmed",
+            "title": "Head of Wealth Management and Insurance",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong digital adoption and market leadership",
+          "key_metrics": ["46% digital sales completion"]
+        }
+      ]
+    },
+    {
+      "subsection": "Cross-Business Synergies and Growth",
+      "quotes": [
+        {
+          "quote_text": "As you know, our single greatest opportunity is to deepen relationships with our more than 15 million customers in Canada. We are executing against that, with continued strong referrals to the Business Bank and wealth. In addition, the Personal Bank achieved record credit card penetration rates with new checking account customers. In the Business Bank, loans are up 6% year over year, reflecting",
+          "context": "Relationship deepening strategy",
+          "speaker": {
+            "name": "Riaz Ahmed",
+            "title": "Head of Wealth Management and Insurance",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Successful cross-selling and relationship deepening",
+          "key_metrics": ["15 million customers", "record credit card penetration", "6% business loan growth YoY"]
+        }
+      ]
+    }
+  ]
+}

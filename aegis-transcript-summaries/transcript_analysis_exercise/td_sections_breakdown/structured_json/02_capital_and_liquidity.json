@@ -1,0 +1,101 @@
+{
+  "section_name": "Capital and Liquidity",
+  "section_title": "Capital and Liquidity: Strong capital (and Schwab sale) to drive continued buybacks and elevated liquidity",
+  "section_statement": "TD Bank is executing a disciplined capital deployment strategy, allocating $8BN from Schwab proceeds to share buybacks while maintaining strong capital levels. The bank's liquidity position remains elevated at 141% LCR, with plans to normalize to 125-135% range as excess liquidity runs off.",
+  "content": [
+    {
+      "subsection": "Capital Deployment",
+      "quotes": [
+        {
+          "quote_text": "Made <span class=\"highlight-keyword\">good progress</span> this <span class=\"highlight-time\">quarter</span>, repurchasing <span class=\"highlight-figure\">30 million shares</span> for a total of <span class=\"highlight-figure\">$2.5BN</span>",
+          "context": "Share buyback progress",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong execution on buyback program",
+          "key_metrics": ["30 million shares", "$2.5BN repurchased"]
+        },
+        {
+          "quote_text": "We still intend to deploy <span class=\"highlight-figure\">$8BN</span> of the proceeds from the <span class=\"highlight-keyword\">Schwab share sale</span> for our current <span class=\"highlight-keyword\">NCIB</span>. We have the capacity to execute the <span class=\"highlight-keyword\">NCIB</span> as planned, while maintaining very <span class=\"highlight-keyword\">strong capital levels</span> in this uncertain environment.",
+          "context": "Schwab proceeds deployment",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "confident",
+          "sentiment_rationale": "Clear capital deployment plan with strong balance sheet",
+          "key_metrics": ["$8BN Schwab proceeds for NCIB"]
+        },
+        {
+          "quote_text": "As we get through our <span class=\"highlight-keyword\">strategic review</span>, at the <span class=\"highlight-time\">Investor Day</span>, we'll lay out for you where we think we're going to deploy some of that <span class=\"highlight-keyword\">capital</span>, and some of that certainly from, we're seeing significant <span class=\"highlight-keyword\">organic growth opportunities</span>, and we're still looking at right-sizing some of the portfolios from a scale those businesses that may not be core to our business and so we're looking at some of those opportunities.",
+          "context": "Strategic review and capital allocation",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Multiple growth opportunities identified",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "There certainly is value in being <span class=\"highlight-keyword\">well-capitalized</span> as we think forward. But as we move through this uncertainty and as we get through our <span class=\"highlight-keyword\">strategic review</span> if we still then feel that we have <span class=\"highlight-keyword\">excess capital</span> as I've said before then we then look at as another opportunity to do another <span class=\"highlight-keyword\">buyback</span>.",
+          "context": "Future capital management",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Flexibility for future capital returns",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "LCR (Liquidity Coverage Ratio)",
+      "quotes": [
+        {
+          "quote_text": "Our average <span class=\"highlight-keyword\">LCR</span> for the <span class=\"highlight-time\">quarter</span> was <span class=\"highlight-figure\">141%</span>. The bank remains comfortable that it can operate at more typical <span class=\"highlight-keyword\">LCR levels</span>. However, while actions have been taken to manage <span class=\"highlight-keyword\">liquidity buffers</span> down, the proceeds from the <span class=\"highlight-keyword\">Schwab share sale</span> will continue to keep <span class=\"highlight-keyword\">LCR elevated</span> in the <span class=\"highlight-time\">near term</span>.",
+          "context": "Current LCR",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "stable",
+          "sentiment_rationale": "Strong liquidity position with normalization plan",
+          "key_metrics": ["141% LCR"]
+        },
+        {
+          "quote_text": "Targeting <span class=\"highlight-keyword\">LCR</span> in the <span class=\"highlight-figure\">125 to 135 range</span>. <span class=\"highlight-time\">Last year</span>, when we raised <span class=\"highlight-keyword\">liquidity</span>, some of that liquidity were on a <span class=\"highlight-time\">one-year basis</span>. So, it's going to take some time for those to run off. But we're comfortable at <span class=\"highlight-keyword\">normalizing</span> on a recurring level, getting back to the <span class=\"highlight-figure\">125 to 135</span> over time.",
+          "context": "Target LCR range",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Clear path to normalized liquidity levels",
+          "key_metrics": ["125-135% target LCR range"]
+        },
+        {
+          "quote_text": "While actions have been taken to manage <span class=\"highlight-keyword\">liquidity buffers</span> down, the proceeds from the <span class=\"highlight-keyword\">Schwab share sale</span> will continue to keep <span class=\"highlight-keyword\">LCR elevated</span> in the <span class=\"highlight-time\">near term</span>.",
+          "context": "Impact of Schwab proceeds",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Temporary elevation due to proceeds",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

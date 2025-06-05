@@ -1,0 +1,174 @@
+{
+  "section_name": "Restructuring",
+  "section_title": "Restructuring: Benefits from total restructuring charges of $600MM to $700MM pre-tax over the next several quarters to be largely reinvested",
+  "section_statement": "TD Bank is executing a comprehensive restructuring program targeting $550-650MM in annual savings through operational excellence and workforce optimization. The bank is simultaneously investing heavily in AI and digital capabilities, including opening a new AI center in New York and deploying generative AI across contact centers and branches.",
+  "content": [
+    {
+      "subsection": "Strategic Review and Operational Excellence",
+      "quotes": [
+        {
+          "quote_text": "Through the strategic review, we are identifying opportunities to innovate, to drive efficiencies, and operational excellence. We are structurally reducing costs across the Bank by taking a disciplined look at our operations and processes to find opportunities to automate and to re-engineer them. These efforts will create capacity to accelerate digital and AI investments to upgrade capabilities and scale relationship banking. We are identifying growth opportunities and making good progress across each of our four pillars of our strategic review.",
+          "context": null,
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Comprehensive transformation strategy with clear benefits",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Expected Savings and Investment",
+      "quotes": [
+        {
+          "quote_text": "Expected to generate savings of approximately $100MM pre-tax in fiscal 2025 and annual run rate savings of $550MM to $650MM pre-tax",
+          "context": "Restructuring program savings",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Significant cost savings targets",
+          "key_metrics": ["$100MM savings FY2025", "$550-650MM annual run rate"]
+        },
+        {
+          "quote_text": "Driven by workforce and real estate optimization, asset write-offs, and business wind-downs and exits as part of the strategic review",
+          "context": "Cost savings drivers",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Clear operational restructuring approach",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "This will result in a 2% reduction in workforce, primarily achieved through attrition and redeployment of talent.",
+          "context": "Workforce impact",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Workforce reduction managed through attrition",
+          "key_metrics": ["2% workforce reduction"]
+        }
+      ]
+    },
+    {
+      "subsection": "Innovation and Strategic Transformation",
+      "quotes": [
+        {
+          "quote_text": "Through this restructuring program and the strategic review more broadly, we are innovating to drive efficiency and structurally reduce the Bank's cost base. We see significant opportunities to continue to invest in the business to drive future growth. And one area, as you would expect, is on the digital AI technology front. And so that spend does not always translate into specific FTEs, but those are investments that are important investments for us.",
+          "context": null,
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Strong focus on AI and digital transformation",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Fiscal 2025 Outlook",
+      "quotes": [
+        {
+          "quote_text": "We expect fiscal 2025 expense growth, assuming fiscal 2024 levels of variable compensation, FX, and U.S., strategic cards portfolio to be at the upper end of the previously communicated 5% to 7% range, reflecting investments in governance and control, and investments supporting business growth, net of expected productivity and restructuring savings.",
+          "context": "Expense growth expectations",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Balanced expense growth with investment priorities",
+          "key_metrics": ["5-7% expense growth range"]
+        }
+      ]
+    },
+    {
+      "subsection": "Remediation Efforts and AI Implementation",
+      "quotes": [
+        {
+          "quote_text": "We're executing against our remediation plan with focus and purpose and operationally we continue to make enhancements to our transaction monitoring coverage and investigative practices. As we said we would do last quarter we implemented the final round of planned scenarios in our transaction monitoring system. Work is progressing on the use of specialized AI to detect, isolate, and automate our risk mitigation activities and teams are continuing to work on the implementation of the machine learning tools with these capabilities expected to come online next month. In addition, we rolled out a streamlined workflow of our investigative practices including the introduction of updated procedures for analyzing customer activity.",
+          "context": "Transaction monitoring",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong progress on remediation with AI integration",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "We are continuing to implement risk reduction measures across our program. For example, this quarter we introduced further enhancements to our cash deposit requirements at TD Stores. While we still have more work to do, we remain on track with our planned remediation activities and are building the foundational AML program that we need for the years ahead.",
+          "context": "Risk reduction measures",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "confident",
+          "sentiment_rationale": "On track with remediation and building strong foundation",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "$500MM Cost Guidance Confidence",
+      "quotes": [
+        {
+          "quote_text": "We will operate within the $500MM guidance. We'll see a slight uptick as we go into the meat of our remediation delivery programs, but I feel comfortable with that guidance. What we did is we wanted to give the street a sense of what 2026 was going to look like. I'd say right now we believe that the spend will be similar. The composition of the spend might change a little bit might be a little less remediation, more validation work, more look backs, monitor costs, et cetera. So, the composition might change, but we think the overall spend level is going to be similar. There's no question as we start thinking about those outer years, I would expect that the raw remediation program management expenses that we're incurring today will fall off. We could have a slight uptick in some of our run costs, but net net, there will be a decline at some point in the future.",
+          "context": "Operating within guidance",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "confident",
+          "sentiment_rationale": "Clear visibility on spending patterns and future decline",
+          "key_metrics": ["$500MM guidance", "similar 2026 spend"]
+        }
+      ]
+    },
+    {
+      "subsection": "AI Research and Development",
+      "quotes": [
+        {
+          "quote_text": "TD has over 800 AI patent filings and according to Evident AI our portfolio is in the top 10 amongst banks globally.",
+          "context": "New York AI center: TD recently announced plans to open a new office in New York City for Layer 6, their AI research and development center.",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Industry-leading AI innovation portfolio",
+          "key_metrics": ["800+ AI patents", "top 10 globally"]
+        },
+        {
+          "quote_text": "AI deployments have begun across different channels and processes: we have deployed a generative AI virtual assistant in our contact centers to drive efficiency while enhancing the customer experience. We are now beginning to deploy this gen AI virtual assistant across our branch network driving further colleague and customer experience and efficiency benefits. This year we launched the next AI enhancement in our fraud operation and insurance claims to enhance our detection of suspected fraudulent auto and residential claims. This helps improve our response time to customers with genuine claims and continues our development of AI and insurance which has been heavily engaged in machine learning for over a decade.",
+          "context": "AI deployment initiatives",
+          "speaker": {
+            "name": "Bharat Masrani",
+            "title": "CEO",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Broad AI deployment across multiple business areas",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

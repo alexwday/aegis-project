@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Bank Q2 2025 Earnings Analysis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 2rem 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+        
+        .header .subtitle {
+            margin-top: 0.5rem;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .section {
+            margin: 2rem 3rem;
+        }
+        
+        .section-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px 12px 0 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+        
+        .section-header .description {
+            margin-top: 0.8rem;
+            opacity: 0.9;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .quotes-container {
+            display: grid;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quote-tile {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+        
+        .quote-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tile-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .tile-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .content-row {
+            display: flex;
+            min-height: 120px;
+        }
+        
+        .quote-column {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .quote {
+            color: #495057;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+        
+        .context {
+            color: #6c757d;
+            font-size: 0.85rem;
+            font-style: normal;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-left: 3px solid #dee2e6;
+            margin-top: 0.5rem;
+        }
+        
+        .quote .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-style: normal;
+            font-weight: 600;
+            color: #856404;
+        }
+        
+        .attribution-column {
+            width: 200px;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-left: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .speaker {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .title {
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+        
+        .sentiment {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .sentiment-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .sentiment-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .sentiment-neutral {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .sentiment-cautious {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .sentiment-confident {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .sentiment-optimistic {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .sentiment-bullish {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .sentiment-stable {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .sentiment-icon {
+            margin-right: 0.3rem;
+            font-size: 1rem;
+        }
+        
+        .key-metric {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 600;
+            font-style: normal;
+        }
+        
+        .highlight-figure {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 700;
+            font-style: normal;
+        }
+        
+        .highlight-keyword {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-style: normal;
+        }
+        
+        .highlight-time {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-style: normal;
+        }
+        
+        
+        @media (max-width: 1024px) {
+            .section {
+                margin: 1rem;
+            }
+            
+            .header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .content-row {
+                flex-direction: column;
+            }
+            
+            .attribution-column {
+                width: 100%;
+                border: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .attribution-column {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+            
+            .quotes-container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TD Bank Q2 2025 Earnings Analysis</h1>
+        <div class="subtitle">AI-Enhanced Transcript Intelligence Report</div>
+    </div>
+
+    
+    <div class="section">
+        <div class="section-header">
+            <h2>Credit: Reviewed credit portfolios and bolstered reserves</h2>
+            <div class="description">TD Bank strengthened its credit reserves by $500MM specifically to address potential tariff impacts, while maintaining disciplined risk assessment across its loan portfolio. Despite tariff uncertainties, underlying credit quality remains strong with watch lists improving across all business segments.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Macro Changes and Governance Process</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">First are the macro changes, determined by our chief economist. They're not determined by me, but we have a strong governance process and we take it through our governance process.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Tariff Scenario Modeling</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We did put <span class="highlight-keyword">tariffs</span> into these scenarios:</div>
+                        <div class="context">For Canada: <span class="highlight-keyword">tariffs</span> of <span class="highlight-figure">10%</span> for <span class="highlight-time">six months</span>, then those come down over a period of time
+For the U.S.: <span class="highlight-keyword">tariffs</span> of <span class="highlight-figure">12%</span> for <span class="highlight-time">six months</span>, then those come down over a period of time</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Downside Case and Reserve Building</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Our <span class="highlight-keyword">downside case</span> is a recessionary case. And that downside case also reflects the risks of higher <span class="highlight-keyword">tariffs</span>. In addition to the macro, what we've done is we've looked more holistically at the book and said at higher <span class="highlight-keyword">tariffs</span> rate what could be the impact on consumers and non-consumers and that's the way we built the overlay. So, it's really a combination of these macro plus the judgmental overlay that got us to the <span class="highlight-figure">$500MM</span> number [business <span class="highlight-keyword">reserve build</span>].</div>
+                        <div class="context"><span class="highlight-keyword">Reserve allocation strategy</span>: Built <span class="highlight-keyword">reserves</span> for consumer, business, and government lending. Expected bigger impact on non-retail sectors. Most of the <span class="highlight-figure">$500MM</span> <span class="highlight-keyword">reserve build</span> has been allocated to business and government lending. If macro conditions deteriorate, consumer impact is also expected.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Industry-Specific Impact Assessment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We looked at the industries that were most exposed to <span class="highlight-keyword">tariffs</span>. What we did is we went actually within those industries borrow by borrower and assessed what is the financial impact on the borrower. So for example we'd look at revenue we'd look at cost of goods sold and we'd look at what impact that would have on the <span class="highlight-keyword">ratings</span> of that individual.</div>
+                        <div class="context"><span class="highlight-keyword">Key Exposure Metrics</span>:
+- Gross loans to industries most exposed to policy and trade uncertainty: <span class="highlight-figure">~9%</span> of Total Bank gross loans
+- Loans to borrowers most sensitive to policy and trade actions: <span class="highlight-figure">&lt;1%</span> of Total Bank gross loans</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Industry-Specific Impact Assessment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">The <span class="highlight-figure">9%</span> number that we have disclosed, we went and looked on a more narrow basis saying what out of these borrowers are most sensitive to <span class="highlight-keyword">tariffs</span>. And, we looked broadly at the financial impact, again, across the <span class="highlight-figure">9%</span>, not just the smaller population. We looked at the <span class="highlight-keyword">ratings migration</span> that could occur, and based on that ratings migration, we built our <span class="highlight-keyword">reserves</span>. There is some for consumer because if the macro deteriorates, I think you should expect there'll be impact on the consumer as well.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Forward-Looking Reserve Philosophy</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Our <span class="highlight-keyword">reserves</span> reflect a <span class="highlight-keyword">forward-looking view</span> as at <span class="highlight-time">April 30</span>. So, if that forward-looking view evolves we may have to build more <span class="highlight-keyword">reserves</span>.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Positive Trends in Watch List</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">The <span class="highlight-keyword">watch list</span> has evolved <span class="highlight-keyword">positively</span> and has been coming down across all business segments.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Impaired PCL Performance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Current impaired <span class="highlight-keyword">PCL</span>: <span class="highlight-figure">$946 million</span> (decrease of <span class="highlight-figure">$270 million</span> <span class="highlight-time">quarter-over-quarter</span>)</div>
+                        <div class="context">Largest Quarter-over-Quarter Decreases by Asset Class:
+- US Cards portfolios: Related to seasonal trends coupled with impact of prior quarter model update
+- US Commercial lending portfolio</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Credit Quality Assessment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">If you keep this <span class="highlight-keyword">tariff</span> issue aside, we were really seeing <span class="highlight-keyword">peak PCL</span> and <span class="highlight-keyword">good quality</span>, and I think the fact that rates have come down have helped borrowers.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Wholesale PCL Details</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">On a broader basis, we're seeing <span class="highlight-keyword">good credit quality</span>. On <span class="highlight-keyword">wholesale</span>, numbers went up a little bit... So that's the overall picture on impaired <span class="highlight-keyword">PCL</span>, and I do view it as quite a <span class="highlight-keyword">positive development</span>.</div>
+                        <div class="context"><span class="highlight-keyword">Wholesale PCL</span> increase: <span class="highlight-figure">$28 million</span>
+
+Drivers: Incremental PCL for three existing borrowers in:
+- Telco
+- Media
+- Power & Utility
+- CRE Office
+
+Additional impacts: Two impairments in forestry sector</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Guidance Reaffirmation and Risk Factors</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">But again, for this year as like I'd really ask you to anchor on the fact that we're not changing our <span class="highlight-keyword">guidance</span>. We're still saying for this year <span class="highlight-figure">45 basis points to 55 basis points</span> but we're also calling out that the <span class="highlight-keyword">risk</span> to that range is <span class="highlight-keyword">elevated</span> because of the environment.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Guidance Reaffirmation and Risk Factors</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We expect <span class="highlight-keyword">tariff resolution</span> to be somewhere in <span class="highlight-time">Q3</span> and if that it takes longer and that would worsen the economic outlook and potentially drive higher <span class="highlight-keyword">PCL</span>.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Gabriel Dechaine</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Capital and Liquidity: Strong capital (and Schwab sale) to drive continued buybacks and elevated liquidity</h2>
+            <div class="description">TD Bank is executing a disciplined capital deployment strategy, allocating $8BN from Schwab proceeds to share buybacks while maintaining strong capital levels. The bank's liquidity position remains elevated at 141% LCR, with plans to normalize to 125-135% range as excess liquidity runs off.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Capital Deployment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Made <span class="highlight-keyword">good progress</span> this <span class="highlight-time">quarter</span>, repurchasing <span class="highlight-figure">30 million shares</span> for a total of <span class="highlight-figure">$2.5BN</span></div>
+                        <div class="context">Share buyback progress</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Capital Deployment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We still intend to deploy <span class="highlight-figure">$8BN</span> of the proceeds from the <span class="highlight-keyword">Schwab share sale</span> for our current <span class="highlight-keyword">NCIB</span>. We have the capacity to execute the <span class="highlight-keyword">NCIB</span> as planned, while maintaining very <span class="highlight-keyword">strong capital levels</span> in this uncertain environment.</div>
+                        <div class="context">Schwab proceeds deployment</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-confident">
+                            Confident
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Capital Deployment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">As we get through our <span class="highlight-keyword">strategic review</span>, at the <span class="highlight-time">Investor Day</span>, we'll lay out for you where we think we're going to deploy some of that <span class="highlight-keyword">capital</span>, and some of that certainly from, we're seeing significant <span class="highlight-keyword">organic growth opportunities</span>, and we're still looking at right-sizing some of the portfolios from a scale those businesses that may not be core to our business and so we're looking at some of those opportunities.</div>
+                        <div class="context">Strategic review and capital allocation</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Capital Deployment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">There certainly is value in being <span class="highlight-keyword">well-capitalized</span> as we think forward. But as we move through this uncertainty and as we get through our <span class="highlight-keyword">strategic review</span> if we still then feel that we have <span class="highlight-keyword">excess capital</span> as I've said before then we then look at as another opportunity to do another <span class="highlight-keyword">buyback</span>.</div>
+                        <div class="context">Future capital management</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">LCR (Liquidity Coverage Ratio)</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Our average <span class="highlight-keyword">LCR</span> for the <span class="highlight-time">quarter</span> was <span class="highlight-figure">141%</span>. The bank remains comfortable that it can operate at more typical <span class="highlight-keyword">LCR levels</span>. However, while actions have been taken to manage <span class="highlight-keyword">liquidity buffers</span> down, the proceeds from the <span class="highlight-keyword">Schwab share sale</span> will continue to keep <span class="highlight-keyword">LCR elevated</span> in the <span class="highlight-time">near term</span>.</div>
+                        <div class="context">Current LCR</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-stable">
+                            Stable
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">LCR (Liquidity Coverage Ratio)</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Targeting <span class="highlight-keyword">LCR</span> in the <span class="highlight-figure">125 to 135 range</span>. <span class="highlight-time">Last year</span>, when we raised <span class="highlight-keyword">liquidity</span>, some of that liquidity were on a <span class="highlight-time">one-year basis</span>. So, it's going to take some time for those to run off. But we're comfortable at <span class="highlight-keyword">normalizing</span> on a recurring level, getting back to the <span class="highlight-figure">125 to 135</span> over time.</div>
+                        <div class="context">Target LCR range</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">LCR (Liquidity Coverage Ratio)</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">While actions have been taken to manage <span class="highlight-keyword">liquidity buffers</span> down, the proceeds from the <span class="highlight-keyword">Schwab share sale</span> will continue to keep <span class="highlight-keyword">LCR elevated</span> in the <span class="highlight-time">near term</span>.</div>
+                        <div class="context">Impact of Schwab proceeds</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Restructuring: Benefits from total restructuring charges of $600MM to $700MM pre-tax over the next several quarters to be largely reinvested</h2>
+            <div class="description">TD Bank is executing a comprehensive restructuring program targeting $550-650MM in annual savings through operational excellence and workforce optimization. The bank is simultaneously investing heavily in AI and digital capabilities, including opening a new AI center in New York and deploying generative AI across contact centers and branches.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Strategic Review and Operational Excellence</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Through the strategic review, we are identifying opportunities to innovate, to drive efficiencies, and operational excellence. We are structurally reducing costs across the Bank by taking a disciplined look at our operations and processes to find opportunities to automate and to re-engineer them. These efforts will create capacity to accelerate digital and AI investments to upgrade capabilities and scale relationship banking. We are identifying growth opportunities and making good progress across each of our four pillars of our strategic review.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Expected Savings and Investment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Expected to generate savings of approximately $100MM pre-tax in fiscal 2025 and annual run rate savings of $550MM to $650MM pre-tax</div>
+                        <div class="context">Restructuring program savings</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Expected Savings and Investment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Driven by workforce and real estate optimization, asset write-offs, and business wind-downs and exits as part of the strategic review</div>
+                        <div class="context">Cost savings drivers</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Expected Savings and Investment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">This will result in a 2% reduction in workforce, primarily achieved through attrition and redeployment of talent.</div>
+                        <div class="context">Workforce impact</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Innovation and Strategic Transformation</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Through this restructuring program and the strategic review more broadly, we are innovating to drive efficiency and structurally reduce the Bank's cost base. We see significant opportunities to continue to invest in the business to drive future growth. And one area, as you would expect, is on the digital AI technology front. And so that spend does not always translate into specific FTEs, but those are investments that are important investments for us.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Fiscal 2025 Outlook</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We expect fiscal 2025 expense growth, assuming fiscal 2024 levels of variable compensation, FX, and U.S., strategic cards portfolio to be at the upper end of the previously communicated 5% to 7% range, reflecting investments in governance and control, and investments supporting business growth, net of expected productivity and restructuring savings.</div>
+                        <div class="context">Expense growth expectations</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Remediation Efforts and AI Implementation</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We're executing against our remediation plan with focus and purpose and operationally we continue to make enhancements to our transaction monitoring coverage and investigative practices. As we said we would do last quarter we implemented the final round of planned scenarios in our transaction monitoring system. Work is progressing on the use of specialized AI to detect, isolate, and automate our risk mitigation activities and teams are continuing to work on the implementation of the machine learning tools with these capabilities expected to come online next month. In addition, we rolled out a streamlined workflow of our investigative practices including the introduction of updated procedures for analyzing customer activity.</div>
+                        <div class="context">Transaction monitoring</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Remediation Efforts and AI Implementation</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We are continuing to implement risk reduction measures across our program. For example, this quarter we introduced further enhancements to our cash deposit requirements at TD Stores. While we still have more work to do, we remain on track with our planned remediation activities and are building the foundational AML program that we need for the years ahead.</div>
+                        <div class="context">Risk reduction measures</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-confident">
+                            Confident
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">$500MM Cost Guidance Confidence</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We will operate within the $500MM guidance. We'll see a slight uptick as we go into the meat of our remediation delivery programs, but I feel comfortable with that guidance. What we did is we wanted to give the street a sense of what 2026 was going to look like. I'd say right now we believe that the spend will be similar. The composition of the spend might change a little bit might be a little less remediation, more validation work, more look backs, monitor costs, et cetera. So, the composition might change, but we think the overall spend level is going to be similar. There's no question as we start thinking about those outer years, I would expect that the raw remediation program management expenses that we're incurring today will fall off. We could have a slight uptick in some of our run costs, but net net, there will be a decline at some point in the future.</div>
+                        <div class="context">Operating within guidance</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-confident">
+                            Confident
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">AI Research and Development</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">TD has over 800 AI patent filings and according to Evident AI our portfolio is in the top 10 amongst banks globally.</div>
+                        <div class="context">New York AI center: TD recently announced plans to open a new office in New York City for Layer 6, their AI research and development center.</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">AI Research and Development</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">AI deployments have begun across different channels and processes: we have deployed a generative AI virtual assistant in our contact centers to drive efficiency while enhancing the customer experience. We are now beginning to deploy this gen AI virtual assistant across our branch network driving further colleague and customer experience and efficiency benefits. This year we launched the next AI enhancement in our fraud operation and insurance claims to enhance our detection of suspected fraudulent auto and residential claims. This helps improve our response time to customers with genuine claims and continues our development of AI and insurance which has been heavily engaged in machine learning for over a decade.</div>
+                        <div class="context">AI deployment initiatives</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Bharat Masrani</div>
+                        <div class="title">CEO, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>U.S. Retail Bank: Continued momentum and progress on balance sheet restructuring to drive strong NII growth and ROE expansion</h2>
+            <div class="description">TD's U.S. Retail Bank is positioned for substantial NIM expansion in Q3, driven by balance sheet restructuring and excess liquidity normalization. The bank has made significant progress on asset limitation compliance, selling $23BN in bonds and $9BN in correspondent loans while targeting upper-end NII benefits of $300-500MM.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">U.S. P&C NIM Outlook</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">As we look forward to <span class="highlight-time">Q3</span>, we again expect <span class="highlight-keyword">NIM</span> to deliver <span class="highlight-keyword">substantial expansion</span>, reflecting the benefits from ongoing <span class="highlight-keyword">balance sheet restructuring</span> activities and further normalization of elevated <span class="highlight-keyword">liquidity levels</span>.</div>
+                        <div class="context">Q3 NIM expectations</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-bullish">
+                            Bullish
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">NIM Expansion Drivers</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">First, we are running down some of the <span class="highlight-keyword">excess liquidity</span> that we had built up <span class="highlight-time">late last year</span>. Second, the <span class="highlight-keyword">investment bond repositioning</span> is starting to trickle through the P&L, and then obviously theractor-off rates right now represent a <span class="highlight-keyword">tailwind</span> for the business. So we do expect that the <span class="highlight-keyword">NII trajectory</span> over the <span class="highlight-time">next few quarters</span> to be quite positive, and we do expect that <span class="highlight-keyword">NIM expansion</span> for <span class="highlight-time">Q3</span> will be a <span class="highlight-keyword">substantial increase</span>, mirroring what we saw in <span class="highlight-time">Q2</span>. I should state, because for the <span class="highlight-time">second quarter</span>, we did have one extraordinary item, which is we did change the amortization period for some of our deferred product acquisition costs. That was about a <span class="highlight-figure">$46 million</span> charge we took. We would not expect that to reoccur in <span class="highlight-time">Q3</span>.</div>
+                        <div class="context">Liquidity management</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Balance Growth and ROE Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote"><span class="highlight-keyword">Bank card</span>, <span class="highlight-keyword">home equity</span>, <span class="highlight-keyword">middle market</span>, and <span class="highlight-keyword">small business</span> balances grew <span class="highlight-figure">11%</span>, <span class="highlight-figure">9%</span>, <span class="highlight-figure">8%</span>, and <span class="highlight-figure">6%</span> YoY, respectively</div>
+                        <div class="context">Strong balance growth</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Balance Growth and ROE Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We are focused on enhancing ROE in U.S. Retail. We are assessing relationship profitability across our loan portfolios.</div>
+                        <div class="context">ROE enhancement strategy</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">U.S. BSA/AML Remediation Investment</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We continue to expect U.S. BSA/AML remediation and related governance and control investments of approximately $500MM, pre-taxed in fiscal 2025. We expect similar investments in fiscal 2026.</div>
+                        <div class="context">Ongoing investment expectations</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Balance Sheet Restructuring Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">On our balance sheet restructuring activities. You will recall this effort has two critical objectives. First, to strictly comply with and maintain a buffer to the asset limitation. And second, to ensure that we can continue to serve our clients and communities as their needs evolve.</div>
+                        <div class="context">Critical objectives</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Balance Sheet Restructuring Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">This quarter, we completed the sale of approximately $9 billion on correspondent loans. We also communicated plans to wind down our U.S., point-of-sale financing business, which services third-party retailers. This business is comprised of a series of bespoke arrangements with each retailer, which impacts its profitability and scalability. Exiting this business is accretive to U.S., retail ROE and free up capacity to invest in a proprietary Bank card business.</div>
+                        <div class="context">Correspondent loan sales</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Balance Sheet Restructuring Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">As to why TD is looking to exit the point-of-sale financing business: despite the fact we have very strong relationships with some of the top retailers across the country, that business does not scale quite as well. So when we were looking at what was going to be required to transform that business, it was going to be consumptive of significant investment resources. And at a time when we're really thinking through where do we want to invest capital for the greatest return, we felt that it was more important to be able to invest in our core proprietary cards business.</div>
+                        <div class="context">Strategic rationale for point-of-sale exit</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Asset Portfolio Repositioning Progress</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Approximately $405BN versus the OCC's asset limitation of $434BN</div>
+                        <div class="context">Two quarter average assets</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Asset Portfolio Repositioning Progress</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">$399BN, reflecting the closing of the correspondent mortgage sale</div>
+                        <div class="context">Total assets at quarter end</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Asset Portfolio Repositioning Progress</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Since the end of the first fiscal quarter, paid down an additional $7BN of bank borrowing</div>
+                        <div class="context">Additional debt paydown</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Asset Portfolio Repositioning Progress</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We continue to expect to complete the investment portfolio repositioning no later than the first half of calendar 2025. To date, we have sold approximately $23BN notional for an upfront loss of just under $1.3BN pre-tax. The investment portfolio repositioning is expected to generate an NII benefit in fiscal 2025 at the upper end of the $300MM to $500MM pre-tax estimated range we provided in October. Collectively, we expect these actions will enable us to improve return on equity through fiscal 2025 and into fiscal 2026.</div>
+                        <div class="context">Investment portfolio timeline</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Forward-Looking Profitability Commentary</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Generally speaking, we're constructive. We're very positive about what the second half will look like. What's driving that is, one, as I indicated before, I do think we will have NII tailwinds based on the factors that I described before, that being excess liquidity, the investment bond repositioning of the tractor on off rates.</div>
+                        <div class="context">Management outlook on H2 profitability</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Forward-Looking Profitability Commentary</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We're really focused on improving the return on equity profile quarter-on-quarter through this year and into next year. As we think about the Investor Day discussion, I think we'll provide a little bit more guidance as to firming up what that objective looks like.</div>
+                        <div class="context">ROE improvement focus</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Leo Salom</div>
+                        <div class="title">Head of U.S. Retail, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Canadian P&C Banking: Continued volume growth in loans and deposits</h2>
+            <div class="description">Canadian P&C Banking delivered resilient performance with record auto finance originations and double-digit growth in proprietary mortgage channels despite tariff uncertainty weighing on housing markets. The bank continues to focus on deepening customer relationships across its 15 million Canadian customers while maintaining profitability discipline.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Canadian P&C NIM Outlook</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We look forward to Q3, we again expect NIM to be relatively stable.</div>
+                        <div class="context">Q3 NIM expectations</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-stable">
+                            Stable
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Canadian P&C NIM Outlook</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">2.82%, up 1 bp QoQ, primarily driven by higher loan margins. Guidance for Q3 is for NIM to remain relatively stable.</div>
+                        <div class="context">Net interest margin performance</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Non-Interest Income Performance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We would have seen moderate foreign currency spend, both on the debit and credit side, as consumers had a little more caution, especially with cross border purchases. We saw some lower merchant acquiring revenue in the business bank, and some small timing items.</div>
+                        <div class="context">QoQ decline factors</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Tariff Impact on Canadian Market</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">This quarter, tariff uncertainty weighed on the Canadian housing market and we saw slower purchase activity.</div>
+                        <div class="context">Housing market effects</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-cautious">
+                            Cautious
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Product Performance Highlights - TD Auto Finance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">In TD Auto Finance, we had record Q2 originations, which may reflect customers pulling forward auto purchases in anticipation of tariffs.</div>
+                        <div class="context">Record Q2 originations</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Real Estate Secured Lending</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">In Real Estate Secured Lending, we continue to enhance speed to decision and to provide tailored customer advice by referring more complex deals to our mobile mortgage specialist. As you know, our single greatest opportunity is to deepen relationships with our more than 15 million customers in Canada. We are executing against that, with continued strong referrals to the Business Bank and wealth.</div>
+                        <div class="context">Operational improvements</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Mortgage Business Performance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">As for the drivers of the QoQ decline in the mortgage business: if I look at our specific competitive position, we're a multi-channel through the cycle lender. I would say in this market, our broker originations have moderated a little bit. We have really strong relationships and we continue to compete for profitable business.</div>
+                        <div class="context">Competitive positioning</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Proprietary Channels Strength</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">I'm really pleased with the strength that we've seen in our proprietary channels. So if I look at our branch and MMS, proprietary ecosystem, originations, and again, this despite the macro environment, originations in those two channels are actually up double digits year over year. And so while you see a flat average sequential growth on a spot basis, we're actually up $1.5BN quarter over quarter. So the growth is there. The profile was a little different this quarter where we had higher paydowns in January and February, but then we exited the quarter with momentum. And overall, I think the fundamentals are very good. We are highly focused on building speed in our ecosystem, ensuring we have specialization. Our branch mortgage referral ecosystem, I had shared on the Q1 call, we had tripled referrals in that ecosystem in Q1, and that has continued in Q2.</div>
+                        <div class="context">Branch and MMS performance</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Proprietary Channels Strength</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">When asked to elaborate on the higher paydowns: our book skews slightly more premium, and so as you have customers that have more disposable income by way of year-end bonuses, for example, and more liquidity in the market, we actually saw January and February prepayments were up double digits on a year-over-year basis. So that was some of the dampness in late in Q1, and then also the jump-off point as well as early in Q2 in February. So those are perhaps a little bit more symptomatic of our premium book.</div>
+                        <div class="context">Premium customer dynamics</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Loan Growth Strategy and Profitability Focus</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Thoughts on approaching loan growth while protecting margins and profitability: profitability should always be a factor, and so we will compete to win profitable business and then leverage our strength in channels where we can differentiate on speed and customer experience, but profitability is important.</div>
+                        <div class="context">Profitability-first approach</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Raymond Chun</div>
+                        <div class="title">Head of Canadian P&C, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Wealth Management and Insurance: Strong quarter across all the businesses, especially in Direct Investing</h2>
+            <div class="description">Wealth Management and Insurance delivered exceptional performance with peer-leading ROE of nearly 47%, driven by strong net asset growth in TDAM, innovation in Direct Investing with partial shares trading, and continued digital transformation in Insurance with 46% of new sales completed digitally end-to-end.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Business Performance Highlights</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Strong net sales in TDAM, positive traction at TD Direct Investing and solid premium growth in Insurance resulting in "peer-leading" ROE of nearly 47%</div>
+                        <div class="context">Robust returns across segments</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Riaz Ahmed</div>
+                        <div class="title">Head of Wealth Management and Insurance, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">TD Asset Management</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">TD Asset Management added $5.3BN in net institutional assets and our advice business delivered strong net asset growth.</div>
+                        <div class="context">Net asset growth</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Riaz Ahmed</div>
+                        <div class="title">Head of Wealth Management and Insurance, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">TD Direct Investing</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">We continue to innovate in TD Direct Investing, the only bank-owned brokerage in Canada to offer partial shares trading. We are seeing great momentum, with an 83% increase in partial shares adoption by our GenZ and Millennial clients within the last six months.</div>
+                        <div class="context">Innovation and momentum</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Riaz Ahmed</div>
+                        <div class="title">Head of Wealth Management and Insurance, TD Bank</div>
+                        <div class="sentiment sentiment-optimistic">
+                            Optimistic
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">TD Insurance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">TD Insurance continued its digital transformation, with over 46% of new sales this quarter completed digitally from end-to-end as we build on our position as the leading digital direct insurer in Canada.</div>
+                        <div class="context">Digital transformation</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Riaz Ahmed</div>
+                        <div class="title">Head of Wealth Management and Insurance, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Cross-Business Synergies and Growth</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">As you know, our single greatest opportunity is to deepen relationships with our more than 15 million customers in Canada. We are executing against that, with continued strong referrals to the Business Bank and wealth. In addition, the Personal Bank achieved record credit card penetration rates with new checking account customers. In the Business Bank, loans are up 6% year over year, reflecting</div>
+                        <div class="context">Relationship deepening strategy</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Riaz Ahmed</div>
+                        <div class="title">Head of Wealth Management and Insurance, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Wholesale Banking: Record Revenue and continued focus on becoming a leading North American investment bank</h2>
+            <div class="description">Wholesale Banking achieved record quarterly revenue of $2.1BN, benefiting from market volatility in the trading business. The division continues strategic investments in technology and front office capabilities to execute on its vision of becoming a leading integrated North American investment bank with global reach.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Revenue Performance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">In wholesale banking, we continue to demonstrate the power of our broader platform, with record revenue of $2.1BN. This quarter, the trading business benefited from market volatility. We are navigating challenges in the market while executing against our strategy.</div>
+                        <div class="context">Record quarter</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Tim Wiggan</div>
+                        <div class="title">Head of Wholesale Banking, TD Bank</div>
+                        <div class="sentiment sentiment-positive">
+                            Positive
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Expense Management and Strategy Execution</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Expenses increased, reflecting higher technology and front office expenses, along with investments in our growth platforms. We continue to execute on our strategy to be a leading integrated North American investment bank with global reach.</div>
+                        <div class="context">Investment in growth</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Tim Wiggan</div>
+                        <div class="title">Head of Wholesale Banking, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <h2>Corporate Segment</h2>
+            <div class="description">The Corporate Segment reported a narrower net loss of $161MM compared to the prior year, primarily driven by higher treasury revenues from Schwab share sale proceeds investment, partially offset by increased governance and control costs. The treasury gains are expected to decline as proceeds are redeployed for share buybacks.</div>
+        </div>
+        <div class="quotes-container">
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Financial Performance</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Net loss for the quarter was $161MM, a smaller loss than the same quarter last year, reflecting higher revenue from treasury and balance sheet activities, partially offset by higher net corporate expenses, which were primarily driven by higher governance and control costs.</div>
+                        <div class="context">Net loss</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quote-tile">
+                <div class="tile-header">
+                    <h3 class="tile-title">Treasury Activity and Cash Management</h3>
+                </div>
+                <div class="content-row">
+                    <div class="quote-column">
+                        <div class="quote">Treasury activity relates to the investment from the proceeds of the Schwab share sale. Cash was invested generating higher NII in the corporate segment and then you would expect that NII to come down over time as we redeploy that cash to buy back shares.</div>
+                        <div class="context">Schwab proceeds impact</div>
+                    </div>
+                    <div class="attribution-column">
+                        <div class="speaker">Kelvin Tran</div>
+                        <div class="title">CFO, TD Bank</div>
+                        <div class="sentiment sentiment-neutral">
+                            Neutral
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Sentiment icon mapping
+        const sentimentIcons = {
+            'positive': '✅',
+            'negative': '❌',
+            'neutral': '📊',
+            'cautious': '⚠️',
+            'confident': '💪',
+            'optimistic': '🚀',
+            'bullish': '📈',
+            'stable': '📊'
+        };
+        
+        // Add icons to sentiment badges
+        document.querySelectorAll('.sentiment').forEach(element => {
+            const sentiment = element.className.split('-')[1];
+            const icon = sentimentIcons[sentiment] || '📊';
+            element.innerHTML = `<span class="sentiment-icon">${icon}</span>${element.textContent}`;
+        });
+        
+        // Add interactivity to tiles
+        document.querySelectorAll('.quote-tile').forEach(tile => {
+            tile.addEventListener('click', function() {
+                this.style.transform = this.style.transform === 'scale(1.02)' ? '' : 'scale(1.02)';
+            });
+        });
+        
+    </script>
+</body>
+</html>

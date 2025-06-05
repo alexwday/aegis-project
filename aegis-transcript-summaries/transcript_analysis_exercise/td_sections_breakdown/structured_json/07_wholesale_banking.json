@@ -1,0 +1,41 @@
+{
+  "section_name": "Wholesale Banking",
+  "section_title": "Wholesale Banking: Record Revenue and continued focus on becoming a leading North American investment bank",
+  "section_statement": "Wholesale Banking achieved record quarterly revenue of $2.1BN, benefiting from market volatility in the trading business. The division continues strategic investments in technology and front office capabilities to execute on its vision of becoming a leading integrated North American investment bank with global reach.",
+  "content": [
+    {
+      "subsection": "Revenue Performance",
+      "quotes": [
+        {
+          "quote_text": "In wholesale banking, we continue to demonstrate the power of our broader platform, with record revenue of $2.1BN. This quarter, the trading business benefited from market volatility. We are navigating challenges in the market while executing against our strategy.",
+          "context": "Record quarter",
+          "speaker": {
+            "name": "Tim Wiggan",
+            "title": "Head of Wholesale Banking",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Record performance with strong strategic execution",
+          "key_metrics": ["$2.1BN record revenue"]
+        }
+      ]
+    },
+    {
+      "subsection": "Expense Management and Strategy Execution",
+      "quotes": [
+        {
+          "quote_text": "Expenses increased, reflecting higher technology and front office expenses, along with investments in our growth platforms. We continue to execute on our strategy to be a leading integrated North American investment bank with global reach.",
+          "context": "Investment in growth",
+          "speaker": {
+            "name": "Tim Wiggan",
+            "title": "Head of Wholesale Banking",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Strategic investment in capabilities for long-term positioning",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

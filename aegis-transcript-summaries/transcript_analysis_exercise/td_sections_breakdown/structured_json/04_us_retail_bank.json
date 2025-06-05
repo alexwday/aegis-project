@@ -1,0 +1,210 @@
+{
+  "section_name": "U.S. Retail Bank",
+  "section_title": "U.S. Retail Bank: Continued momentum and progress on balance sheet restructuring to drive strong NII growth and ROE expansion",
+  "section_statement": "TD's U.S. Retail Bank is positioned for substantial NIM expansion in Q3, driven by balance sheet restructuring and excess liquidity normalization. The bank has made significant progress on asset limitation compliance, selling $23BN in bonds and $9BN in correspondent loans while targeting upper-end NII benefits of $300-500MM.",
+  "content": [
+    {
+      "subsection": "U.S. P&C NIM Outlook",
+      "quotes": [
+        {
+          "quote_text": "As we look forward to <span class=\"highlight-time\">Q3</span>, we again expect <span class=\"highlight-keyword\">NIM</span> to deliver <span class=\"highlight-keyword\">substantial expansion</span>, reflecting the benefits from ongoing <span class=\"highlight-keyword\">balance sheet restructuring</span> activities and further normalization of elevated <span class=\"highlight-keyword\">liquidity levels</span>.",
+          "context": "Q3 NIM expectations",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "bullish",
+          "sentiment_rationale": "Strong confidence in NIM expansion",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "NIM Expansion Drivers",
+      "quotes": [
+        {
+          "quote_text": "First, we are running down some of the <span class=\"highlight-keyword\">excess liquidity</span> that we had built up <span class=\"highlight-time\">late last year</span>. Second, the <span class=\"highlight-keyword\">investment bond repositioning</span> is starting to trickle through the P&L, and then obviously theractor-off rates right now represent a <span class=\"highlight-keyword\">tailwind</span> for the business. So we do expect that the <span class=\"highlight-keyword\">NII trajectory</span> over the <span class=\"highlight-time\">next few quarters</span> to be quite positive, and we do expect that <span class=\"highlight-keyword\">NIM expansion</span> for <span class=\"highlight-time\">Q3</span> will be a <span class=\"highlight-keyword\">substantial increase</span>, mirroring what we saw in <span class=\"highlight-time\">Q2</span>. I should state, because for the <span class=\"highlight-time\">second quarter</span>, we did have one extraordinary item, which is we did change the amortization period for some of our deferred product acquisition costs. That was about a <span class=\"highlight-figure\">$46 million</span> charge we took. We would not expect that to reoccur in <span class=\"highlight-time\">Q3</span>.",
+          "context": "Liquidity management",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Multiple positive NII drivers identified",
+          "key_metrics": ["$46 million one-time charge Q2"]
+        }
+      ]
+    },
+    {
+      "subsection": "Balance Growth and ROE Focus",
+      "quotes": [
+        {
+          "quote_text": "<span class=\"highlight-keyword\">Bank card</span>, <span class=\"highlight-keyword\">home equity</span>, <span class=\"highlight-keyword\">middle market</span>, and <span class=\"highlight-keyword\">small business</span> balances grew <span class=\"highlight-figure\">11%</span>, <span class=\"highlight-figure\">9%</span>, <span class=\"highlight-figure\">8%</span>, and <span class=\"highlight-figure\">6%</span> YoY, respectively",
+          "context": "Strong balance growth",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strong growth across key business lines",
+          "key_metrics": ["11% bank card growth", "9% home equity growth", "8% middle market growth", "6% small business growth"]
+        },
+        {
+          "quote_text": "We are focused on enhancing ROE in U.S. Retail. We are assessing relationship profitability across our loan portfolios.",
+          "context": "ROE enhancement strategy",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Strategic focus on profitability optimization",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "U.S. BSA/AML Remediation Investment",
+      "quotes": [
+        {
+          "quote_text": "We continue to expect U.S. BSA/AML remediation and related governance and control investments of approximately $500MM, pre-taxed in fiscal 2025. We expect similar investments in fiscal 2026.",
+          "context": "Ongoing investment expectations",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Continued compliance investment commitment",
+          "key_metrics": ["$500MM FY2025", "similar FY2026 investment"]
+        }
+      ]
+    },
+    {
+      "subsection": "Balance Sheet Restructuring Focus",
+      "quotes": [
+        {
+          "quote_text": "On our balance sheet restructuring activities. You will recall this effort has two critical objectives. First, to strictly comply with and maintain a buffer to the asset limitation. And second, to ensure that we can continue to serve our clients and communities as their needs evolve.",
+          "context": "Critical objectives",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Clear regulatory compliance focus",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "This quarter, we completed the sale of approximately $9 billion on correspondent loans. We also communicated plans to wind down our U.S., point-of-sale financing business, which services third-party retailers. This business is comprised of a series of bespoke arrangements with each retailer, which impacts its profitability and scalability. Exiting this business is accretive to U.S., retail ROE and free up capacity to invest in a proprietary Bank card business.",
+          "context": "Correspondent loan sales",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Strategic business optimization for ROE improvement",
+          "key_metrics": ["$9 billion correspondent loan sales"]
+        },
+        {
+          "quote_text": "As to why TD is looking to exit the point-of-sale financing business: despite the fact we have very strong relationships with some of the top retailers across the country, that business does not scale quite as well. So when we were looking at what was going to be required to transform that business, it was going to be consumptive of significant investment resources. And at a time when we're really thinking through where do we want to invest capital for the greatest return, we felt that it was more important to be able to invest in our core proprietary cards business.",
+          "context": "Strategic rationale for point-of-sale exit",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Rational capital allocation decision",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Asset Portfolio Repositioning Progress",
+      "quotes": [
+        {
+          "quote_text": "Approximately $405BN versus the OCC's asset limitation of $434BN",
+          "context": "Two quarter average assets",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Comfortable buffer to asset limitation",
+          "key_metrics": ["$405BN average assets", "$434BN asset limitation"]
+        },
+        {
+          "quote_text": "$399BN, reflecting the closing of the correspondent mortgage sale",
+          "context": "Total assets at quarter end",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Asset optimization progress",
+          "key_metrics": ["$399BN quarter-end assets"]
+        },
+        {
+          "quote_text": "Since the end of the first fiscal quarter, paid down an additional $7BN of bank borrowing",
+          "context": "Additional debt paydown",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Continued balance sheet optimization",
+          "key_metrics": ["$7BN debt paydown"]
+        },
+        {
+          "quote_text": "We continue to expect to complete the investment portfolio repositioning no later than the first half of calendar 2025. To date, we have sold approximately $23BN notional for an upfront loss of just under $1.3BN pre-tax. The investment portfolio repositioning is expected to generate an NII benefit in fiscal 2025 at the upper end of the $300MM to $500MM pre-tax estimated range we provided in October. Collectively, we expect these actions will enable us to improve return on equity through fiscal 2025 and into fiscal 2026.",
+          "context": "Investment portfolio timeline",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Clear timeline with substantial NII benefits",
+          "key_metrics": ["$23BN sold", "$1.3BN upfront loss", "$300-500MM NII benefit"]
+        }
+      ]
+    },
+    {
+      "subsection": "Forward-Looking Profitability Commentary",
+      "quotes": [
+        {
+          "quote_text": "Generally speaking, we're constructive. We're very positive about what the second half will look like. What's driving that is, one, as I indicated before, I do think we will have NII tailwinds based on the factors that I described before, that being excess liquidity, the investment bond repositioning of the tractor on off rates.",
+          "context": "Management outlook on H2 profitability",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "optimistic",
+          "sentiment_rationale": "Very positive H2 outlook with multiple tailwinds",
+          "key_metrics": []
+        },
+        {
+          "quote_text": "We're really focused on improving the return on equity profile quarter-on-quarter through this year and into next year. As we think about the Investor Day discussion, I think we'll provide a little bit more guidance as to firming up what that objective looks like.",
+          "context": "ROE improvement focus",
+          "speaker": {
+            "name": "Leo Salom",
+            "title": "Head of U.S. Retail",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Clear ROE improvement trajectory",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "section_name": "Corporate Segment",
+  "section_title": "Corporate Segment",
+  "section_statement": "The Corporate Segment reported a narrower net loss of $161MM compared to the prior year, primarily driven by higher treasury revenues from Schwab share sale proceeds investment, partially offset by increased governance and control costs. The treasury gains are expected to decline as proceeds are redeployed for share buybacks.",
+  "content": [
+    {
+      "subsection": "Financial Performance",
+      "quotes": [
+        {
+          "quote_text": "Net loss for the quarter was $161MM, a smaller loss than the same quarter last year, reflecting higher revenue from treasury and balance sheet activities, partially offset by higher net corporate expenses, which were primarily driven by higher governance and control costs.",
+          "context": "Net loss",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Improving loss position with clear cost drivers",
+          "key_metrics": ["$161MM net loss"]
+        }
+      ]
+    },
+    {
+      "subsection": "Treasury Activity and Cash Management",
+      "quotes": [
+        {
+          "quote_text": "Treasury activity relates to the investment from the proceeds of the Schwab share sale. Cash was invested generating higher NII in the corporate segment and then you would expect that NII to come down over time as we redeploy that cash to buy back shares.",
+          "context": "Schwab proceeds impact",
+          "speaker": {
+            "name": "Kelvin Tran",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Temporary benefit with clear deployment plan",
+          "key_metrics": []
+        }
+      ]
+    }
+  ]
+}

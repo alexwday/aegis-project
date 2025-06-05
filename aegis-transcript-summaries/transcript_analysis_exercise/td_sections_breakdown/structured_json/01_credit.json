@@ -1,0 +1,201 @@
+{
+  "section_name": "Credit",
+  "section_title": "Credit: Reviewed credit portfolios and bolstered reserves",
+  "section_statement": "TD Bank strengthened its credit reserves by $500MM specifically to address potential tariff impacts, while maintaining disciplined risk assessment across its loan portfolio. Despite tariff uncertainties, underlying credit quality remains strong with watch lists improving across all business segments.",
+  "content": [
+    {
+      "subsection": "Macro Changes and Governance Process",
+      "quotes": [
+        {
+          "quote_text": "First are the macro changes, determined by our chief economist. They're not determined by me, but we have a strong governance process and we take it through our governance process.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Factual explanation of process",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Tariff Scenario Modeling",
+      "quotes": [
+        {
+          "quote_text": "We did put <span class=\"highlight-keyword\">tariffs</span> into these scenarios:",
+          "context": "For Canada: <span class=\"highlight-keyword\">tariffs</span> of <span class=\"highlight-figure\">10%</span> for <span class=\"highlight-time\">six months</span>, then those come down over a period of time\nFor the U.S.: <span class=\"highlight-keyword\">tariffs</span> of <span class=\"highlight-figure\">12%</span> for <span class=\"highlight-time\">six months</span>, then those come down over a period of time",
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Conservative scenario planning for risks",
+          "key_metrics": ["10% tariffs for Canada", "12% tariffs for U.S.", "six months duration"]
+        }
+      ]
+    },
+    {
+      "subsection": "Downside Case and Reserve Building",
+      "quotes": [
+        {
+          "quote_text": "Our <span class=\"highlight-keyword\">downside case</span> is a recessionary case. And that downside case also reflects the risks of higher <span class=\"highlight-keyword\">tariffs</span>. In addition to the macro, what we've done is we've looked more holistically at the book and said at higher <span class=\"highlight-keyword\">tariffs</span> rate what could be the impact on consumers and non-consumers and that's the way we built the overlay. So, it's really a combination of these macro plus the judgmental overlay that got us to the <span class=\"highlight-figure\">$500MM</span> number [business <span class=\"highlight-keyword\">reserve build</span>].",
+          "context": "<span class=\"highlight-keyword\">Reserve allocation strategy</span>: Built <span class=\"highlight-keyword\">reserves</span> for consumer, business, and government lending. Expected bigger impact on non-retail sectors. Most of the <span class=\"highlight-figure\">$500MM</span> <span class=\"highlight-keyword\">reserve build</span> has been allocated to business and government lending. If macro conditions deteriorate, consumer impact is also expected.",
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Proactive risk management with significant reserve building",
+          "key_metrics": ["$500MM reserve build"]
+        }
+      ]
+    },
+    {
+      "subsection": "Industry-Specific Impact Assessment",
+      "quotes": [
+        {
+          "quote_text": "We looked at the industries that were most exposed to <span class=\"highlight-keyword\">tariffs</span>. What we did is we went actually within those industries borrow by borrower and assessed what is the financial impact on the borrower. So for example we'd look at revenue we'd look at cost of goods sold and we'd look at what impact that would have on the <span class=\"highlight-keyword\">ratings</span> of that individual.",
+          "context": "<span class=\"highlight-keyword\">Key Exposure Metrics</span>:\n- Gross loans to industries most exposed to policy and trade uncertainty: <span class=\"highlight-figure\">~9%</span> of Total Bank gross loans\n- Loans to borrowers most sensitive to policy and trade actions: <span class=\"highlight-figure\">&lt;1%</span> of Total Bank gross loans",
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "neutral",
+          "sentiment_rationale": "Detailed risk assessment methodology",
+          "key_metrics": ["9% of total loans exposed", "<1% highly sensitive"]
+        },
+        {
+          "quote_text": "The <span class=\"highlight-figure\">9%</span> number that we have disclosed, we went and looked on a more narrow basis saying what out of these borrowers are most sensitive to <span class=\"highlight-keyword\">tariffs</span>. And, we looked broadly at the financial impact, again, across the <span class=\"highlight-figure\">9%</span>, not just the smaller population. We looked at the <span class=\"highlight-keyword\">ratings migration</span> that could occur, and based on that ratings migration, we built our <span class=\"highlight-keyword\">reserves</span>. There is some for consumer because if the macro deteriorates, I think you should expect there'll be impact on the consumer as well.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Comprehensive risk evaluation with consumer impact consideration",
+          "key_metrics": ["9% exposure", "ratings migration analysis"]
+        }
+      ]
+    },
+    {
+      "subsection": "Forward-Looking Reserve Philosophy",
+      "quotes": [
+        {
+          "quote_text": "Our <span class=\"highlight-keyword\">reserves</span> reflect a <span class=\"highlight-keyword\">forward-looking view</span> as at <span class=\"highlight-time\">April 30</span>. So, if that forward-looking view evolves we may have to build more <span class=\"highlight-keyword\">reserves</span>.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Acknowledges potential for additional reserves",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Positive Trends in Watch List",
+      "quotes": [
+        {
+          "quote_text": "The <span class=\"highlight-keyword\">watch list</span> has evolved <span class=\"highlight-keyword\">positively</span> and has been coming down across all business segments.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Improvement in credit quality indicators",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Impaired PCL Performance",
+      "quotes": [
+        {
+          "quote_text": "Current impaired <span class=\"highlight-keyword\">PCL</span>: <span class=\"highlight-figure\">$946 million</span> (decrease of <span class=\"highlight-figure\">$270 million</span> <span class=\"highlight-time\">quarter-over-quarter</span>)",
+          "context": "Largest Quarter-over-Quarter Decreases by Asset Class:\n- US Cards portfolios: Related to seasonal trends coupled with impact of prior quarter model update\n- US Commercial lending portfolio",
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Significant improvement in impaired PCL",
+          "key_metrics": ["$946 million impaired PCL", "$270 million QoQ decrease"]
+        }
+      ]
+    },
+    {
+      "subsection": "Credit Quality Assessment",
+      "quotes": [
+        {
+          "quote_text": "If you keep this <span class=\"highlight-keyword\">tariff</span> issue aside, we were really seeing <span class=\"highlight-keyword\">peak PCL</span> and <span class=\"highlight-keyword\">good quality</span>, and I think the fact that rates have come down have helped borrowers.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Underlying credit quality improving",
+          "key_metrics": []
+        }
+      ]
+    },
+    {
+      "subsection": "Wholesale PCL Details",
+      "quotes": [
+        {
+          "quote_text": "On a broader basis, we're seeing <span class=\"highlight-keyword\">good credit quality</span>. On <span class=\"highlight-keyword\">wholesale</span>, numbers went up a little bit... So that's the overall picture on impaired <span class=\"highlight-keyword\">PCL</span>, and I do view it as quite a <span class=\"highlight-keyword\">positive development</span>.",
+          "context": "<span class=\"highlight-keyword\">Wholesale PCL</span> increase: <span class=\"highlight-figure\">$28 million</span>\n\nDrivers: Incremental PCL for three existing borrowers in:\n- Telco\n- Media\n- Power & Utility\n- CRE Office\n\nAdditional impacts: Two impairments in forestry sector",
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "positive",
+          "sentiment_rationale": "Minor increase viewed positively overall",
+          "key_metrics": ["$28 million wholesale PCL increase"]
+        }
+      ]
+    },
+    {
+      "subsection": "Guidance Reaffirmation and Risk Factors",
+      "quotes": [
+        {
+          "quote_text": "But again, for this year as like I'd really ask you to anchor on the fact that we're not changing our <span class=\"highlight-keyword\">guidance</span>. We're still saying for this year <span class=\"highlight-figure\">45 basis points to 55 basis points</span> but we're also calling out that the <span class=\"highlight-keyword\">risk</span> to that range is <span class=\"highlight-keyword\">elevated</span> because of the environment.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Maintains guidance but flags elevated risks",
+          "key_metrics": ["45-55 basis points guidance"]
+        },
+        {
+          "quote_text": "We expect <span class=\"highlight-keyword\">tariff resolution</span> to be somewhere in <span class=\"highlight-time\">Q3</span> and if that it takes longer and that would worsen the economic outlook and potentially drive higher <span class=\"highlight-keyword\">PCL</span>.",
+          "context": null,
+          "speaker": {
+            "name": "Gabriel Dechaine",
+            "title": "CFO",
+            "company": "TD Bank"
+          },
+          "sentiment": "cautious",
+          "sentiment_rationale": "Timeline dependency on external factors",
+          "key_metrics": ["Q3 tariff resolution expected"]
+        }
+      ]
+    }
+  ]
+}
