@@ -64,6 +64,23 @@ cp your_earnings_transcript.pdf 4_transcript_input_pdf/
 python 5_create_research_plan.py
 ```
 
+### **7. Generate Section Analyses**
+```bash
+# Execute research plans to extract structured content
+python 8_generate_sections.py
+```
+This processes each section using the research plans and generates structured JSON analyses.
+
+### **8. Create HTML Report with Executive Summary**
+```bash
+# Generate final interactive HTML report with AI summary
+python 11_generate_report.py
+```
+This creates the final report with:
+- 🎯 **AI-Generated Executive Summary** - Comprehensive overview of entire call
+- 📊 **Interactive Sections** - Collapsible sections with quotes and analysis
+- 🎨 **Professional Styling** - Business-ready presentation format
+
 ## 📊 **Authentication Flow:**
 
 1. **SSL Setup** - Configures SSL certificate for ALL connections:
@@ -83,8 +100,10 @@ python 5_create_research_plan.py
 
 ## 📋 **Output Files:**
 
-- `6_research_plan.json` - **Main output**: All research plans
-- `research_plan_creator.log` - Detailed processing logs
+- `6_research_plan.json` - Research plans for all sections
+- `9_report_sections.json` - Structured section analyses with quotes
+- `12_transcript_summary_report.html` - **Final interactive report with AI summary**
+- Log files: `research_plan_creator.log`, `section_generator.log`, `report_generator.log`
 
 ## 🛠 **Troubleshooting:**
 
@@ -128,8 +147,14 @@ cp ~/Downloads/q2_earnings_transcript.pdf 4_transcript_input_pdf/
 # 6. Generate research plans
 python 5_create_research_plan.py
 
-# 7. View results
-cat 6_research_plan.json | jq .
+# 7. Execute section analyses
+python 8_generate_sections.py
+
+# 8. Create final HTML report with AI summary
+python 11_generate_report.py
+
+# 9. View results
+open 12_transcript_summary_report.html
 ```
 
 ## 🏢 **Corporate Environment Note:**
