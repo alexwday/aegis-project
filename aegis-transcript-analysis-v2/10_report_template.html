@@ -20,11 +20,12 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(30, 60, 114, 0.95);
+            background: rgba(52, 73, 94, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 0.8rem 1rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .nav-container {
@@ -38,6 +39,8 @@
             align-items: center;
             justify-content: space-between;
             gap: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .nav-links-container {
@@ -45,6 +48,10 @@
             align-items: center;
             gap: 0.8rem;
             flex-wrap: wrap;
+            padding-top: 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 6px;
+            padding: 0.5rem;
         }
         
         .nav-controls {
@@ -663,11 +670,11 @@
         <div class="header-content">
             <div class="header-text">
                 <h1>{{REPORT_TITLE}}</h1>
-                <div class="subtitle">{{REPORT_SUBTITLE}}</div>
+                <div class="subtitle" id="generated-date"></div>
             </div>
             <div class="ai-enhancement-button-container">
                 <button class="ai-enhancement-button" id="ai-toggle">
-                    <span class="ai-button-icon">🤖</span>
+                    <span class="ai-button-icon">✨</span>
                     <span class="ai-button-text">
                         <span class="ai-button-primary">Enable AI Enhancements</span>
                         <span class="ai-button-secondary">See speaker insights, sentiment & metrics</span>
@@ -682,6 +689,14 @@
     </div>
 
     <script>
+        // Set generated date
+        document.getElementById('generated-date').textContent = 
+            'Generated on ' + new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        
         // AI Toggle functionality
         const aiToggle = document.getElementById('ai-toggle');
         const body = document.body;
