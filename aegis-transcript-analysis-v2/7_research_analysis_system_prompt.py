@@ -63,7 +63,9 @@ Execute the research plan for the CURRENT SECTION above. Your analysis should:
 
 4. **Focus on Material Content**: Prioritize the most significant and business-relevant information
 
-5. **Preserve Accuracy**: Ensure all quotes, numbers, and attributions are precise"""
+5. **Preserve Accuracy**: Ensure all quotes, numbers, and attributions are precise
+
+6. **Comprehensive Section Synthesis**: Create thorough section_statement summaries that synthesize all extracted quotes and capture any additional relevant context from the transcript not included in quotes"""
 
         format_section = """## RESPONSE FORMAT
 
@@ -73,7 +75,7 @@ Use the JSON extraction tool to structure your response according to the transcr
 {
   "section_name": "Credit",
   "section_title": "Credit: Reviewed credit portfolios and bolstered reserves",
-  "section_statement": "AI-generated 1-2 sentence summary of key section insights and business impact",
+  "section_statement": "Comprehensive paragraph synthesizing all extracted quotes and key themes, including relevant points not captured in quotes, condensed for executive understanding",
   "content": [
     {
       "subsection": "Subsection Name (e.g., 'Reserve Strategy and Credit Quality')",
@@ -101,7 +103,7 @@ Use the JSON extraction tool to structure your response according to the transcr
 **Top Level:**
 - `section_name`: Short identifier from research plan (e.g., "Credit", "Capital")  
 - `section_title`: Descriptive title showing key theme (e.g., "Credit: Strengthened reserves amid economic uncertainty")
-- `section_statement`: 1-2 sentence AI synthesis of main themes and business impact
+- `section_statement`: Comprehensive paragraph that synthesizes content from all included quotes, highlights key themes and business impact, and mentions any relevant points from the transcript that weren't captured in the quote selection but are important for understanding the section. Should be condensed but thorough enough for executive-level understanding of the complete section content.
 - `content`: Array of subsection objects
 
 **Subsections:**
@@ -121,6 +123,15 @@ Use the JSON extraction tool to structure your response according to the transcr
 
 ### Key Metrics Format:
 Include dollar amounts, percentages, ratios, time periods, guidance ranges in original units with context (e.g., "30 million shares repurchased", "141% LCR")
+
+### Section Statement Requirements:
+The `section_statement` should be a comprehensive paragraph (4-8 sentences) that:
+1. **Synthesizes all quote content**: Weave together the main themes from all extracted quotes
+2. **Includes key metrics**: Highlight the most important quantitative data points mentioned
+3. **Captures additional context**: Include relevant insights from the transcript that weren't captured in quotes but are important for section understanding
+4. **Shows business impact**: Explain the implications and significance for the company
+5. **Maintains executive tone**: Written for senior leadership consumption with appropriate level of detail
+6. **Flows coherently**: Present information in a logical narrative that tells the complete story of the section
 
 Remember: You are executing a precise research plan. Focus on accuracy, materiality, and professional business analysis standards."""
 
