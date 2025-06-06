@@ -29,10 +29,18 @@
         
         .nav-container {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 0.8rem;
             max-width: 100%;
             flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-shrink: 0;
         }
         
         .nav-title {
@@ -67,6 +75,24 @@
         }
         
         .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .nav-button {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.4rem 0.7rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-button:hover {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border-color: rgba(255, 255, 255, 0.3);
@@ -149,9 +175,9 @@
         
         .ai-toggle-label {
             color: white;
-            font-size: 0.95rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            opacity: 0.95;
+            opacity: 0.9;
         }
         
         .main-content {
@@ -455,12 +481,24 @@
             
             .nav-container {
                 gap: 0.4rem;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-controls {
+                justify-content: space-between;
+                gap: 0.4rem;
             }
             
             .nav-item {
                 padding: 0.4rem 0.6rem;
                 font-size: 0.75rem;
                 max-width: 8rem;
+            }
+            
+            .nav-button {
+                padding: 0.3rem 0.5rem;
+                font-size: 0.7rem;
             }
         }
         
@@ -505,25 +543,29 @@
         }
     </style>
 </head>
-<body class="ai-mode">
+<body class="simple-mode">
     <!-- Top Navigation -->
     <nav class="top-nav">
         <div class="nav-container">
             <span class="nav-title">Quick Navigation</span>
             <div id="nav-links"></div>
+            <div class="nav-controls">
+                <button class="nav-button" id="expand-all" title="Expand All Sections">Expand All</button>
+                <button class="nav-button" id="collapse-all" title="Collapse All Sections">Collapse All</button>
+                <div class="ai-toggle-container">
+                    <span class="ai-toggle-label">AI</span>
+                    <label class="ai-toggle">
+                        <input type="checkbox" id="ai-toggle">
+                        <span class="ai-toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
         </div>
     </nav>
 
     <div class="header">
         <h1>{{REPORT_TITLE}}</h1>
         <div class="subtitle">{{REPORT_SUBTITLE}}</div>
-        <div class="ai-toggle-container">
-            <span class="ai-toggle-label">AI Enhancements</span>
-            <label class="ai-toggle">
-                <input type="checkbox" id="ai-toggle" checked>
-                <span class="ai-toggle-slider"></span>
-            </label>
-        </div>
     </div>
 
     <div class="main-content">
@@ -567,6 +609,22 @@
             header.addEventListener('click', function() {
                 const section = this.parentElement;
                 section.classList.toggle('expanded');
+            });
+        });
+        
+        // Expand/Collapse All functionality
+        const expandAllBtn = document.getElementById('expand-all');
+        const collapseAllBtn = document.getElementById('collapse-all');
+        
+        expandAllBtn.addEventListener('click', function() {
+            sections.forEach(section => {
+                section.classList.add('expanded');
+            });
+        });
+        
+        collapseAllBtn.addEventListener('click', function() {
+            sections.forEach(section => {
+                section.classList.remove('expanded');
             });
         });
         
