@@ -116,9 +116,9 @@
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 1.5rem 2rem;
+            padding: 2rem 2rem 1.5rem 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 80px; /* Space for top nav with controls */
+            margin-top: 100px; /* Space for top nav with controls + extra spacing */
         }
         
         .header-content {
@@ -798,8 +798,13 @@
                     section.classList.add('expanded');
                 }
                 
-                // Smooth scroll to section
-                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Smooth scroll to section with offset for fixed nav
+                const navHeight = document.querySelector('.top-nav').offsetHeight;
+                const sectionTop = section.offsetTop - navHeight - 10; // 10px extra buffer
+                window.scrollTo({ 
+                    top: sectionTop, 
+                    behavior: 'smooth' 
+                });
                 
                 // Update active state
                 document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -811,7 +816,8 @@
         
         // Update active nav on scroll
         function updateActiveNav() {
-            const scrollPosition = window.scrollY + 100;
+            const navHeight = document.querySelector('.top-nav').offsetHeight;
+            const scrollPosition = window.scrollY + navHeight + 50; // Account for nav height + buffer
             
             sections.forEach((section, index) => {
                 const sectionTop = section.offsetTop;
