@@ -20,11 +20,11 @@
             top: 0;
             left: 0;
             right: 0;
-            background: rgba(52, 73, 94, 0.95);
+            background: rgba(30, 60, 114, 0.95);
             backdrop-filter: blur(10px);
             z-index: 1000;
             padding: 0.8rem 1rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
@@ -49,9 +49,6 @@
             gap: 0.8rem;
             flex-wrap: wrap;
             padding-top: 0.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 6px;
-            padding: 0.5rem;
         }
         
         .nav-controls {
@@ -689,12 +686,17 @@
     </div>
 
     <script>
-        // Set generated date
+        // Set generated date and time
+        const now = new Date();
         document.getElementById('generated-date').textContent = 
-            'Generated on ' + new Date().toLocaleDateString('en-US', { 
+            'Generated on ' + now.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
+            }) + ' at ' + now.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
             });
         
         // AI Toggle functionality
