@@ -482,12 +482,29 @@ Respond with ONLY the JSON, no additional text or explanation."""
                             f"Total: {response.usage.total_tokens}"
                         )
                     
+                    # Log the raw response for debugging
+                    self.logger.info("=== RAW MODEL RESPONSE START ===")
+                    self.logger.info(content)
+                    self.logger.info("=== RAW MODEL RESPONSE END ===")
+                    
                     # Parse JSON response
                     try:
-                        return json.loads(content.strip())
+                        parsed = json.loads(content.strip())
+                        self.logger.info("✅ Successfully parsed JSON from structured prompt")
+                        return parsed
                     except json.JSONDecodeError as e:
-                        self.logger.warning(f"Failed to parse JSON from structured prompt: {e}")
+                        self.logger.warning(f"❌ Failed to parse JSON from structured prompt: {e}")
+                        self.logger.warning(f"Error position: {e.pos if hasattr(e, 'pos') else 'unknown'}")
+                        
+                        # Show problematic part of response
+                        if hasattr(e, 'pos') and e.pos < len(content):
+                            start = max(0, e.pos - 50)
+                            end = min(len(content), e.pos + 50)
+                            problem_area = content[start:end]
+                            self.logger.warning(f"Problematic area around error: ...{problem_area}...")
+                        
                         # Try to extract JSON from the response
+                        self.logger.info("🔄 Attempting fallback JSON extraction...")
                         return self._extract_json_fallback(content)
                 else:
                     raise ValueError("No content in LLM response")
@@ -500,25 +517,78 @@ Respond with ONLY the JSON, no additional text or explanation."""
         """Fallback JSON extraction for o1 models with reasoning text."""
         import re
         
-        # Try to find JSON in the response
+        self.logger.info("🔍 Starting fallback JSON extraction...")
+        
+        # Strategy 1: Look for JSON in markdown code blocks
+        self.logger.info("📝 Trying Strategy 1: Markdown code blocks")
         json_patterns = [
-            r'```json\s*(.*?)\s*```',
-            r'```\s*(.*?)\s*```',
-            r'\{.*\}',
+            (r'```json\s*(.*?)\s*```', "```json blocks"),
+            (r'```\s*(.*?)\s*```', "generic ``` blocks"),
         ]
         
-        for pattern in json_patterns:
+        for pattern, description in json_patterns:
+            self.logger.info(f"  Testing pattern: {description}")
             matches = re.findall(pattern, response, re.DOTALL)
-            for match in matches:
+            self.logger.info(f"  Found {len(matches)} matches")
+            
+            for i, match in enumerate(matches):
                 try:
+                    self.logger.info(f"  Attempting to parse match {i+1}: {match[:100]}...")
                     parsed = json.loads(match.strip())
                     if isinstance(parsed, dict) and 'section_id' in parsed:
+                        self.logger.info(f"✅ Success with {description} - match {i+1}")
                         return parsed
-                except json.JSONDecodeError:
+                    else:
+                        self.logger.info(f"  Match {i+1} missing required fields")
+                except json.JSONDecodeError as e:
+                    self.logger.info(f"  Match {i+1} failed JSON parsing: {e}")
                     continue
         
+        # Strategy 2: Look for JSON-like structures with brace matching
+        self.logger.info("🔗 Trying Strategy 2: Brace-matched JSON blocks")
+        json_candidates = []
+        brace_count = 0
+        start_idx = -1
+        
+        for i, char in enumerate(response):
+            if char == '{':
+                if brace_count == 0:
+                    start_idx = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_idx != -1:
+                    candidate = response[start_idx:i+1]
+                    json_candidates.append(candidate)
+                    start_idx = -1
+        
+        self.logger.info(f"  Found {len(json_candidates)} brace-matched candidates")
+        
+        for i, candidate in enumerate(json_candidates):
+            try:
+                self.logger.info(f"  Testing candidate {i+1}: {candidate[:100]}...")
+                parsed = json.loads(candidate.strip())
+                if isinstance(parsed, dict) and 'section_id' in parsed:
+                    self.logger.info(f"✅ Success with brace-matched candidate {i+1}")
+                    return parsed
+                else:
+                    self.logger.info(f"  Candidate {i+1} missing required fields")
+            except json.JSONDecodeError as e:
+                self.logger.info(f"  Candidate {i+1} failed JSON parsing: {e}")
+                continue
+        
+        # Strategy 3: Try parsing entire response
+        self.logger.info("📄 Trying Strategy 3: Parse entire response as JSON")
+        try:
+            parsed = json.loads(response.strip())
+            if isinstance(parsed, dict):
+                self.logger.info("✅ Success parsing entire response as JSON")
+                return parsed
+        except json.JSONDecodeError as e:
+            self.logger.info(f"  Failed to parse entire response: {e}")
+        
         # If all else fails, return a basic structure
-        self.logger.warning("Could not extract valid JSON, returning basic structure")
+        self.logger.warning("❌ All extraction strategies failed, returning basic structure")
         return {
             "section_id": "unknown",
             "section_name": "Unknown Section",
