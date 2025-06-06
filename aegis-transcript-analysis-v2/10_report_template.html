@@ -117,17 +117,89 @@
             margin-top: 80px; /* Space for top nav with controls */
         }
         
-        .header h1 {
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .header-text h1 {
             margin: 0;
             font-size: 2rem;
             font-weight: 300;
             letter-spacing: -0.5px;
         }
         
-        .header .subtitle {
+        .header-text .subtitle {
             margin-top: 0.5rem;
             opacity: 0.9;
             font-size: 1.1rem;
+        }
+        
+        /* AI Enhancement Button */
+        .ai-enhancement-button-container {
+            flex-shrink: 0;
+        }
+        
+        .ai-enhancement-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+        }
+        
+        .ai-enhancement-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .ai-enhancement-button.active {
+            background: rgba(255, 255, 255, 0.95);
+            color: #1e3c72;
+            border-color: white;
+        }
+        
+        .ai-enhancement-button.active:hover {
+            background: white;
+        }
+        
+        .ai-button-icon {
+            font-size: 1.5rem;
+            display: block;
+        }
+        
+        .ai-button-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.2rem;
+        }
+        
+        .ai-button-primary {
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        
+        .ai-button-secondary {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+        
+        .ai-enhancement-button.active .ai-button-primary::after {
+            content: " ✓";
         }
         
         /* AI Toggle */
@@ -512,6 +584,21 @@
                 padding: 0.3rem 0.5rem;
                 font-size: 0.7rem;
             }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+            
+            .ai-enhancement-button {
+                padding: 0.8rem 1.2rem;
+                align-self: stretch;
+            }
+            
+            .ai-button-text {
+                align-items: center;
+            }
         }
         
         @media (max-width: 480px) {
@@ -564,13 +651,6 @@
                 <div class="nav-controls">
                     <button class="nav-button" id="expand-all" title="Expand All Sections">Expand All</button>
                     <button class="nav-button" id="collapse-all" title="Collapse All Sections">Collapse All</button>
-                    <div class="ai-toggle-container">
-                        <span class="ai-toggle-label">AI</span>
-                        <label class="ai-toggle">
-                            <input type="checkbox" id="ai-toggle">
-                            <span class="ai-toggle-slider"></span>
-                        </label>
-                    </div>
                 </div>
             </div>
             <div class="nav-links-container">
@@ -580,8 +660,21 @@
     </nav>
 
     <div class="header">
-        <h1>{{REPORT_TITLE}}</h1>
-        <div class="subtitle">{{REPORT_SUBTITLE}}</div>
+        <div class="header-content">
+            <div class="header-text">
+                <h1>{{REPORT_TITLE}}</h1>
+                <div class="subtitle">{{REPORT_SUBTITLE}}</div>
+            </div>
+            <div class="ai-enhancement-button-container">
+                <button class="ai-enhancement-button" id="ai-toggle">
+                    <span class="ai-button-icon">🤖</span>
+                    <span class="ai-button-text">
+                        <span class="ai-button-primary">Enable AI Enhancements</span>
+                        <span class="ai-button-secondary">See speaker insights, sentiment & metrics</span>
+                    </span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -592,14 +685,32 @@
         // AI Toggle functionality
         const aiToggle = document.getElementById('ai-toggle');
         const body = document.body;
+        let isAiMode = false;
         
-        aiToggle.addEventListener('change', function() {
-            if (this.checked) {
+        function updateAiButton() {
+            const primaryText = aiToggle.querySelector('.ai-button-primary');
+            const secondaryText = aiToggle.querySelector('.ai-button-secondary');
+            
+            if (isAiMode) {
+                primaryText.textContent = 'AI Enhancements Active';
+                secondaryText.textContent = 'Click to hide AI insights & return to simple view';
+                aiToggle.classList.add('active');
                 body.className = 'ai-mode';
             } else {
+                primaryText.textContent = 'Enable AI Enhancements';
+                secondaryText.textContent = 'See speaker insights, sentiment & metrics';
+                aiToggle.classList.remove('active');
                 body.className = 'simple-mode';
             }
+        }
+        
+        aiToggle.addEventListener('click', function() {
+            isAiMode = !isAiMode;
+            updateAiButton();
         });
+        
+        // Initialize with simple mode
+        updateAiButton();
         
         // Sentiment icon mapping
         const sentimentIcons = {
