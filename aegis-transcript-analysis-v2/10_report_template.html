@@ -93,6 +93,67 @@
             font-size: 1.1rem;
         }
         
+        /* AI Toggle */
+        .ai-toggle-container {
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        
+        .ai-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .ai-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .ai-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: 0.3s;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        
+        .ai-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        .ai-toggle input:checked + .ai-toggle-slider {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .ai-toggle input:checked + .ai-toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .ai-toggle-label {
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.95;
+        }
+        
         .main-content {
             padding: 1rem 2rem;
         }
@@ -189,10 +250,19 @@
             padding: 1rem;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
             border: 1px solid #e9ecef;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 1rem;
             transition: all 0.2s ease;
+        }
+        
+        /* AI Mode Layout - 75/25 split */
+        .ai-mode .quote-item {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            gap: 1rem;
+        }
+        
+        /* Simple Mode Layout - full width quote only */
+        .simple-mode .quote-item {
+            display: block;
         }
         
         .quote-item:hover {
@@ -200,8 +270,8 @@
             transform: translateY(-1px);
         }
         
-        .quote-content {
-            flex: 1;
+        .quote-main {
+            /* In AI mode, this takes 75% width; in simple mode, takes full width */
         }
         
         .quote-text {
@@ -209,7 +279,17 @@
             font-size: 0.9rem;
             line-height: 1.5;
             font-style: italic;
-            margin-bottom: 0.5rem;
+            margin: 0;
+        }
+        
+        /* Quote enhancements - below the main quote area */
+        .quote-enhancements {
+            margin-top: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        .simple-mode .quote-enhancements {
+            display: none;
         }
         
         .context {
@@ -219,20 +299,23 @@
             background: #f8f9fa;
             padding: 0.4rem;
             border-left: 3px solid #dee2e6;
-            margin-top: 0.3rem;
+            margin-bottom: 0.5rem;
         }
         
         .quote-meta {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            justify-content: center;
-            min-width: 150px;
+            justify-content: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .simple-mode .quote-meta {
+            display: none;
         }
         
         .speaker-info {
             text-align: right;
-            margin-bottom: 0.5rem;
         }
         
         .speaker {
@@ -382,15 +465,15 @@
         }
         
         @media (max-width: 768px) {
-            .quote-item {
+            .ai-mode .quote-item {
                 grid-template-columns: 1fr;
+                gap: 0.8rem;
             }
             
             .quote-meta {
                 flex-direction: row;
                 justify-content: space-between;
                 align-items: center;
-                min-width: auto;
                 margin-top: 0.5rem;
                 padding-top: 0.5rem;
                 border-top: 1px solid #e9ecef;
@@ -398,7 +481,6 @@
             
             .speaker-info {
                 text-align: left;
-                margin-bottom: 0;
             }
             
             .main-content {
@@ -407,7 +489,7 @@
         }
     </style>
 </head>
-<body>
+<body class="ai-mode">
     <!-- Top Navigation -->
     <nav class="top-nav">
         <div class="nav-container">
@@ -419,6 +501,13 @@
     <div class="header">
         <h1>{{REPORT_TITLE}}</h1>
         <div class="subtitle">{{REPORT_SUBTITLE}}</div>
+        <div class="ai-toggle-container">
+            <span class="ai-toggle-label">AI Enhancements</span>
+            <label class="ai-toggle">
+                <input type="checkbox" id="ai-toggle" checked>
+                <span class="ai-toggle-slider"></span>
+            </label>
+        </div>
     </div>
 
     <div class="main-content">
@@ -426,6 +515,18 @@
     </div>
 
     <script>
+        // AI Toggle functionality
+        const aiToggle = document.getElementById('ai-toggle');
+        const body = document.body;
+        
+        aiToggle.addEventListener('change', function() {
+            if (this.checked) {
+                body.className = 'ai-mode';
+            } else {
+                body.className = 'simple-mode';
+            }
+        });
+        
         // Sentiment icon mapping
         const sentimentIcons = {
             'positive': '✅',
