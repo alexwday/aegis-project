@@ -28,6 +28,7 @@ from typing import Dict, List, Optional
 import requests
 from openai import OpenAI
 import PyPDF2
+import re
 
 # Import with importlib to handle numeric filename
 import importlib.util
@@ -262,10 +263,11 @@ class SectionGenerator:
             self.logger.error(f"Failed to extract PDF text: {e}")
             raise
 
-    def _get_model_params(self, model: str) -> dict:
+    def _get_model_params(self, model: str, use_tools: bool = False) -> dict:
         """Get supported parameters for the specified model."""
-        # Models that don't support temperature (like o1 series)
+        # Models that don't support temperature or tools (like o1 series)
         no_temperature_models = ["o1-preview", "o1-mini", "o1"]
+        no_tools_models = ["o1-preview", "o1-mini", "o1"]  # o1 models don't support function calling yet
         
         # Base parameters that all models support
         params = {
@@ -283,42 +285,289 @@ class SectionGenerator:
         else:
             self.logger.info(f"Model {model} doesn't support temperature parameter - skipping")
         
+        # Only add tools for models that support them
+        if use_tools and not any(no_tool in model.lower() for no_tool in no_tools_models):
+            params["tools"] = [self._get_section_analysis_tool_schema()]
+            params["tool_choice"] = {"type": "function", "function": {"name": "create_section_analysis"}}
+        elif use_tools:
+            self.logger.info(f"Model {model} doesn't support function calling - using structured prompt instead")
+        
         return params
 
-    def call_llm(self, prompt: str) -> str:
-        """Make LLM API call."""
+    def _get_section_analysis_tool_schema(self) -> dict:
+        """Define the tool schema for structured section analysis output."""
+        return {
+            "type": "function",
+            "function": {
+                "name": "create_section_analysis",
+                "description": "Create structured analysis for an earnings call transcript section",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "section_name": {
+                            "type": "string",
+                            "description": "Short identifier for the section"
+                        },
+                        "section_title": {
+                            "type": "string", 
+                            "description": "Descriptive title showing key theme"
+                        },
+                        "section_statement": {
+                            "type": "string",
+                            "description": "Comprehensive paragraph synthesizing all content and key themes"
+                        },
+                        "content": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "subsection": {
+                                        "type": "string",
+                                        "description": "Specific topic within section"
+                                    },
+                                    "quotes": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "quote_text": {
+                                                    "type": "string",
+                                                    "description": "Exact transcript quote with HTML highlighting"
+                                                },
+                                                "context": {
+                                                    "type": ["string", "null"],
+                                                    "description": "Supporting clarification or null if not needed"
+                                                },
+                                                "speaker": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {"type": "string"},
+                                                        "title": {"type": "string"},
+                                                        "company": {"type": "string"}
+                                                    },
+                                                    "required": ["name", "title", "company"]
+                                                },
+                                                "sentiment": {
+                                                    "type": "string",
+                                                    "enum": ["positive", "negative", "neutral", "cautious", "confident", "optimistic", "bullish", "stable"]
+                                                },
+                                                "sentiment_rationale": {
+                                                    "type": "string",
+                                                    "description": "Brief explanation for sentiment classification"
+                                                },
+                                                "key_metrics": {
+                                                    "type": "array",
+                                                    "items": {"type": "string"},
+                                                    "description": "Array of quantitative data mentioned in quote"
+                                                }
+                                            },
+                                            "required": ["quote_text", "context", "speaker", "sentiment", "sentiment_rationale", "key_metrics"]
+                                        }
+                                    }
+                                },
+                                "required": ["subsection", "quotes"]
+                            }
+                        }
+                    },
+                    "required": ["section_name", "section_title", "section_statement", "content"]
+                }
+            }
+        }
+
+    def call_llm_with_structure(self, prompt: str, use_function_calling: bool = True) -> Dict:
+        """Make LLM API call with structured output (function calling or fallback)."""
         if not self.openai_client:
             raise ValueError("OpenAI client not initialized")
 
-        self.logger.info("Making LLM API call...")
-
         model = self.config.get("openai_model", "gpt-4")
+        self.logger.info(f"Making structured LLM API call for section analysis with model: {model}")
+
+        # Check if model supports function calling
+        no_tools_models = ["o1-preview", "o1-mini", "o1"]
+        supports_tools = not any(no_tool in model.lower() for no_tool in no_tools_models)
+        
         messages = [{"role": "user", "content": prompt}]
 
         try:
-            # Get model-specific parameters
-            params = self._get_model_params(model)
-            params["messages"] = messages
-            
-            response = self.openai_client.chat.completions.create(**params)
-
-            if response.choices and response.choices[0].message:
-                content = response.choices[0].message.content
-
-                if hasattr(response, "usage") and response.usage:
-                    self.logger.info(
-                        f"Token usage - Prompt: {response.usage.prompt_tokens}, "
-                        f"Completion: {response.usage.completion_tokens}, "
-                        f"Total: {response.usage.total_tokens}"
-                    )
-
-                return content
+            if use_function_calling and supports_tools:
+                # Use function calling for supported models
+                self.logger.info("Using function calling for structured section analysis")
+                params = self._get_model_params(model, use_tools=True)
+                params["messages"] = messages
+                
+                response = self.openai_client.chat.completions.create(**params)
+                
+                if response.choices and response.choices[0].message.tool_calls:
+                    tool_call = response.choices[0].message.tool_calls[0]
+                    function_args = json.loads(tool_call.function.arguments)
+                    
+                    if hasattr(response, "usage") and response.usage:
+                        self.logger.info(
+                            f"Token usage - Prompt: {response.usage.prompt_tokens}, "
+                            f"Completion: {response.usage.completion_tokens}, "
+                            f"Total: {response.usage.total_tokens}"
+                        )
+                    
+                    return function_args
+                else:
+                    raise ValueError("No tool calls in function calling response")
+                    
             else:
-                raise ValueError("No content in LLM response")
+                # Fallback to structured prompt for o1 models
+                self.logger.info("Using structured prompt fallback for section analysis (no function calling)")
+                
+                # Add JSON schema instruction to prompt for section analysis
+                structured_prompt = f"""{prompt}
+
+IMPORTANT: You MUST respond with valid JSON following the transcript JSON format exactly:
+
+{{
+  "section_name": "string",
+  "section_title": "string showing key theme", 
+  "section_statement": "Comprehensive paragraph synthesizing all content and themes",
+  "content": [
+    {{
+      "subsection": "string",
+      "quotes": [
+        {{
+          "quote_text": "exact quote with <span class=\\"highlight-keyword\\">keywords</span> highlighted",
+          "context": "string or null",
+          "speaker": {{
+            "name": "string",
+            "title": "string", 
+            "company": "string"
+          }},
+          "sentiment": "positive|negative|neutral|cautious|confident|optimistic|bullish|stable",
+          "sentiment_rationale": "brief explanation",
+          "key_metrics": ["metric1", "metric2"]
+        }}
+      ]
+    }}
+  ]
+}}
+
+Respond with ONLY the JSON, no additional text or explanation."""
+
+                params = self._get_model_params(model, use_tools=False)
+                params["messages"] = [{"role": "user", "content": structured_prompt}]
+                
+                response = self.openai_client.chat.completions.create(**params)
+                
+                if response.choices and response.choices[0].message:
+                    content = response.choices[0].message.content
+                    
+                    if hasattr(response, "usage") and response.usage:
+                        self.logger.info(
+                            f"Token usage - Prompt: {response.usage.prompt_tokens}, "
+                            f"Completion: {response.usage.completion_tokens}, "
+                            f"Total: {response.usage.total_tokens}"
+                        )
+                    
+                    # Log the raw response for debugging
+                    self.logger.info("=== RAW SECTION ANALYSIS RESPONSE START ===")
+                    self.logger.info(content)
+                    self.logger.info("=== RAW SECTION ANALYSIS RESPONSE END ===")
+                    
+                    # Parse JSON response
+                    try:
+                        parsed = json.loads(content.strip())
+                        self.logger.info("✅ Successfully parsed section analysis JSON")
+                        return parsed
+                    except json.JSONDecodeError as e:
+                        self.logger.warning(f"❌ Failed to parse section analysis JSON: {e}")
+                        self.logger.warning(f"Error position: {e.pos if hasattr(e, 'pos') else 'unknown'}")
+                        
+                        # Show problematic part of response
+                        if hasattr(e, 'pos') and e.pos < len(content):
+                            start = max(0, e.pos - 50)
+                            end = min(len(content), e.pos + 50)
+                            problem_area = content[start:end]
+                            self.logger.warning(f"Problematic area: ...{problem_area}...")
+                        
+                        # Try to extract JSON from the response
+                        return self._extract_section_json_fallback(content)
+                else:
+                    raise ValueError("No content in LLM response")
 
         except Exception as e:
-            self.logger.error(f"LLM API call failed: {e}")
+            self.logger.error(f"Structured section analysis LLM call failed: {e}")
             raise
+
+    def _extract_section_json_fallback(self, response: str) -> Dict:
+        """Fallback JSON extraction for section analysis with o1 reasoning text."""
+        import re
+        
+        self.logger.info("🔍 Starting section analysis fallback JSON extraction...")
+        
+        # Try to find JSON in the response using various strategies
+        json_patterns = [
+            (r'```json\s*(.*?)\s*```', "```json blocks"),
+            (r'```\s*(.*?)\s*```', "generic ``` blocks"),
+        ]
+        
+        for pattern, description in json_patterns:
+            matches = re.findall(pattern, response, re.DOTALL)
+            for i, match in enumerate(matches):
+                try:
+                    parsed = json.loads(match.strip())
+                    if isinstance(parsed, dict) and 'section_name' in parsed:
+                        self.logger.info(f"✅ Success with {description} - match {i+1}")
+                        return parsed
+                except json.JSONDecodeError:
+                    continue
+        
+        # Try brace-matched extraction
+        json_candidates = []
+        brace_count = 0
+        start_idx = -1
+        
+        for i, char in enumerate(response):
+            if char == '{':
+                if brace_count == 0:
+                    start_idx = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_idx != -1:
+                    candidate = response[start_idx:i+1]
+                    json_candidates.append(candidate)
+                    start_idx = -1
+        
+        for candidate in json_candidates:
+            try:
+                parsed = json.loads(candidate.strip())
+                if isinstance(parsed, dict) and 'section_name' in parsed:
+                    self.logger.info("✅ Success with brace-matched extraction")
+                    return parsed
+            except json.JSONDecodeError:
+                continue
+        
+        # If all else fails, return a basic structure
+        self.logger.warning("❌ Section analysis extraction failed, returning basic structure")
+        return {
+            "section_name": "Unknown",
+            "section_title": "Analysis Results",
+            "section_statement": "Section analysis could not be properly parsed",
+            "content": [
+                {
+                    "subsection": "Raw Analysis",
+                    "quotes": [
+                        {
+                            "quote_text": "Analysis could not be parsed as JSON",
+                            "context": response[:500] + "..." if len(response) > 500 else response,
+                            "speaker": {
+                                "name": "System",
+                                "title": "Parser",
+                                "company": "AEGIS",
+                            },
+                            "sentiment": "neutral",
+                            "sentiment_rationale": "Raw text output",
+                            "key_metrics": [],
+                        }
+                    ],
+                }
+            ],
+        }
 
     def generate_section_analysis(
         self, current_research_plan: Dict, completed_analyses: List[Dict]
@@ -345,26 +594,11 @@ class SectionGenerator:
             transcript_text=self.transcript_text,
         )
 
-        # Make LLM call
-        response = self.call_llm(prompt)
-
-        # Try to parse as JSON, fallback to structured format if needed
+        # Make structured LLM call
         try:
-            # Extract JSON from response if it's wrapped in markdown
-            if "```json" in response:
-                json_start = response.find("```json") + 7
-                json_end = response.find("```", json_start)
-                json_text = response[json_start:json_end].strip()
-            else:
-                json_text = response.strip()
-
-            section_analysis = json.loads(json_text)
-
-        except json.JSONDecodeError as e:
-            self.logger.warning(
-                f"Failed to parse JSON response, creating structured fallback: {e}"
-            )
-            # Create structured fallback following transcript JSON format
+            section_analysis = self.call_llm_with_structure(prompt)
+        except Exception as e:
+            self.logger.warning(f"Structured section analysis call failed, using fallback: {e}")
             section_analysis = {
                 "section_name": section_name,
                 "section_title": f"{section_name}: Analysis Results",
@@ -374,25 +608,21 @@ class SectionGenerator:
                         "subsection": "Raw Analysis",
                         "quotes": [
                             {
-                                "quote_text": "Analysis could not be parsed as JSON",
-                                "context": (
-                                    response[:500] + "..."
-                                    if len(response) > 500
-                                    else response
-                                ),
+                                "quote_text": "Section analysis call failed",
+                                "context": str(e),
                                 "speaker": {
                                     "name": "System",
-                                    "title": "Parser",
+                                    "title": "Error Handler",
                                     "company": "AEGIS",
                                 },
                                 "sentiment": "neutral",
-                                "sentiment_rationale": "Raw text output",
+                                "sentiment_rationale": "System error fallback",
                                 "key_metrics": [],
                             }
                         ],
                     }
                 ],
-                "processing_note": "JSON parsing failed, review response format",
+                "processing_note": "LLM call failed, using fallback structure",
             }
 
         self.logger.info(f"Section analysis generated for: {section_name}")
