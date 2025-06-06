@@ -29,11 +29,22 @@
         
         .nav-container {
             display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .nav-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+        
+        .nav-links-container {
+            display: flex;
             align-items: center;
             gap: 0.8rem;
-            max-width: 100%;
             flex-wrap: wrap;
-            justify-content: space-between;
         }
         
         .nav-controls {
@@ -103,7 +114,7 @@
             color: white;
             padding: 1.5rem 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 70px; /* Space for top nav (allowing for wrapping) */
+            margin-top: 80px; /* Space for top nav with controls */
         }
         
         .header h1 {
@@ -476,17 +487,18 @@
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-title {
-                display: none;
+                font-size: 0.8rem;
             }
             
-            .nav-container {
+            .nav-header {
                 gap: 0.4rem;
-                flex-direction: column;
-                align-items: stretch;
             }
             
             .nav-controls {
-                justify-content: space-between;
+                gap: 0.4rem;
+            }
+            
+            .nav-links-container {
                 gap: 0.4rem;
             }
             
@@ -547,18 +559,22 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
         <div class="nav-container">
-            <span class="nav-title">Quick Navigation</span>
-            <div id="nav-links"></div>
-            <div class="nav-controls">
-                <button class="nav-button" id="expand-all" title="Expand All Sections">Expand All</button>
-                <button class="nav-button" id="collapse-all" title="Collapse All Sections">Collapse All</button>
-                <div class="ai-toggle-container">
-                    <span class="ai-toggle-label">AI</span>
-                    <label class="ai-toggle">
-                        <input type="checkbox" id="ai-toggle">
-                        <span class="ai-toggle-slider"></span>
-                    </label>
+            <div class="nav-header">
+                <span class="nav-title">Quick Navigation</span>
+                <div class="nav-controls">
+                    <button class="nav-button" id="expand-all" title="Expand All Sections">Expand All</button>
+                    <button class="nav-button" id="collapse-all" title="Collapse All Sections">Collapse All</button>
+                    <div class="ai-toggle-container">
+                        <span class="ai-toggle-label">AI</span>
+                        <label class="ai-toggle">
+                            <input type="checkbox" id="ai-toggle">
+                            <span class="ai-toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
+            </div>
+            <div class="nav-links-container">
+                <div id="nav-links"></div>
             </div>
         </div>
     </nav>
