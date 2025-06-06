@@ -30,6 +30,10 @@ Edit `config.json` with your **corporate credentials**:
 }
 ```
 
+**🎯 Model Support**: Compatible with all OpenAI models including:
+- `gpt-4`, `gpt-4-turbo` - Full parameter support (temperature, max_tokens)
+- `o1-preview`, `o1-mini` - Automatically handles unsupported parameters (temperature excluded)
+
 **⚠️ Important**: This system supports two authentication methods:
 1. **Corporate OAuth**: Configure oauth_endpoint, client_id, client_secret + base_url
 2. **Direct OpenAI**: Set OPENAI_API_KEY environment variable (no base_url needed)

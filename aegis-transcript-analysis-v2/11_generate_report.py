@@ -188,6 +188,30 @@ class ReportGenerator:
         self.logger.info("OpenAI client initialized successfully")
         return client
 
+    def _get_model_params(self, model: str) -> dict:
+        """Get supported parameters for the specified model."""
+        # Models that don't support temperature (like o1 series)
+        no_temperature_models = ["o1-preview", "o1-mini", "o1"]
+        
+        # Base parameters that all models support
+        params = {
+            "model": model,
+            "messages": [],
+        }
+        
+        # Add max_tokens if configured
+        if "max_tokens" in self.config:
+            params["max_tokens"] = self.config["max_tokens"]
+        
+        # Only add temperature for models that support it
+        model_base = model.split("-")[0]  # Handle versioned models like "o1-preview-2024"
+        if not any(no_temp in model.lower() for no_temp in no_temperature_models):
+            params["temperature"] = self.config.get("temperature", 0.1)
+        else:
+            self.logger.info(f"Model {model} doesn't support temperature parameter - skipping")
+        
+        return params
+
     def call_llm(self, prompt: str) -> str:
         """Make LLM API call."""
         if not self.openai_client:
@@ -195,15 +219,15 @@ class ReportGenerator:
 
         self.logger.info("Making LLM API call for overall summary...")
 
+        model = self.config.get("openai_model", "gpt-4")
         messages = [{"role": "user", "content": prompt}]
 
         try:
-            response = self.openai_client.chat.completions.create(
-                model=self.config.get("openai_model", "gpt-4"),
-                messages=messages,
-                max_tokens=self.config.get("max_tokens", 2000),
-                temperature=self.config.get("temperature", 0.1),
-            )
+            # Get model-specific parameters
+            params = self._get_model_params(model)
+            params["messages"] = messages
+            
+            response = self.openai_client.chat.completions.create(**params)
 
             if response.choices and response.choices[0].message:
                 content = response.choices[0].message.content
