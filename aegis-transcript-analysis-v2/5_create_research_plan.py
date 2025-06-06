@@ -28,6 +28,7 @@ from typing import Dict, List, Optional
 import requests
 from openai import OpenAI
 import PyPDF2
+import re
 
 # Import with importlib to handle numeric filename
 import importlib.util
@@ -267,10 +268,11 @@ class ResearchPlanCreator:
             self.logger.error(f"Failed to extract PDF text: {e}")
             raise
 
-    def _get_model_params(self, model: str) -> dict:
+    def _get_model_params(self, model: str, use_tools: bool = False) -> dict:
         """Get supported parameters for the specified model."""
-        # Models that don't support temperature (like o1 series)
+        # Models that don't support temperature or tools (like o1 series)
         no_temperature_models = ["o1-preview", "o1-mini", "o1"]
+        no_tools_models = ["o1-preview", "o1-mini", "o1"]  # o1 models don't support function calling yet
         
         # Base parameters that all models support
         params = {
@@ -288,42 +290,244 @@ class ResearchPlanCreator:
         else:
             self.logger.info(f"Model {model} doesn't support temperature parameter - skipping")
         
+        # Only add tools for models that support them
+        if use_tools and not any(no_tool in model.lower() for no_tool in no_tools_models):
+            params["tools"] = [self._get_research_plan_tool_schema()]
+            params["tool_choice"] = {"type": "function", "function": {"name": "create_research_plan"}}
+        elif use_tools:
+            self.logger.info(f"Model {model} doesn't support function calling - using structured prompt instead")
+        
         return params
 
-    def call_llm(self, prompt: str) -> str:
-        """Make LLM API call."""
+    def _get_research_plan_tool_schema(self) -> dict:
+        """Define the tool schema for structured research plan output."""
+        return {
+            "type": "function",
+            "function": {
+                "name": "create_research_plan",
+                "description": "Create a structured research plan for extracting content from an earnings call transcript section",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "section_id": {
+                            "type": "string",
+                            "description": "Short identifier for the section (e.g., 'credit', 'capital')"
+                        },
+                        "section_name": {
+                            "type": "string", 
+                            "description": "Full name of the section being analyzed"
+                        },
+                        "research_plan": {
+                            "type": "object",
+                            "properties": {
+                                "content_availability": {
+                                    "type": "object",
+                                    "properties": {
+                                        "high_priority_content": {
+                                            "type": "array",
+                                            "items": {"type": "string"},
+                                            "description": "List of high-priority content types expected in this section"
+                                        },
+                                        "medium_priority_content": {
+                                            "type": "array", 
+                                            "items": {"type": "string"},
+                                            "description": "List of medium-priority content types that may be present"
+                                        }
+                                    }
+                                },
+                                "extraction_strategy": {
+                                    "type": "object",
+                                    "properties": {
+                                        "key_quotes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "content_description": {"type": "string"},
+                                                    "speaker_attribution": {"type": "string"},
+                                                    "approximate_location": {"type": "string"},
+                                                    "priority": {"type": "string", "enum": ["high", "medium", "low"]}
+                                                }
+                                            }
+                                        },
+                                        "numerical_data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object", 
+                                                "properties": {
+                                                    "metric_description": {"type": "string"},
+                                                    "expected_format": {"type": "string"},
+                                                    "comparative_context": {"type": "string"},
+                                                    "priority": {"type": "string", "enum": ["high", "medium", "low"]}
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "organization_structure": {
+                                    "type": "object",
+                                    "properties": {
+                                        "primary_subsections": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "subsection_name": {"type": "string"},
+                                                    "content_focus": {"type": "string"}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "required": ["section_id", "section_name", "research_plan"]
+                }
+            }
+        }
+
+    def call_llm_with_structure(self, prompt: str, use_function_calling: bool = True) -> Dict:
+        """Make LLM API call with structured output (function calling or fallback)."""
         if not self.openai_client:
             raise ValueError("OpenAI client not initialized")
 
-        self.logger.info("Making LLM API call...")
-
         model = self.config.get("openai_model", "gpt-4")
+        self.logger.info(f"Making structured LLM API call with model: {model}")
+
+        # Check if model supports function calling
+        no_tools_models = ["o1-preview", "o1-mini", "o1"]
+        supports_tools = not any(no_tool in model.lower() for no_tool in no_tools_models)
+        
         messages = [{"role": "user", "content": prompt}]
 
         try:
-            # Get model-specific parameters
-            params = self._get_model_params(model)
-            params["messages"] = messages
-            
-            response = self.openai_client.chat.completions.create(**params)
-
-            if response.choices and response.choices[0].message:
-                content = response.choices[0].message.content
-
-                if hasattr(response, "usage") and response.usage:
-                    self.logger.info(
-                        f"Token usage - Prompt: {response.usage.prompt_tokens}, "
-                        f"Completion: {response.usage.completion_tokens}, "
-                        f"Total: {response.usage.total_tokens}"
-                    )
-
-                return content
+            if use_function_calling and supports_tools:
+                # Use function calling for supported models
+                self.logger.info("Using function calling for structured output")
+                params = self._get_model_params(model, use_tools=True)
+                params["messages"] = messages
+                
+                response = self.openai_client.chat.completions.create(**params)
+                
+                if response.choices and response.choices[0].message.tool_calls:
+                    tool_call = response.choices[0].message.tool_calls[0]
+                    function_args = json.loads(tool_call.function.arguments)
+                    
+                    if hasattr(response, "usage") and response.usage:
+                        self.logger.info(
+                            f"Token usage - Prompt: {response.usage.prompt_tokens}, "
+                            f"Completion: {response.usage.completion_tokens}, "
+                            f"Total: {response.usage.total_tokens}"
+                        )
+                    
+                    return function_args
+                else:
+                    raise ValueError("No tool calls in function calling response")
+                    
             else:
-                raise ValueError("No content in LLM response")
+                # Fallback to structured prompt for o1 models or when function calling is disabled
+                self.logger.info("Using structured prompt fallback (no function calling)")
+                
+                # Add JSON schema instruction to prompt
+                structured_prompt = f"""{prompt}
+
+IMPORTANT: You MUST respond with valid JSON following this exact structure:
+
+{{
+  "section_id": "string",
+  "section_name": "string", 
+  "research_plan": {{
+    "content_availability": {{
+      "high_priority_content": ["string1", "string2"],
+      "medium_priority_content": ["string1", "string2"]
+    }},
+    "extraction_strategy": {{
+      "key_quotes": [{{
+        "content_description": "string",
+        "speaker_attribution": "string",
+        "approximate_location": "string", 
+        "priority": "high|medium|low"
+      }}],
+      "numerical_data": [{{
+        "metric_description": "string",
+        "expected_format": "string",
+        "comparative_context": "string",
+        "priority": "high|medium|low"
+      }}]
+    }},
+    "organization_structure": {{
+      "primary_subsections": [{{
+        "subsection_name": "string",
+        "content_focus": "string"
+      }}]
+    }}
+  }}
+}}
+
+Respond with ONLY the JSON, no additional text or explanation."""
+
+                params = self._get_model_params(model, use_tools=False)
+                params["messages"] = [{"role": "user", "content": structured_prompt}]
+                
+                response = self.openai_client.chat.completions.create(**params)
+                
+                if response.choices and response.choices[0].message:
+                    content = response.choices[0].message.content
+                    
+                    if hasattr(response, "usage") and response.usage:
+                        self.logger.info(
+                            f"Token usage - Prompt: {response.usage.prompt_tokens}, "
+                            f"Completion: {response.usage.completion_tokens}, "
+                            f"Total: {response.usage.total_tokens}"
+                        )
+                    
+                    # Parse JSON response
+                    try:
+                        return json.loads(content.strip())
+                    except json.JSONDecodeError as e:
+                        self.logger.warning(f"Failed to parse JSON from structured prompt: {e}")
+                        # Try to extract JSON from the response
+                        return self._extract_json_fallback(content)
+                else:
+                    raise ValueError("No content in LLM response")
 
         except Exception as e:
-            self.logger.error(f"LLM API call failed: {e}")
+            self.logger.error(f"Structured LLM API call failed: {e}")
             raise
+
+    def _extract_json_fallback(self, response: str) -> Dict:
+        """Fallback JSON extraction for o1 models with reasoning text."""
+        import re
+        
+        # Try to find JSON in the response
+        json_patterns = [
+            r'```json\s*(.*?)\s*```',
+            r'```\s*(.*?)\s*```',
+            r'\{.*\}',
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, response, re.DOTALL)
+            for match in matches:
+                try:
+                    parsed = json.loads(match.strip())
+                    if isinstance(parsed, dict) and 'section_id' in parsed:
+                        return parsed
+                except json.JSONDecodeError:
+                    continue
+        
+        # If all else fails, return a basic structure
+        self.logger.warning("Could not extract valid JSON, returning basic structure")
+        return {
+            "section_id": "unknown",
+            "section_name": "Unknown Section",
+            "research_plan": {
+                "content_availability": {"high_priority_content": [], "medium_priority_content": []},
+                "extraction_strategy": {"key_quotes": [], "numerical_data": []}, 
+                "organization_structure": {"primary_subsections": []}
+            }
+        }
 
     def create_research_plan_for_section(
         self,
@@ -344,28 +548,20 @@ class ResearchPlanCreator:
             transcript_text=self.transcript_text,
         )
 
-        # Make LLM call
-        response = self.call_llm(prompt)
-
-        # Try to parse as JSON, fallback to text if needed
+        # Make structured LLM call
         try:
-            # Extract JSON from response if it's wrapped in markdown
-            if "```json" in response:
-                json_start = response.find("```json") + 7
-                json_end = response.find("```", json_start)
-                json_text = response[json_start:json_end].strip()
-            else:
-                json_text = response.strip()
-
-            research_plan = json.loads(json_text)
-
-        except json.JSONDecodeError as e:
-            self.logger.warning(f"Failed to parse JSON response, storing as text: {e}")
+            research_plan = self.call_llm_with_structure(prompt)
+        except Exception as e:
+            self.logger.warning(f"Structured LLM call failed, using fallback: {e}")
             research_plan = {
                 "section_id": current_section.get("section_id", "unknown"),
                 "section_name": section_name,
-                "research_plan": response,
-                "format": "text",
+                "research_plan": {
+                    "content_availability": {"high_priority_content": [], "medium_priority_content": []},
+                    "extraction_strategy": {"key_quotes": [], "numerical_data": []}, 
+                    "organization_structure": {"primary_subsections": []}
+                },
+                "format": "fallback",
             }
 
         self.logger.info(f"Research plan created for: {section_name}")
