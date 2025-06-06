@@ -111,94 +111,112 @@ class ReportGenerator:
         return template_html
 
     def generate_section_html(self, section_data: Dict) -> str:
-        """Generate HTML for a single section with card/tile structure."""
+        """Generate HTML for a single section with grouped subsections."""
         section_name = section_data.get("section_name", "Unknown Section")
         section_title = section_data.get("section_title", section_name)
         section_statement = section_data.get(
             "section_statement", "No summary available"
         )
 
+        # Start section HTML (sections start collapsed)
         section_html = f"""
     <div class="section">
         <div class="section-header">
-            <h2>{section_title}</h2>
+            <h2>{section_title} <span class="toggle-icon">▶</span></h2>
             <div class="description">{section_statement}</div>
         </div>
-        <div class="quotes-container">
+        <div class="section-content">
 """
 
-        # Process each subsection and its quotes
+        # Process and group quotes by subsection
         content_items = section_data.get("content", [])
-        quote_count = 0
+        total_quotes = 0
 
         for content_item in content_items:
-            subsection = content_item.get("subsection", "General")
+            subsection_name = content_item.get("subsection", "General")
             quotes = content_item.get("quotes", [])
 
-            # Add each quote as a tile
-            for quote in quotes:
-                quote_count += 1
-
-                # Get quote data with defaults
-                quote_text = quote.get("quote_text", "No quote available")
-                context = quote.get("context")
-                speaker_info = quote.get("speaker", {})
-                sentiment = quote.get("sentiment", "neutral")
-                sentiment_rationale = quote.get("sentiment_rationale", "")
-
-                # Speaker information
-                speaker_name = speaker_info.get("name", "Unknown Speaker")
-                speaker_title = speaker_info.get("title", "Unknown Title")
-                speaker_company = speaker_info.get("company", "Unknown Company")
-
-                # Generate sentiment class
-                sentiment_class = f"sentiment-{sentiment}"
-
+            if quotes:  # Only create subsection if it has quotes
                 section_html += f"""
-            <div class="quote-tile">
-                <div class="tile-header">
-                    <h3 class="tile-title">{subsection}</h3>
-                </div>
-                <div class="content-row">
-                    <div class="quote-column">
-                        <div class="quote">{quote_text}</div>"""
+            <div class="subsection-group">
+                <h3 class="subsection-title">{subsection_name}</h3>
+                <div class="quotes-list">
+"""
+                # Generate each quote in the subsection
+                for quote in quotes:
+                    total_quotes += 1
+                    quote_html = self.generate_quote_html(quote)
+                    section_html += quote_html
 
-                # Add context if it exists and is not null
-                if context and context.lower() != "null":
-                    section_html += f"""
-                        <div class="context">{context}</div>"""
-
-                # Add key metrics if they exist
-                key_metrics = quote.get("key_metrics", [])
-                if key_metrics:
-                    metrics_html = ", ".join(
-                        f'<span class="key-metric">{metric}</span>'
-                        for metric in key_metrics
-                    )
-                    section_html += f"""
-                        <div class="context"><strong>Key Metrics:</strong> {metrics_html}</div>"""
-
-                section_html += f"""
-                    </div>
-                    <div class="attribution-column">
-                        <div class="speaker">{speaker_name}</div>
-                        <div class="title">{speaker_title}, {speaker_company}</div>
-                        <div class="sentiment {sentiment_class}" title="{sentiment_rationale}">
-                            {sentiment.title()}
-                        </div>
-                    </div>
+                section_html += """
                 </div>
             </div>
 """
 
-        section_html += """        </div>
+        # Close section HTML
+        section_html += """
+        </div>
     </div>
 """
 
         self.logger.info(
-            f"Generated HTML for section '{section_name}' with {quote_count} quotes"
+            f"Generated HTML for section '{section_name}' with {total_quotes} quotes in {len(content_items)} subsections"
         )
         return section_html
+
+    def generate_quote_html(self, quote: Dict) -> str:
+        """Generate HTML for a single quote."""
+        # Extract quote data with defaults
+        quote_text = quote.get("quote_text", "No quote available")
+        context = quote.get("context")
+        speaker_info = quote.get("speaker", {})
+        sentiment = quote.get("sentiment", "neutral")
+        sentiment_rationale = quote.get("sentiment_rationale", "")
+        key_metrics = quote.get("key_metrics", [])
+
+        # Speaker information
+        speaker_name = speaker_info.get("name", "Unknown Speaker")
+        speaker_title = speaker_info.get("title", "Unknown Title")
+        speaker_company = speaker_info.get("company", "Unknown Company")
+
+        # Generate sentiment class
+        sentiment_class = f"sentiment-{sentiment}"
+
+        # Build quote HTML
+        quote_html = f"""
+                    <div class="quote-item">
+                        <div class="quote-content">
+                            <div class="quote-text">{quote_text}</div>"""
+
+        # Add context if it exists and is not null
+        if context and context.lower() != "null":
+            quote_html += f"""
+                            <div class="context">{context}</div>"""
+
+        # Add key metrics if they exist
+        if key_metrics:
+            quote_html += """
+                            <div class="key-metrics">"""
+            for metric in key_metrics:
+                quote_html += f"""
+                                <span class="metric-tag">{metric}</span>"""
+            quote_html += """
+                            </div>"""
+
+        quote_html += f"""
+                        </div>
+                        <div class="quote-meta">
+                            <div class="speaker-info">
+                                <div class="speaker">{speaker_name}</div>
+                                <div class="title">{speaker_title}, {speaker_company}</div>
+                            </div>
+                            <div class="sentiment {sentiment_class}" title="{sentiment_rationale}">
+                                {sentiment.title()}
+                            </div>
+                        </div>
+                    </div>
+"""
+        return quote_html
 
     def generate_report_metadata(self, sections: List[Dict]) -> Dict[str, str]:
         """Generate metadata for the report."""

@@ -14,11 +14,56 @@
             line-height: 1.6;
         }
         
+        /* Floating Navigation */
+        .floating-nav {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 1rem;
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .floating-nav h3 {
+            margin: 0 0 0.8rem 0;
+            font-size: 0.9rem;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .nav-item {
+            display: block;
+            padding: 0.4rem 0.6rem;
+            margin: 0.2rem 0;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: #f8f9fa;
+            color: #1e3c72;
+        }
+        
+        .nav-item.active {
+            background: #1e3c72;
+            color: white;
+        }
+        
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 1.5rem 2rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-right: 250px; /* Space for floating nav */
         }
         
         .header h1 {
@@ -34,89 +79,124 @@
             font-size: 1.1rem;
         }
         
+        .main-content {
+            margin-right: 250px; /* Space for floating nav */
+            padding: 1rem 2rem;
+        }
+        
+        /* Collapsible Sections */
         .section {
-            margin: 1rem 2rem;
+            margin: 1rem 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         
         .section-header {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
-            padding: 1.2rem 1.5rem;
-            border-radius: 8px 8px 0 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+        
+        .section-header:hover {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
         }
         
         .section-header h2 {
             margin: 0;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 600;
             letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .section-header .description {
-            margin-top: 0.5rem;
+            margin-top: 0.4rem;
             opacity: 0.9;
             font-size: 0.9rem;
             line-height: 1.4;
         }
         
-        .quotes-container {
-            display: grid;
-            gap: 0.8rem;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 0 0 8px 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+            display: inline-block;
         }
         
-        .quote-tile {
-            background: white;
-            border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        .section.expanded .toggle-icon {
+            transform: rotate(90deg);
+        }
+        
+        .section-content {
+            max-height: 0;
             overflow: hidden;
-            transition: all 0.3s ease;
-            border: 1px solid #e9ecef;
+            transition: max-height 0.3s ease;
+            background: #f8f9fa;
         }
         
-        .quote-tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .section.expanded .section-content {
+            max-height: none;
         }
         
-        .tile-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 0.5rem 1rem;
-            border-bottom: 1px solid #dee2e6;
+        /* Subsection Groups */
+        .subsection-group {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
         }
         
-        .tile-title {
-            font-size: 0.8rem;
+        .subsection-group:last-child {
+            border-bottom: none;
+        }
+        
+        .subsection-title {
+            font-size: 1.1rem;
             font-weight: 600;
-            color: #495057;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #2c3e50;
+            margin: 0 0 0.8rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #dee2e6;
         }
         
-        .content-row {
-            display: flex;
-            min-height: 80px;
-        }
-        
-        .quote-column {
-            flex: 1;
-            padding: 1rem 1.2rem;
+        /* Quote Layout */
+        .quotes-list {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 0.8rem;
         }
         
-        .quote {
+        .quote-item {
+            background: white;
+            border-radius: 6px;
+            padding: 1rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .quote-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            transform: translateY(-1px);
+        }
+        
+        .quote-content {
+            flex: 1;
+        }
+        
+        .quote-text {
             color: #495057;
             font-size: 0.9rem;
             line-height: 1.5;
             font-style: italic;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
         }
         
         .context {
@@ -129,25 +209,17 @@
             margin-top: 0.3rem;
         }
         
-        .quote .highlight {
-            background: #fff3cd;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-style: normal;
-            font-weight: 600;
-            color: #856404;
-        }
-        
-        .attribution-column {
-            width: 180px;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-left: 1px solid #e9ecef;
+        .quote-meta {
             display: flex;
             flex-direction: column;
+            align-items: flex-end;
             justify-content: center;
-            align-items: center;
-            text-align: center;
+            min-width: 150px;
+        }
+        
+        .speaker-info {
+            text-align: right;
+            margin-bottom: 0.5rem;
         }
         
         .speaker {
@@ -160,7 +232,6 @@
         .title {
             color: #6c757d;
             font-size: 0.75rem;
-            margin-bottom: 0.5rem;
         }
         
         .sentiment {
@@ -219,10 +290,11 @@
             font-size: 1rem;
         }
         
-        .key-metric {
-            background: #e7f3ff;
-            color: #004085;
-            padding: 0.2rem 0.4rem;
+        /* Highlighting */
+        .highlight-keyword {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 2px 4px;
             border-radius: 3px;
             font-weight: 600;
             font-style: normal;
@@ -237,15 +309,6 @@
             font-style: normal;
         }
         
-        .highlight-keyword {
-            background: #d1ecf1;
-            color: #0c5460;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: 600;
-            font-style: normal;
-        }
-        
         .highlight-time {
             background: #f8d7da;
             color: #721c24;
@@ -255,47 +318,76 @@
             font-style: normal;
         }
         
+        /* Key Metrics */
+        .key-metrics {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
         
-        @media (max-width: 1024px) {
-            .section {
-                margin: 0.5rem;
+        .metric-tag {
+            background: #e7f3ff;
+            color: #004085;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .floating-nav {
+                display: none;
             }
             
-            .header {
-                padding: 1rem 0.8rem;
+            .header,
+            .main-content {
+                margin-right: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .quote-item {
+                grid-template-columns: 1fr;
             }
             
-            .content-row {
-                flex-direction: column;
-            }
-            
-            .attribution-column {
-                width: 100%;
-                border: none;
-                border-bottom: 1px solid #e9ecef;
-                padding: 0.8rem 1rem;
-            }
-            
-            .attribution-column {
+            .quote-meta {
                 flex-direction: row;
                 justify-content: space-between;
-                text-align: left;
+                align-items: center;
+                min-width: auto;
+                margin-top: 0.5rem;
+                padding-top: 0.5rem;
+                border-top: 1px solid #e9ecef;
             }
             
-            .quotes-container {
-                padding: 0.8rem;
-                gap: 0.6rem;
+            .speaker-info {
+                text-align: left;
+                margin-bottom: 0;
+            }
+            
+            .main-content {
+                padding: 0.5rem;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Floating Navigation -->
+    <nav class="floating-nav">
+        <h3>Quick Navigation</h3>
+        <div id="nav-links"></div>
+    </nav>
+
     <div class="header">
         <h1>{{REPORT_TITLE}}</h1>
         <div class="subtitle">{{REPORT_SUBTITLE}}</div>
     </div>
 
-    {{SECTIONS}}
+    <div class="main-content">
+        {{SECTIONS}}
+    </div>
 
     <script>
         // Sentiment icon mapping
@@ -317,13 +409,64 @@
             element.innerHTML = `<span class="sentiment-icon">${icon}</span>${element.textContent}`;
         });
         
-        // Add interactivity to tiles
-        document.querySelectorAll('.quote-tile').forEach(tile => {
-            tile.addEventListener('click', function() {
-                this.style.transform = this.style.transform === 'scale(1.02)' ? '' : 'scale(1.02)';
+        // Section toggle functionality
+        document.querySelectorAll('.section-header').forEach(header => {
+            header.addEventListener('click', function() {
+                const section = this.parentElement;
+                section.classList.toggle('expanded');
             });
         });
         
+        // Build navigation
+        const navLinks = document.getElementById('nav-links');
+        const sections = document.querySelectorAll('.section');
+        
+        sections.forEach((section, index) => {
+            const sectionId = `section-${index}`;
+            section.id = sectionId;
+            
+            const sectionTitle = section.querySelector('.section-header h2').textContent.replace('▶', '').trim();
+            const navLink = document.createElement('a');
+            navLink.href = `#${sectionId}`;
+            navLink.className = 'nav-item';
+            navLink.textContent = sectionTitle;
+            
+            navLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Expand section if collapsed
+                if (!section.classList.contains('expanded')) {
+                    section.classList.add('expanded');
+                }
+                
+                // Smooth scroll to section
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Update active state
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+            });
+            
+            navLinks.appendChild(navLink);
+        });
+        
+        // Update active nav on scroll
+        function updateActiveNav() {
+            const scrollPosition = window.scrollY + 100;
+            
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                const sectionBottom = sectionTop + section.offsetHeight;
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                    document.querySelectorAll('.nav-item')[index].classList.add('active');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', updateActiveNav);
+        updateActiveNav();
     </script>
 </body>
 </html>
