@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maven UI - Aegis Chat Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .maven-logo {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            opacity: 0.95;
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .controls-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 50;
+        }
+
+        .dropdown-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: visible;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e5e5e7;
+            transition: all 0.2s ease;
+            border-radius: 12px;
+        }
+
+        .dropdown-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-header.active {
+            background: #667eea;
+            color: white;
+            border-bottom: none;
+            position: relative;
+            z-index: 101;
+        }
+        
+        .dropdown-header.active .section-title,
+        .dropdown-header.active .database-count {
+            color: white !important;
+        }
+
+        .dropdown-content {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 20px);
+            max-width: 1380px;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+            z-index: 100;
+            opacity: 0;
+            margin-top: -1px;
+        }
+
+        .dropup-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .dropup-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .dropup-content.open {
+            max-height: 600px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+
+        .dropdown-content.open {
+            max-height: 600px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid #667eea;
+            opacity: 1;
+        }
+
+        .dropdown-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .dropdown-arrow.open {
+            transform: rotate(180deg);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .dropdown-content .section-title,
+        .dropdown-content p,
+        .dropdown-content h3 {
+            color: #333;
+        }
+
+        .dropup-content .section-title,
+        .dropup-content p {
+            color: #333;
+        }
+
+        .dropdown-content .status-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .dropdown-content .week-header {
+            color: #333;
+            border-bottom-color: #e5e5e7;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .database-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border: 2px solid #e5e5e7;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .database-option:hover {
+            border-color: #667eea;
+            background: #fafafa;
+        }
+
+        .database-option.selected {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .database-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .database-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .database-name {
+            font-weight: 500;
+        }
+
+        .last-refresh {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .status-online {
+            background-color: #34d399;
+        }
+
+        .status-warning {
+            background-color: #fbbf24;
+        }
+
+        .status-offline {
+            background-color: #ef4444;
+        }
+
+        .status-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .status-card {
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        .status-card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .status-card-title {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .data-summary {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .chat-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            min-height: 400px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e5e7;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .chat-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #34d399;
+            font-size: 0.9rem;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #667eea;
+            color: white;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: #f1f3f4;
+            color: #333;
+        }
+
+        .sub-response {
+            margin: 10px 0;
+            padding: 12px;
+            background: white;
+            border: 1px solid #e5e5e7;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .sub-response-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .sub-response-header:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sub-response-header.active {
+            background-color: #f0f4ff;
+        }
+
+        .sub-response-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        .sub-response-content {
+            display: none;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e5e7;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .sub-response-content.open {
+            display: block;
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #667eea;
+            animation: loading-bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0; }
+
+        @keyframes loading-bounce {
+            0%, 80%, 100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .chart-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e5e5e7;
+        }
+
+        .chart-bar {
+            height: 120px;
+            margin: 15px 0;
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            position: relative;
+        }
+
+        .chart-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .chart-sublabel {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid #e5e5e7;
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .chat-input-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chat-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e5e7;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+
+        .send-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .send-button:hover {
+            background: #5a6fd8;
+        }
+
+        .reports-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .report-card {
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .report-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            background: #fafafa;
+        }
+
+        .report-title {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .report-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .report-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .database-count {
+            font-size: 0.9rem;
+            color: #666;
+            margin-left: 10px;
+        }
+
+        .document-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .week-section {
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+        }
+
+        .week-header {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 1px solid #e5e5e7;
+            padding-bottom: 8px;
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #e5e5e7;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .document-item:hover {
+            background: #fafafa;
+            border-color: #667eea;
+        }
+
+        .document-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: #667eea;
+            margin-top: 2px;
+        }
+
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .status-table th,
+        .status-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e5e5e7;
+            font-size: 0.9rem;
+        }
+
+        .status-table th {
+            background: rgba(102, 126, 234, 0.2);
+            font-weight: 600;
+            color: #333;
+        }
+
+        .status-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .quarter-available {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .quarter-unavailable {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .year-available {
+            background: #ddd6fe;
+            color: #5b21b6;
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 2px;
+            line-height: 1.3;
+        }
+
+        .document-meta {
+            font-size: 0.8rem;
+            color: #666;
+            display: flex;
+            gap: 10px;
+        }
+
+        .document-source {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .add-documents-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.2s ease;
+            float: right;
+        }
+
+        .add-documents-button:hover {
+            background: #5a6fd8;
+        }
+
+        .add-documents-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .document-limit-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .selected-documents {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+
+        .selected-doc-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .selected-doc-tag .remove-doc {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .selected-doc-tag .remove-doc:hover {
+            color: #fee2e2;
+        }
+
+        @media (max-width: 768px) {
+            .controls-section {
+                flex-direction: column;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
+        }
+        
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1600px;
+            }
+        }
+        
+        .dropdown-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="maven-logo">MAVEN</div>
+            <h1>AEGIS</h1>
+            <p>External Finance Research and Analysis</p>
+        </div>
+
+        <!-- Database Controls Section -->
+        <div class="controls-section">
+            <!-- Database Filters -->
+            <div class="dropdown-wrapper">
+            <div class="dropdown-container">
+                <div class="dropdown-header" onclick="toggleDropdown('filters')">
+                    <div style="display: flex; align-items: center;">
+                        <span class="section-title" style="margin-bottom: 0;">Data Filters</span>
+                        <span class="database-count">(3 of 3 selected)</span>
+                    </div>
+                    <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="dropdown-content" id="filters-content">
+                    <p style="margin-bottom: 20px; color: #666; font-size: 0.95rem;">Select which data sources to include in your conversations with Aegis. By default, all sources are enabled for comprehensive analysis.</p>
+                    <div class="filter-group">
+                        <div class="database-option selected" onclick="toggleDatabase('transcripts')">
+                            <div class="database-info">
+                                <input type="checkbox" class="database-checkbox" checked id="transcripts">
+                                <span class="database-name">Transcripts</span>
+                                <div class="status-indicator status-online"></div>
+                            </div>
+                            <div class="last-refresh">Last refresh: 2024-06-10 14:30</div>
+                        </div>
+                        <div class="database-option selected" onclick="toggleDatabase('benchmarking')">
+                            <div class="database-info">
+                                <input type="checkbox" class="database-checkbox" checked id="benchmarking">
+                                <span class="database-name">Benchmarking</span>
+                                <div class="status-indicator status-online"></div>
+                            </div>
+                            <div class="last-refresh">Last refresh: 2024-06-10 12:15</div>
+                        </div>
+                        <div class="database-option selected" onclick="toggleDatabase('rts')">
+                            <div class="database-info">
+                                <input type="checkbox" class="database-checkbox" checked id="rts">
+                                <span class="database-name">RTS (Report to Shareholders)</span>
+                                <div class="status-indicator status-warning"></div>
+                            </div>
+                            <div class="last-refresh">Last refresh: 2024-06-09 18:45</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Database Status -->
+            <div class="dropdown-wrapper">
+            <div class="dropdown-container">
+                <div class="dropdown-header" onclick="toggleDropdown('status')">
+                    <span class="section-title" style="margin-bottom: 0;">Data Status Overview</span>
+                    <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="dropdown-content" id="status-content">
+                    <p style="margin-bottom: 25px; color: #666; font-size: 0.95rem;">View data availability across all databases by bank and time period. Green indicates available data, red shows missing data, and purple represents full year coverage.</p>
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin-bottom: 10px; color: #333;">Transcripts</h3>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>Bank</th>
+                                    <th>2021</th>
+                                    <th>2022</th>
+                                    <th>2023</th>
+                                    <th>2024 Q1</th>
+                                    <th>2024 Q2</th>
+                                    <th>2024 Q3</th>
+                                    <th>2024 Q4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Royal Bank of Canada</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                </tr>
+                                <tr>
+                                    <td>TD Bank</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Nova Scotia</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Montreal</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>CIBC</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>National Bank</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="margin-bottom: 10px; color: #333;">Benchmarking</h3>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>Bank</th>
+                                    <th>2021</th>
+                                    <th>2022</th>
+                                    <th>2023</th>
+                                    <th>2024 Q1</th>
+                                    <th>2024 Q2</th>
+                                    <th>2024 Q3</th>
+                                    <th>2024 Q4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Royal Bank of Canada</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                </tr>
+                                <tr>
+                                    <td>TD Bank</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Nova Scotia</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Montreal</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                </tr>
+                                <tr>
+                                    <td>CIBC</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>National Bank</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div>
+                        <h3 style="margin-bottom: 10px; color: #333;">RTS (Report to Shareholders)</h3>
+                        <table class="status-table">
+                            <thead>
+                                <tr>
+                                    <th>Bank</th>
+                                    <th>2021</th>
+                                    <th>2022</th>
+                                    <th>2023</th>
+                                    <th>2024 Q1</th>
+                                    <th>2024 Q2</th>
+                                    <th>2024 Q3</th>
+                                    <th>2024 Q4</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Royal Bank of Canada</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>TD Bank</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Nova Scotia</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                </tr>
+                                <tr>
+                                    <td>Bank of Montreal</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>CIBC</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                                <tr>
+                                    <td>National Bank</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="year-available">✓</td>
+                                    <td class="quarter-unavailable">—</td>
+                                    <td class="quarter-unavailable">—</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Document Selector -->
+            <div class="dropdown-wrapper">
+            <div class="dropdown-container">
+                <div class="dropdown-header" onclick="toggleDropdown('documents')">
+                    <div style="display: flex; align-items: center;">
+                        <span class="section-title" style="margin-bottom: 0;">Additional Documents</span>
+                        <span class="database-count">(0 selected)</span>
+                    </div>
+                    <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                </div>
+                <div class="dropdown-content" id="documents-content">
+                    <p style="margin-bottom: 25px; color: #666; font-size: 0.95rem;">Add supplementary documents from financial news, regulatory filings, and market analysis to enhance Aegis's context. Documents are organized by publication week for easy selection.</p>
+                    
+                    <div class="document-limit-text">
+                        Select up to 3 documents to include in your next message:
+                    </div>
+                    <div class="selected-documents" id="selected-documents"></div>
+                    
+                    <div class="document-selector">
+                        <div class="week-section">
+                            <div class="week-header">Week of June 3-9, 2024</div>
+                            <div class="documents-grid">
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc1">
+                                    <div class="document-info">
+                                        <div class="document-title">RBC Capital Markets Q2 Outlook Report</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">SEDAR+</span>
+                                            <span>June 5, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc2">
+                                    <div class="document-info">
+                                        <div class="document-title">TD Bank Interest Rate Sensitivity Analysis</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">Globe & Mail</span>
+                                            <span>June 7, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc3">
+                                    <div class="document-info">
+                                        <div class="document-title">Canadian Banking Sector Credit Risk Assessment</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">Financial Post</span>
+                                            <span>June 8, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="week-section">
+                            <div class="week-header">Week of May 27 - June 2, 2024</div>
+                            <div class="documents-grid">
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc4">
+                                    <div class="document-info">
+                                        <div class="document-title">BMO Stress Testing Results</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">SEDAR+</span>
+                                            <span>May 30, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc5">
+                                    <div class="document-info">
+                                        <div class="document-title">Scotiabank Latin America Expansion Strategy</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">Reuters</span>
+                                            <span>June 1, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc6">
+                                    <div class="document-info">
+                                        <div class="document-title">CIBC Digital Banking Initiative Update</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">BNN Bloomberg</span>
+                                            <span>May 29, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="week-section">
+                            <div class="week-header">Week of May 20-26, 2024</div>
+                            <div class="documents-grid">
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc7">
+                                    <div class="document-info">
+                                        <div class="document-title">National Bank ESG Investment Framework</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">SEDAR+</span>
+                                            <span>May 23, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc8">
+                                    <div class="document-info">
+                                        <div class="document-title">Canadian Mortgage Market Analysis Q2 2024</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">CMHC Report</span>
+                                            <span>May 24, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc9">
+                                    <div class="document-info">
+                                        <div class="document-title">Big 6 Banks Capital Adequacy Comparison</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">Financial Post</span>
+                                            <span>May 21, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="week-section">
+                            <div class="week-header">Week of May 13-19, 2024</div>
+                            <div class="documents-grid">
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc10">
+                                    <div class="document-info">
+                                        <div class="document-title">RBC Wealth Management Performance Report</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">SEDAR+</span>
+                                            <span>May 16, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc11">
+                                    <div class="document-info">
+                                        <div class="document-title">TD Securities Trading Revenue Analysis</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">Globe & Mail</span>
+                                            <span>May 17, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="document-item">
+                                    <input type="checkbox" class="document-checkbox" id="doc12">
+                                    <div class="document-info">
+                                        <div class="document-title">OSFI Banking Sector Guidelines Update</div>
+                                        <div class="document-meta">
+                                            <span class="document-source">OSFI</span>
+                                            <span>May 14, 2024</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="add-documents-button" id="add-documents-btn" onclick="addDocumentsToChat()" disabled>
+                        Add to Chat (0/3)
+                    </button>
+                    <div style="clear: both;"></div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <div class="chat-title">Aegis AI Assistant</div>
+                <div class="chat-status">
+                    <div class="status-indicator status-online"></div>
+                    Online
+                </div>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant">
+                    Hello! I'm Aegis, your AI assistant for financial data analysis. I have access to your selected databases: Transcripts, Benchmarking, and RTS. How can I help you today?
+                </div>
+                <div class="message user">
+                    Can you analyze RBC's Q4 2024 performance and show me how they compare to industry benchmarks? I need insights from both their earnings transcript and benchmarking data.
+                </div>
+                <div class="message assistant">
+                    I'll analyze RBC's Q4 2024 performance using multiple data sources. Let me query the Transcripts and Benchmarking models for comprehensive insights.
+                    
+                    <div class="sub-response">
+                        <div class="sub-response-header" onclick="toggleSubResponse('transcripts-sub')">
+                            <div class="sub-response-title">
+                                <span>📄</span>
+                                <span>Transcripts Model</span>
+                            </div>
+                            <div class="loading-indicator" id="transcripts-loading">
+                                <span>Processing</span>
+                                <div class="loading-dots">
+                                    <div class="loading-dot"></div>
+                                    <div class="loading-dot"></div>
+                                    <div class="loading-dot"></div>
+                                </div>
+                            </div>
+                            <svg class="dropdown-arrow" id="transcripts-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="sub-response-content" id="transcripts-sub">
+                            <strong>Q4 2024 Earnings Call Analysis:</strong><br><br>
+                            • <strong>CEO Commentary:</strong> "Strong capital position with CET1 ratio at 16.8%, well above regulatory requirements"<br>
+                            • <strong>Revenue Performance:</strong> Fee-based revenue growth of +12% YoY, driven by wealth management<br>
+                            • <strong>Digital Strategy:</strong> $500M investment in digital banking transformation showing early ROI<br>
+                            • <strong>Credit Quality:</strong> PCL trending towards normalization at 28bps, below historical average<br>
+                            • <strong>Wealth Management:</strong> AUM grew 8% QoQ to $578B, outpacing market growth<br>
+                            • <strong>Forward Guidance:</strong> Management expects continued momentum in Q1 2025<br><br>
+                            <em>Sentiment Score: 8.2/10 (Positive outlook with cautious optimism on macro environment)</em>
+                        </div>
+                    </div>
+                    
+                    <div class="sub-response">
+                        <div class="sub-response-header" onclick="toggleSubResponse('benchmarking-sub')">
+                            <div class="sub-response-title">
+                                <span>📊</span>
+                                <span>Benchmarking Model</span>
+                            </div>
+                            <div class="loading-indicator" id="benchmarking-loading">
+                                <span>Processing</span>
+                                <div class="loading-dots">
+                                    <div class="loading-dot"></div>
+                                    <div class="loading-dot"></div>
+                                    <div class="loading-dot"></div>
+                                </div>
+                            </div>
+                            <svg class="dropdown-arrow" id="benchmarking-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="sub-response-content" id="benchmarking-sub">
+                            <strong>RBC vs Big 6 Canadian Banks - Q4 2024:</strong><br><br>
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #667eea;">Metric</th>
+                                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #667eea;">RBC</th>
+                                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #667eea;">Peer Avg</th>
+                                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #667eea;">Ranking</th>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e5e7;">ROE</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7; font-weight: bold; color: #34d399;">14.8%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">13.2%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">1st</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e5e7;">Efficiency Ratio</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7; font-weight: bold; color: #34d399;">52.1%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">54.8%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">1st</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e5e7;">CET1 Ratio</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7; font-weight: bold; color: #667eea;">16.8%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">15.9%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">2nd</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px; border-bottom: 1px solid #e5e5e7;">NIM</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7; font-weight: bold;">1.82%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">1.79%</td>
+                                    <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e5e5e7;">3rd</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 8px;">Credit Loss Rate</td>
+                                    <td style="padding: 8px; text-align: right; font-weight: bold; color: #34d399;">0.28%</td>
+                                    <td style="padding: 8px; text-align: right;">0.31%</td>
+                                    <td style="padding: 8px; text-align: right;">2nd</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <br><strong>Aegis Analysis Summary:</strong><br>
+                    Based on the comprehensive analysis from both models, RBC demonstrates exceptional Q4 2024 performance:
+                    
+                    <br><br>✅ <strong>Key Strengths:</strong>
+                    <br>• Industry-leading profitability (ROE) and operational efficiency
+                    <br>• Strong capital buffers providing flexibility for growth and dividends
+                    <br>• Diversified revenue mix reducing dependence on interest income
+                    <br>• Superior asset quality with below-average credit losses
+                    
+                    <br><br>⚠️ <strong>Areas to Monitor:</strong>
+                    <br>• Net Interest Margin compression in rising rate environment
+                    <br>• Integration costs from digital transformation initiatives
+                    <br>• Competitive pressure in wealth management space
+                    
+                    <div class="sub-response">
+                        <div class="sub-response-header active" onclick="toggleSubResponse('charts-sub')">
+                            <div class="sub-response-title">
+                                <span>📈</span>
+                                <span>Performance Visualizations</span>
+                            </div>
+                            <svg class="dropdown-arrow open" id="charts-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6,9 12,15 18,9"></polyline>
+                            </svg>
+                        </div>
+                        <div class="sub-response-content open" id="charts-sub">
+                            <div class="chart-container">
+                                <div class="chart-card">
+                                    <div class="chart-label">ROE Comparison</div>
+                                    <div class="chart-bar" style="background: linear-gradient(to top, #667eea 0%, #667eea 89%, #e5e5e7 89%, #e5e5e7 100%);">14.8%</div>
+                                    <div class="chart-sublabel">RBC vs 13.2% Peer Avg<br><span style="color: #34d399;">+1.6pp advantage</span></div>
+                                </div>
+                                <div class="chart-card">
+                                    <div class="chart-label">Efficiency Ratio</div>
+                                    <div class="chart-bar" style="background: linear-gradient(to top, #34d399 0%, #34d399 74%, #e5e5e7 74%, #e5e5e7 100%);">52.1%</div>
+                                    <div class="chart-sublabel">Best in Class<br><span style="color: #666;">(Lower is Better)</span></div>
+                                </div>
+                                <div class="chart-card">
+                                    <div class="chart-label">CET1 Capital Ratio</div>
+                                    <div class="chart-bar" style="background: linear-gradient(to top, #764ba2 0%, #764ba2 84%, #e5e5e7 84%, #e5e5e7 100%);">16.8%</div>
+                                    <div class="chart-sublabel">Above 15.9% Peer Avg<br><span style="color: #764ba2;">Strong Buffer</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <br><strong>💡 Recommendation:</strong> RBC's Q4 2024 results position it as a sector leader with best-in-class efficiency and profitability metrics. The strong capital position provides optionality for strategic investments while maintaining attractive shareholder returns.
+                </div>
+            </div>
+            <div class="chat-input">
+                <div class="chat-input-container">
+                    <div class="selected-documents" id="chat-selected-documents"></div>
+                    <input type="text" placeholder="Ask Aegis about financial data, request reports, or analyze trends..." id="chat-input">
+                </div>
+                <button class="send-button" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22,2 15,22 11,13 2,9"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="dropup-container">
+            <div class="dropdown-header" onclick="toggleDropup('reports')">
+                <div style="display: flex; align-items: center;">
+                    <span class="section-title" style="margin-bottom: 0;">Available Reports</span>
+                </div>
+                <svg class="dropdown-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg);">
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+            </div>
+            <div class="dropup-content" id="reports-content">
+                <p style="margin-bottom: 25px; color: #666; font-size: 0.95rem;">Select a report to generate. Aegis will run the ETL process and provide you with a downloadable file through the chat interface.</p>
+                <div class="reports-grid">
+                    <div class="report-card" onclick="generateReport('quarterly-comparison')">
+                        <div class="report-title">Quarterly Comparison Report</div>
+                        <div class="report-description">Compare financial metrics across quarters for selected banks</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~3-5 min</span>
+                            <span>Excel/PDF</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('transcript-sentiment')">
+                        <div class="report-title">Transcript Sentiment Analysis</div>
+                        <div class="report-description">Analyze sentiment trends from earnings call transcripts</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~2-4 min</span>
+                            <span>Excel/CSV</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('benchmark-analysis')">
+                        <div class="report-title">Benchmark Performance Report</div>
+                        <div class="report-description">Compare bank performance against industry benchmarks</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~4-6 min</span>
+                            <span>PDF/Excel</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('risk-metrics')">
+                        <div class="report-title">Risk Metrics Dashboard</div>
+                        <div class="report-description">Real-time risk assessment and compliance metrics</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~1-2 min</span>
+                            <span>Interactive/PDF</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('custom-analysis')">
+                        <div class="report-title">Custom Data Analysis</div>
+                        <div class="report-description">Generate custom reports based on specific criteria</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: Variable</span>
+                            <span>Multiple formats</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('peer-analysis')">
+                        <div class="report-title">Peer Group Analysis</div>
+                        <div class="report-description">Compare performance against peer Canadian banks</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~4-7 min</span>
+                            <span>Excel/PDF</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('regulatory-compliance')">
+                        <div class="report-title">Regulatory Compliance Report</div>
+                        <div class="report-description">OSFI compliance metrics and regulatory ratios</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~2-3 min</span>
+                            <span>PDF/Excel</span>
+                        </div>
+                    </div>
+                    <div class="report-card" onclick="generateReport('market-trends')">
+                        <div class="report-title">Market Trends Analysis</div>
+                        <div class="report-description">Banking sector trends and market indicators</div>
+                        <div class="report-meta">
+                            <span>ETL Runtime: ~3-6 min</span>
+                            <span>Interactive/PDF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown(type) {
+            const content = document.getElementById(`${type}-content`);
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('.dropdown-arrow');
+            
+            // Toggle the clicked dropdown
+            const isOpen = content.classList.contains('open');
+            
+            // Close all dropdowns first
+            document.querySelectorAll('.dropdown-content').forEach(el => {
+                el.classList.remove('open');
+            });
+            document.querySelectorAll('.dropdown-header').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.dropdown-arrow').forEach(el => {
+                el.classList.remove('open');
+            });
+            
+            // Open the clicked one if it was closed
+            if (!isOpen) {
+                content.classList.add('open');
+                arrow.classList.add('open');
+                header.classList.add('active');
+                
+                // Adjust position to align with header
+                const headerRect = header.getBoundingClientRect();
+                const containerRect = document.querySelector('.container').getBoundingClientRect();
+                
+                // Position the dropdown content
+                content.style.top = headerRect.bottom + 'px';
+                content.style.width = (containerRect.width - 20) + 'px';
+                content.style.maxWidth = '1380px';
+            }
+        }
+
+        function toggleDatabase(dbName) {
+            const checkbox = document.getElementById(dbName);
+            const option = checkbox.closest('.database-option');
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                option.classList.add('selected');
+            } else {
+                option.classList.remove('selected');
+            }
+            
+            // Update the counter
+            updateDatabaseCounter();
+            
+            // Update chat with database selection change
+            addMessage(`Database filter updated: ${dbName} ${checkbox.checked ? 'enabled' : 'disabled'}`, 'assistant');
+        }
+
+        function updateDatabaseCounter() {
+            const checkboxes = document.querySelectorAll('.database-checkbox');
+            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const totalCount = checkboxes.length;
+            
+            const counter = document.querySelector('.database-count');
+            counter.textContent = `(${selectedCount} of ${totalCount} selected)`;
+        }
+
+        function updateDocumentCounter() {
+            const checkboxes = document.querySelectorAll('.document-checkbox');
+            const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+            
+            const counters = document.querySelectorAll('.database-count');
+            counters[2].textContent = `(${selectedCount} selected)`;
+        }
+
+        let selectedDocuments = [];
+        const maxDocuments = 3;
+
+        function updateSelectedDocuments() {
+            const selectedDocsContainer = document.getElementById('selected-documents');
+            selectedDocsContainer.innerHTML = '';
+            
+            selectedDocuments.forEach((doc, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-doc-tag';
+                tag.innerHTML = `
+                    <span>${doc.title}</span>
+                    <span class="remove-doc" onclick="removeDocument(${index})">&times;</span>
+                `;
+                selectedDocsContainer.appendChild(tag);
+            });
+            
+            // Update button state
+            const button = document.getElementById('add-documents-btn');
+            button.textContent = `Add to Chat (${selectedDocuments.length}/3)`;
+            button.disabled = selectedDocuments.length === 0;
+            
+            // Update counter in header
+            updateDocumentCounter();
+        }
+
+        function handleDocumentSelection(checkbox, title, source, date) {
+            const docInfo = { title, source, date };
+            
+            if (checkbox.checked) {
+                if (selectedDocuments.length < maxDocuments) {
+                    selectedDocuments.push(docInfo);
+                } else {
+                    checkbox.checked = false;
+                    alert('You can only select up to 3 documents.');
+                    return;
+                }
+            } else {
+                selectedDocuments = selectedDocuments.filter(doc => doc.title !== title);
+            }
+            
+            updateSelectedDocuments();
+        }
+
+        function removeDocument(index) {
+            const removedDoc = selectedDocuments[index];
+            selectedDocuments.splice(index, 1);
+            
+            // Uncheck the corresponding checkbox
+            const checkboxes = document.querySelectorAll('.document-checkbox');
+            checkboxes.forEach(checkbox => {
+                const docItem = checkbox.closest('.document-item');
+                const docTitle = docItem.querySelector('.document-title').textContent;
+                if (docTitle === removedDoc.title) {
+                    checkbox.checked = false;
+                }
+            });
+            
+            updateSelectedDocuments();
+        }
+
+        function addDocumentsToChat() {
+            if (selectedDocuments.length === 0) return;
+            
+            // Add documents to chat input area
+            const chatDocsContainer = document.getElementById('chat-selected-documents');
+            chatDocsContainer.innerHTML = '';
+            
+            selectedDocuments.forEach((doc, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-doc-tag';
+                tag.innerHTML = `
+                    <span>📄 ${doc.title}</span>
+                    <span class="remove-doc" onclick="removeChatDocument(${index})">&times;</span>
+                `;
+                chatDocsContainer.appendChild(tag);
+            });
+            
+            // Close the dropdown
+            toggleDropdown('documents');
+            
+            // Clear selections in dropdown
+            selectedDocuments = [];
+            const checkboxes = document.querySelectorAll('.document-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
+            updateSelectedDocuments();
+        }
+
+        function removeChatDocument(index) {
+            const chatDocsContainer = document.getElementById('chat-selected-documents');
+            const tags = chatDocsContainer.querySelectorAll('.selected-doc-tag');
+            if (tags[index]) {
+                tags[index].remove();
+            }
+        }
+
+        // Add event listeners for document checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const documentCheckboxes = document.querySelectorAll('.document-checkbox');
+            documentCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const docItem = this.closest('.document-item');
+                    const title = docItem.querySelector('.document-title').textContent;
+                    const source = docItem.querySelector('.document-source').textContent;
+                    const meta = docItem.querySelector('.document-meta');
+                    const date = meta.children[1].textContent;
+                    
+                    handleDocumentSelection(this, title, source, date);
+                });
+            });
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                addMessage(message, 'user');
+                input.value = '';
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    addMessage('I understand your request. Let me analyze the data from the selected databases and provide you with insights...', 'assistant');
+                }, 1000);
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function toggleDropup(type) {
+            // Close all other dropdowns and dropups first
+            const allContents = document.querySelectorAll('.dropdown-content, .dropup-content');
+            const allHeaders = document.querySelectorAll('.dropdown-header');
+            const allArrows = document.querySelectorAll('.dropdown-arrow');
+            
+            allContents.forEach((content, index) => {
+                if (content.id !== `${type}-content`) {
+                    content.classList.remove('open');
+                    if (allArrows[index]) {
+                        allArrows[index].classList.remove('open');
+                    }
+                    if (allHeaders[index]) {
+                        allHeaders[index].classList.remove('active');
+                    }
+                }
+            });
+            
+            // Toggle the clicked dropup
+            const content = document.getElementById(`${type}-content`);
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('.dropdown-arrow');
+            
+            content.classList.toggle('open');
+            arrow.classList.toggle('open');
+            header.classList.toggle('active');
+        }
+
+        function generateReport(reportType) {
+            toggleDropup('reports'); // Close the dropup
+            addMessage(`Generating ${reportType.replace('-', ' ')} report. This will take a few minutes to process...`, 'assistant');
+            
+            setTimeout(() => {
+                const reportLink = `<a href="#" style="color: #667eea; text-decoration: underline;">📄 ${reportType.replace('-', ' ')}_${new Date().toISOString().split('T')[0]}.xlsx</a>`;
+                addMessage(`Report generated successfully! You can download it here: ${reportLink}`, 'assistant');
+            }, 3000);
+        }
+
+
+        function toggleSubResponse(id) {
+            const content = document.getElementById(id);
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('.dropdown-arrow');
+            
+            content.classList.toggle('open');
+            arrow.classList.toggle('open');
+            header.classList.toggle('active');
+        }
+
+        // Simulate loading states
+        setTimeout(() => {
+            // Transcripts model finishes first
+            document.getElementById('transcripts-loading').style.display = 'none';
+            document.getElementById('transcripts-arrow').style.display = 'block';
+        }, 2000);
+
+        setTimeout(() => {
+            // Benchmarking model finishes second
+            document.getElementById('benchmarking-loading').style.display = 'none';
+            document.getElementById('benchmarking-arrow').style.display = 'block';
+        }, 3500);
+
+        // Enable Enter key for chat input
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
