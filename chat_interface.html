@@ -911,6 +911,62 @@
                 }
             }
             
+            // Method to progressively update research details as databases complete
+            addOrUpdateResearchDetails(messageContentDiv, allSubagentData) {
+                if (!allSubagentData || allSubagentData.length === 0) {
+                    return;
+                }
+                
+                let researchDetailsSection = messageContentDiv.querySelector('.research-details');
+                
+                // Create the research details section if it doesn't exist
+                if (!researchDetailsSection) {
+                    researchDetailsSection = document.createElement('div');
+                    researchDetailsSection.className = 'research-details expanded'; // Start expanded to show progress
+                    
+                    // Create header
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'research-details-header';
+                    
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'research-details-title';
+                    
+                    const toggleDiv = document.createElement('div');
+                    toggleDiv.className = 'research-details-toggle';
+                    toggleDiv.textContent = '▼';
+                    
+                    headerDiv.appendChild(titleDiv);
+                    headerDiv.appendChild(toggleDiv);
+                    
+                    // Create content container
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'research-details-content';
+                    
+                    researchDetailsSection.appendChild(headerDiv);
+                    researchDetailsSection.appendChild(contentDiv);
+                    
+                    // Add toggle functionality
+                    headerDiv.addEventListener('click', () => {
+                        researchDetailsSection.classList.toggle('expanded');
+                    });
+                    
+                    messageContentDiv.appendChild(researchDetailsSection);
+                }
+                
+                // Update the title with current progress
+                const titleDiv = researchDetailsSection.querySelector('.research-details-title');
+                titleDiv.innerHTML = `🔍 Research Details (${allSubagentData.length} sources)`;
+                
+                // Update the content with all completed subagents
+                const contentDiv = researchDetailsSection.querySelector('.research-details-content');
+                contentDiv.innerHTML = ''; // Clear existing content
+                
+                allSubagentData.forEach(subagent => {
+                    const subagentDiv = this.createSubagentItem(subagent);
+                    contentDiv.appendChild(subagentDiv);
+                });
+            }
+            
             async streamResponse(messages) {
                 this.isStreaming = true;
                 
@@ -949,7 +1005,7 @@
                     
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
-                    let subagentData = null;
+                    let allSubagentData = [];
                     
                     while (true) {
                         const { done, value } = await reader.read();
@@ -958,17 +1014,26 @@
                         const chunk = decoder.decode(value, { stream: true });
                         fullResponse += chunk;
                         
-                        // Check for subagent data in the chunk
-                        if (chunk.includes('SUBAGENT_DATA:')) {
-                            const subagentMatch = fullResponse.match(/SUBAGENT_DATA:(.+)$/);
-                            if (subagentMatch) {
-                                try {
-                                    subagentData = JSON.parse(subagentMatch[1]);
-                                    // Remove the subagent data from the display text
-                                    fullResponse = fullResponse.replace(/\n\nSUBAGENT_DATA:.+$/, '');
-                                } catch (e) {
-                                    console.error('Failed to parse subagent data:', e);
-                                }
+                        // Check for real-time subagent completion in the chunk
+                        if (chunk.includes('SUBAGENT_COMPLETE:')) {
+                            const subagentMatches = chunk.match(/SUBAGENT_COMPLETE:(.+?)(?=\n|$)/g);
+                            if (subagentMatches) {
+                                subagentMatches.forEach(match => {
+                                    try {
+                                        const jsonData = match.replace('SUBAGENT_COMPLETE:', '');
+                                        const subagentItem = JSON.parse(jsonData);
+                                        allSubagentData.push(subagentItem);
+                                        
+                                        // Create or update the research details section
+                                        this.addOrUpdateResearchDetails(assistantContentDiv, allSubagentData);
+                                        this.scrollToBottom();
+                                    } catch (e) {
+                                        console.error('Failed to parse subagent completion data:', e);
+                                    }
+                                });
+                                
+                                // Remove the subagent completion data from display text
+                                fullResponse = fullResponse.replace(/SUBAGENT_COMPLETE:.+?(?=\n|$)/g, '');
                             }
                         }
                         
@@ -980,14 +1045,8 @@
                         this.scrollToBottom();
                     }
                     
-                    // Add research details if we have subagent data
-                    if (subagentData) {
-                        this.addResearchDetailsToMessage(assistantContentDiv, subagentData);
-                        this.scrollToBottom();
-                    }
-                    
                     // Update the stored message (without debug/subagent data)
-                    const cleanResponse = fullResponse.replace(/\n\n(DEBUG_DATA|SUBAGENT_DATA):.+$/gs, '');
+                    const cleanResponse = fullResponse.replace(/\n\n(DEBUG_DATA|SUBAGENT_COMPLETE):.+$/gs, '').replace(/SUBAGENT_COMPLETE:.+?(?=\n|$)/g, '');
                     this.messages[this.messages.length - 1].content = cleanResponse;
                     
                 } catch (error) {
@@ -1150,7 +1209,7 @@
                 itemDiv.appendChild(headerDiv);
                 itemDiv.appendChild(contentDiv);
                 
-                // Add toggle functionality
+                // Add toggle functionality - start collapsed by default for real-time view
                 headerDiv.addEventListener('click', () => {
                     itemDiv.classList.toggle('expanded');
                 });
