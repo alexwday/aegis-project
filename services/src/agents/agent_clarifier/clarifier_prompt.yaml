@@ -86,9 +86,16 @@ system_prompt: |
   3. **Essential Context Identification:** Check for year(s), quarter(s), and bank(s) in the query
   4. The specific databases available and their capabilities
   5. Whether temporal references need clarification (e.g., "last quarter" → "Q2 2025")
-  6. **Ambiguous References:** Identify any unclear terms that need clarification:
-     - Temporal: "last quarter", "this year", "recently"
-     - Entity: "our performance", "the company", "we" (which bank?)
+  6. **Banking Terminology Recognition:** Identify and resolve banking terminology:
+     - **Global SIBs (GSIBs)**: Global Systemically Important Banks - 29 major banks worldwide
+     - **Big Six**: Often refers to major Canadian banks (RBC, TD, BMO, Scotiabank, CIBC, National Bank)
+     - **Major US Banks**: JPMorgan Chase, Bank of America, Wells Fargo, Citigroup
+     - **European Banks**: HSBC, BNP Paribas, Deutsche Bank, Barclays, etc.
+     - **Regional terms**: "Big 4" (Australia), "Megabanks" (Japan), etc.
+  7. **Ambiguous References:** Identify any unclear terms that need clarification:
+     - Temporal: "last quarter", "this year", "recently", "current period"
+     - Entity: "our performance", "the company", "we", "major banks", "peers"
+     - Banking groups: "Big Six", "GSIBs", "major Canadian banks", "systemically important banks"
   7. **Follow-up Context:** If the last assistant message contained document lists or search results, check if user is referencing specific items by name or ID
   </ANALYSIS_INSTRUCTIONS>
 
@@ -123,16 +130,23 @@ system_prompt: |
   **STRUCTURE**: Write as a direct research query optimized for retrieval systems:
   - Start with action verb: "Research", "Analyze", "Find", "Examine"
   - Include specific standards, topics, and scope
+  - **ALWAYS specify quarters separately**: "Q1, Q2, Q3, Q4" instead of "all quarters" or "full year"
   - NO meta-commentary about context availability or user preferences
   - NO phrases like "no additional context provided" or "user mentioned"
 
-  **INCLUDE ESSENTIAL ELEMENTS**:
-  1. **Specific Banks**: Royal Bank of Canada, Bank of Montreal, TD Bank, etc.
-  2. **Specific Time Periods**: "Q1 2024", "fiscal year 2023", "Q2-Q4 2024"
+  **INCLUDE ESSENTIAL ELEMENTS (STRUCTURED FORMAT)**:
+  1. **Specific Banks**: Full official names (Royal Bank of Canada, Bank of Montreal, TD Bank, etc.)
+  2. **Specific Time Periods**: Always break down quarters individually:
+     - ✅ "Q1, Q2, Q3, Q4 of fiscal year 2024"
+     - ❌ "all quarters of 2024" or "full year 2024"
   3. **Financial Metrics**: Net income, revenue, operating margin, EPS, etc.
   4. **Comparison Context**: "compared to Q1 2023", "versus industry peers"
-  5. **Data Sources**: Earnings calls, quarterly reports, supplementary packages
+  5. **Data Sources**: Earnings calls, quarterly reports, peer benchmarking, IR summaries
   6. **Specific Topics**: Guidance, outlook, segment performance, etc.
+  7. **Banking Group Resolution**: Expand ambiguous terms:
+     - "Big Six" → "Royal Bank of Canada, TD Bank, Bank of Montreal, Scotiabank, CIBC, National Bank of Canada"
+     - "GSIBs" → specify actual banks relevant to query
+     - "Major banks" → specify which banks
 
   **AVOID COMMENTARY**:
   - ❌ "No additional context was provided"
@@ -177,17 +191,23 @@ system_prompt: |
 
   **Excellent Research Statements (Optimized for Retrieval):**
 
-  *Complete Context:*
-  "Research Royal Bank of Canada's net income for Q1, Q2, Q3, and Q4 of fiscal year 2024."
+  *Complete Context with Structured Quarters:*
+  "Research Royal Bank of Canada's net income for Q1, Q2, Q3, Q4 of fiscal year 2024."
 
   *Comparative Research:*
   "Research TD Bank's revenue growth for Q3 2024 compared to Q3 2023, focusing on retail banking segment."
 
-  *Earnings Call Research:*
-  "Analyze Bank of Montreal's Q2 2024 earnings call transcript for management guidance on fiscal 2025 outlook."
+  *Earnings Call Research with Management Commentary:*
+  "Analyze Bank of Montreal's Q2 2024 earnings call transcript for management guidance on fiscal 2025 outlook and strategic initiatives."
 
-  *Peer Comparison:*
-  "Compare Royal Bank of Canada's Q4 2024 operating margin to Canadian banking industry peers including TD Bank, Bank of Montreal, and Scotiabank."
+  *Peer Comparison with Multiple Banks:*
+  "Compare Royal Bank of Canada's Q4 2024 operating margin to Canadian banking peers including TD Bank, Bank of Montreal, Scotiabank, CIBC, and National Bank of Canada."
+
+  *Banking Group Expansion:*
+  "Research Big Six Canadian banks (Royal Bank of Canada, TD Bank, Bank of Montreal, Scotiabank, CIBC, National Bank of Canada) net income performance for Q1, Q2, Q3, Q4 of fiscal year 2024."
+
+  *Multi-Quarter Analysis:*
+  "Analyze JPMorgan Chase's credit loss provisions for Q1, Q2, Q3, Q4 of fiscal year 2024 with management commentary on economic outlook."
 
   **Poor Research Statements (Avoid These):**
 

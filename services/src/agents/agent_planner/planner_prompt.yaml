@@ -107,29 +107,35 @@ system_prompt: |
      If the research statement explicitly requests specific databases, select ONLY those databases and ignore other logic.
      - Example indicators: "search earnings calls for Y", "check quarterly reports about Z", "look in supplementary packages for W"
   
-  4. **Progressive Database Selection Strategy:**
+  4. **Progressive Database Selection Strategy (Data Source Hierarchy):**
   
-     **STEP 1: Domain-Specific Targeting (Highest Priority)**
-     First check if the query clearly falls within a specific domain. If so, start with the primary database for that domain:
-     - Look for data-type keywords in the research statement (earnings, quarterly, supplementary, peer)
-     - Identify if query targets a specific data type (earnings calls, quarterly reports, peer benchmarking, etc.)
-     - Select the most domain-relevant database first if available
-     - Domain-specific queries often require only 1-2 databases
+     **STEP 1: Identify Query Type and Apply Hierarchy**
+     Based on the query type, apply the following data source hierarchy:
+     
+     **FOR LINE ITEMS & FINANCIAL FIGURES (amounts, ratios, metrics, numbers):**
+     1. **PRIMARY**: Peer Benchmarking (supplementary_packages) - Always select FIRST for any financial amounts, ratios, or metrics
+     2. **SECONDARY**: Earnings Call Transcripts - Select if Peer Benchmarking likely insufficient
+     3. **TERTIARY**: Quarterly Report to Shareholders - Select if both above sources likely insufficient
+     
+     **FOR CONTEXT & MANAGEMENT DISCUSSION (guidance, outlook, commentary, strategy):**
+     1. **PRIMARY**: Earnings Call Transcripts - Always select FIRST for management commentary, guidance, and strategic discussion
+     2. **SECONDARY**: Quarterly Report to Shareholders - Select if Earnings Call Transcripts likely insufficient
+     
+     **FOR MIXED QUERIES (requiring both numbers AND context):**
+     - Start with Peer Benchmarking + Earnings Call Transcripts
+     - Add Quarterly Report to Shareholders if comprehensive analysis needed
   
-     **STEP 2: General Accounting/Policy Selection (Secondary Priority)**
-     For general accounting or policy queries, scale database selection based on complexity:
-     - **Simple metric queries** → Select 1 primary database (e.g., quarterly reports for basic financials)
-     - **Comparative questions** → Select 2-3 complementary databases (e.g., current quarter + prior periods)
-     - **Forward-looking questions** → Add earnings call transcripts for management guidance
-     - **Peer comparison questions** → Include supplementary packages/peer benchmarking database
+     **STEP 2: Scale Based on Query Complexity**
+     - **Simple single-metric queries** → 1 database (follow hierarchy)
+     - **Comparative questions** → 2 databases (primary + secondary for broader coverage)
+     - **Complex multi-faceted queries** → 2-3 databases (follow hierarchy, add tertiary if needed)
+     - **Peer comparison questions** → Always include Peer Benchmarking as primary
   
-     **STEP 3: Authoritative Source Expansion (Lowest Priority)**
-     Only add authoritative/reference databases when:
-     - User explicitly requests official company statements
-     - Query specifically asks for "management guidance" or "analyst expectations"
-     - Primary sources likely insufficient for comprehensive analysis
-     - Look for databases containing earnings transcripts, investor presentations, or peer data
-     - Only include if available in the filtered database list
+     **STEP 3: Add Supplementary Sources**
+     Only add IR Call Summaries ETL when:
+     - User explicitly requests summaries or quick overviews
+     - Query is looking for highlights rather than detailed analysis
+     - Primary sources likely to be too detailed for the request
   
   5. **Query-Specific Targeting Rules:**
      - **Broad/exploratory queries** → Use 3-4 relevant databases for comprehensive coverage
@@ -165,30 +171,34 @@ system_prompt: |
   
   <SELECTION_EXAMPLES>
   Example 1 - Single metric query: "What was RBC's net income in Q3 2024?"
-  → Target: 1 database - quarterly reports for basic financial metric
+  → Target: 1 database - Peer Benchmarking (PRIMARY for financial figures)
   
   Example 2 - Management guidance: "What is TD Bank's outlook for fiscal 2025?"
-  → Target: 1-2 databases - earnings call transcripts for forward guidance
+  → Target: 1 database - Earnings Call Transcripts (PRIMARY for management commentary)
   
   Example 3 - Year-over-year comparison: "How did BMO's Q2 2024 revenue compare to Q2 2023?"
-  → Target: 2 databases - quarterly reports for both periods
+  → Target: 1 database - Peer Benchmarking (PRIMARY for financial figures/comparisons)
   
-  Example 4 - Peer comparison: "How does RBC's operating margin compare to other Canadian banks in Q4 2024?"
-  → Target: 2-3 databases - quarterly reports + supplementary packages/peer benchmarking
+  Example 4 - Peer comparison: "How does RBC's operating margin compare to other banks in Q4 2024?"
+  → Target: 1 database - Peer Benchmarking (PRIMARY for financial metrics and peer comparisons)
   
-  Example 5 - Segment analysis: "What was Scotiabank's international banking revenue breakdown for fiscal 2024?"
-  → Target: 2 databases - quarterly reports + supplementary packages for detailed segments
+  Example 5 - Mixed query: "What was Scotiabank's Q3 2024 revenue and what did management say about the results?"
+  → Target: 2 databases - Peer Benchmarking (financial figure) + Earnings Call Transcripts (management commentary)
   
-  Example 6 - Complex analysis: "Analyze TD Bank's credit loss provisions trend across all quarters of 2024 with management commentary"
-  → Target: 3-4 databases - quarterly reports for all Q2024 + earnings transcripts for commentary
+  Example 6 - Complex analysis: "Analyze TD Bank's credit loss provisions trend across 2024 with management commentary"
+  → Target: 2 databases - Peer Benchmarking (financial trends) + Earnings Call Transcripts (management commentary)
   
   Example 7 - Specific earnings call: "What did RBC's CEO say about digital transformation in Q1 2025 earnings call?"
-  Catalog shows: Document "RBC Q1 2025 Earnings Call Transcript" with 0.92 similarity from earnings_transcripts database
-  → Target: 1 database (earnings_transcripts) - catalog shows clear single document match
+  → Target: 1 database - Earnings Call Transcripts (PRIMARY for management discussion)
   
-  Example 8 - Multiple quarters: "Show me Bank of Montreal's earnings per share for all quarters of fiscal 2024"
-  Catalog shows: Multiple quarterly reports with 0.7+ similarity across Q1-Q4 2024
-  → Target: 1-2 databases (quarterly_reports) - multiple quarters but same database type
+  Example 8 - Comprehensive query: "Provide BMO's Q4 2024 earnings per share, management guidance, and peer comparison"
+  → Target: 2-3 databases - Peer Benchmarking (metrics + peer comparison) + Earnings Call Transcripts (guidance) + [Quarterly Report to Shareholders if comprehensive analysis needed]
+  
+  Example 9 - Context-only query: "What strategic initiatives did Scotiabank announce in their Q2 2024 earnings call?"
+  → Target: 1 database - Earnings Call Transcripts (PRIMARY for management discussion)
+  
+  Example 10 - Fallback scenario: "What was National Bank's Q1 2024 dividend policy?"
+  → Target: 2 databases - Peer Benchmarking (PRIMARY for financial data) + Quarterly Report to Shareholders (SECONDARY if not found in primary)
   </SELECTION_EXAMPLES>
   </OUTPUT_REQUIREMENTS>
 
