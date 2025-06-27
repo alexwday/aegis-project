@@ -440,6 +440,205 @@
             background: #9ca3af;
         }
         
+        /* Subagent Research Details Styles */
+        .research-details {
+            margin-top: 16px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            background: #fafafa;
+            overflow: hidden;
+        }
+        
+        .research-details-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        
+        .research-details-header:hover {
+            background: #f1f3f4;
+        }
+        
+        .research-details-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .research-details-toggle {
+            font-size: 12px;
+            color: #6b7280;
+            transition: transform 0.2s;
+        }
+        
+        .research-details.expanded .research-details-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .research-details-content {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .research-details.expanded .research-details-content {
+            display: block;
+            max-height: 1000px;
+        }
+        
+        .subagent-item {
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .subagent-item:last-child {
+            border-bottom: none;
+        }
+        
+        .subagent-header {
+            padding: 12px 16px;
+            background: #ffffff;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s;
+        }
+        
+        .subagent-header:hover {
+            background: #f9fafb;
+        }
+        
+        .subagent-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .subagent-name {
+            font-weight: 500;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        
+        .subagent-type {
+            font-size: 11px;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        .subagent-type.primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .subagent-type.secondary {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+        
+        .subagent-type.skipped {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .subagent-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .subagent-status-icon {
+            font-size: 14px;
+        }
+        
+        .subagent-status-text {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .subagent-toggle {
+            font-size: 12px;
+            color: #9ca3af;
+            transition: transform 0.2s;
+        }
+        
+        .subagent-item.expanded .subagent-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .subagent-content {
+            display: none;
+            padding: 16px;
+            background: #fefefe;
+            border-top: 1px solid #f3f4f6;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #374151;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .subagent-item.expanded .subagent-content {
+            display: block;
+        }
+        
+        .subagent-content pre {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 11px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .subagent-content h4 {
+            margin: 12px 0 6px 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .subagent-content p {
+            margin: 6px 0;
+        }
+        
+        .subagent-metadata {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f3f4f6;
+            font-size: 11px;
+            color: #6b7280;
+        }
+        
+        .subagent-metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        
+        .subagent-metadata-label {
+            font-weight: 500;
+            min-width: 80px;
+        }
+        
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             .header {
@@ -652,7 +851,7 @@
                 }
             }
             
-            addMessage(role, content) {
+            addMessage(role, content, subagentData = null) {
                 this.messages.push({ role, content });
                 
                 const messageDiv = document.createElement('div');
@@ -667,6 +866,14 @@
                 
                 if (role === 'assistant') {
                     contentDiv.innerHTML = marked.parse(content);
+                    
+                    // Add research details if provided
+                    if (subagentData) {
+                        const researchDetails = this.createResearchDetails(subagentData);
+                        if (researchDetails) {
+                            contentDiv.appendChild(researchDetails);
+                        }
+                    }
                 } else {
                     contentDiv.textContent = content;
                 }
@@ -683,6 +890,25 @@
                 this.scrollToBottom();
                 
                 return contentDiv;
+            }
+            
+            // Method to add subagent data to an existing message
+            addResearchDetailsToMessage(messageContentDiv, subagentData) {
+                if (!subagentData || subagentData.length === 0) {
+                    return;
+                }
+                
+                // Remove any existing research details
+                const existingDetails = messageContentDiv.querySelector('.research-details');
+                if (existingDetails) {
+                    existingDetails.remove();
+                }
+                
+                // Add new research details
+                const researchDetails = this.createResearchDetails(subagentData);
+                if (researchDetails) {
+                    messageContentDiv.appendChild(researchDetails);
+                }
             }
             
             async streamResponse(messages) {
@@ -723,6 +949,7 @@
                     
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
+                    let subagentData = null;
                     
                     while (true) {
                         const { done, value } = await reader.read();
@@ -731,13 +958,37 @@
                         const chunk = decoder.decode(value, { stream: true });
                         fullResponse += chunk;
                         
+                        // Check for subagent data in the chunk
+                        if (chunk.includes('SUBAGENT_DATA:')) {
+                            const subagentMatch = fullResponse.match(/SUBAGENT_DATA:(.+)$/);
+                            if (subagentMatch) {
+                                try {
+                                    subagentData = JSON.parse(subagentMatch[1]);
+                                    // Remove the subagent data from the display text
+                                    fullResponse = fullResponse.replace(/\n\nSUBAGENT_DATA:.+$/, '');
+                                } catch (e) {
+                                    console.error('Failed to parse subagent data:', e);
+                                }
+                            }
+                        }
+                        
+                        // Clean up debug data too
+                        const cleanResponse = fullResponse.replace(/\n\nDEBUG_DATA:.+$/s, '');
+                        
                         // Update the message content with markdown rendering
-                        assistantContentDiv.innerHTML = marked.parse(fullResponse);
+                        assistantContentDiv.innerHTML = marked.parse(cleanResponse);
                         this.scrollToBottom();
                     }
                     
-                    // Update the stored message
-                    this.messages[this.messages.length - 1].content = fullResponse;
+                    // Add research details if we have subagent data
+                    if (subagentData) {
+                        this.addResearchDetailsToMessage(assistantContentDiv, subagentData);
+                        this.scrollToBottom();
+                    }
+                    
+                    // Update the stored message (without debug/subagent data)
+                    const cleanResponse = fullResponse.replace(/\n\n(DEBUG_DATA|SUBAGENT_DATA):.+$/gs, '');
+                    this.messages[this.messages.length - 1].content = cleanResponse;
                     
                 } catch (error) {
                     typingDiv.remove();
@@ -815,6 +1066,139 @@
                 } else {
                     countElement.textContent = `${selected} of ${total} databases`;
                 }
+            }
+            
+            // Research details functionality
+            createResearchDetails(subagentData) {
+                if (!subagentData || subagentData.length === 0) {
+                    return null;
+                }
+                
+                const researchDiv = document.createElement('div');
+                researchDiv.className = 'research-details';
+                
+                // Header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'research-details-header';
+                headerDiv.innerHTML = `
+                    <div class="research-details-title">
+                        🔍 Research Details (${subagentData.length} sources)
+                    </div>
+                    <div class="research-details-toggle">▼</div>
+                `;
+                
+                // Content container
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'research-details-content';
+                
+                // Add each subagent
+                subagentData.forEach(subagent => {
+                    const subagentDiv = this.createSubagentItem(subagent);
+                    contentDiv.appendChild(subagentDiv);
+                });
+                
+                researchDiv.appendChild(headerDiv);
+                researchDiv.appendChild(contentDiv);
+                
+                // Add toggle functionality
+                headerDiv.addEventListener('click', () => {
+                    researchDiv.classList.toggle('expanded');
+                });
+                
+                return researchDiv;
+            }
+            
+            createSubagentItem(subagent) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'subagent-item';
+                
+                // Determine subagent type and status
+                const typeClass = this.getSubagentTypeClass(subagent.priority);
+                const statusIcon = this.getStatusIcon(subagent.status);
+                
+                // Header
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'subagent-header';
+                headerDiv.innerHTML = `
+                    <div class="subagent-info">
+                        <div class="subagent-name">${subagent.name}</div>
+                        <div class="subagent-type ${typeClass}">${subagent.priority || 'queried'}</div>
+                    </div>
+                    <div class="subagent-status">
+                        <span class="subagent-status-icon">${statusIcon}</span>
+                        <span class="subagent-status-text">${subagent.status}</span>
+                        <span class="subagent-toggle">▼</span>
+                    </div>
+                `;
+                
+                // Content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'subagent-content';
+                
+                if (subagent.response) {
+                    contentDiv.innerHTML = marked.parse(subagent.response);
+                }
+                
+                // Add metadata if available
+                if (subagent.metadata) {
+                    const metadataDiv = document.createElement('div');
+                    metadataDiv.className = 'subagent-metadata';
+                    metadataDiv.innerHTML = this.formatSubagentMetadata(subagent.metadata);
+                    contentDiv.appendChild(metadataDiv);
+                }
+                
+                itemDiv.appendChild(headerDiv);
+                itemDiv.appendChild(contentDiv);
+                
+                // Add toggle functionality
+                headerDiv.addEventListener('click', () => {
+                    itemDiv.classList.toggle('expanded');
+                });
+                
+                return itemDiv;
+            }
+            
+            getSubagentTypeClass(priority) {
+                switch(priority?.toLowerCase()) {
+                    case 'primary': return 'primary';
+                    case 'secondary': return 'secondary';
+                    case 'skipped': return 'skipped';
+                    default: return '';
+                }
+            }
+            
+            getStatusIcon(status) {
+                switch(status?.toLowerCase()) {
+                    case 'success': return '✅';
+                    case 'completed': return '✅';
+                    case 'error': return '❌';
+                    case 'skipped': return '⏭️';
+                    case 'running': return '⏳';
+                    default: return '📄';
+                }
+            }
+            
+            formatSubagentMetadata(metadata) {
+                let html = '';
+                if (metadata.documents) {
+                    html += `<div class="subagent-metadata-item">
+                        <span class="subagent-metadata-label">Documents:</span>
+                        <span>${metadata.documents} found</span>
+                    </div>`;
+                }
+                if (metadata.duration) {
+                    html += `<div class="subagent-metadata-item">
+                        <span class="subagent-metadata-label">Duration:</span>
+                        <span>${metadata.duration}ms</span>
+                    </div>`;
+                }
+                if (metadata.scope) {
+                    html += `<div class="subagent-metadata-item">
+                        <span class="subagent-metadata-label">Scope:</span>
+                        <span>${metadata.scope}</span>
+                    </div>`;
+                }
+                return html;
             }
         }
         

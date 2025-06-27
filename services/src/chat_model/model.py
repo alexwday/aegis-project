@@ -1571,6 +1571,40 @@ def _model_generator(
                 debug_data["end_timestamp"] = datetime.now().isoformat()
             yield f"\n\nDEBUG_DATA:{json.dumps(debug_data)}"
         # --- End Legacy Debug ---
+        
+        # Add structured subagent data for frontend research details
+        if scope == "research" and 'aggregated_detailed_research' in locals():
+            subagent_data = []
+            for db_name, research_content in aggregated_detailed_research.items():
+                db_display_name = available_databases.get(db_name, {}).get("name", db_name)
+                
+                # Determine priority based on database type and order
+                priority = "primary"
+                if db_name == "supplementary_packages":  # Peer Benchmarking
+                    priority = "primary"
+                elif db_name == "earnings_transcripts":
+                    priority = "primary"
+                elif db_name == "quarterly_reports":
+                    priority = "secondary"
+                elif db_name == "ir_call_summaries":
+                    priority = "secondary"
+                
+                subagent_item = {
+                    "name": db_display_name,
+                    "database_key": db_name,
+                    "priority": priority,
+                    "status": "success" if research_content else "error",
+                    "response": research_content or "No data available",
+                    "metadata": {
+                        "scope": scope,
+                        "documents": len(all_file_links) if 'all_file_links' in locals() else 0,
+                        "duration": None  # Could be extracted from process_monitor if needed
+                    }
+                }
+                subagent_data.append(subagent_item)
+            
+            # Send structured subagent data as JSON
+            yield f"\n\nSUBAGENT_DATA:{json.dumps(subagent_data)}"
 
 
 # --- Synchronous Wrapper Function ---
