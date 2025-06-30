@@ -1143,6 +1143,7 @@ def _model_generator(
                                         aggregated_detailed_research[db_name] = result[
                                             "detailed_research"
                                         ]
+                                        logger.info(f"📝 Successfully populated research for {db_name}: {len(result['detailed_research'])} chars")
                                     else:
                                         status_summary = (
                                             "❌ Error: Unexpected result format."
@@ -1150,6 +1151,7 @@ def _model_generator(
                                         aggregated_detailed_research[db_name] = (
                                             f"Error: {str(result)[:200]}..."
                                         )
+                                        logger.warning(f"⚠️ Unexpected result format for {db_name}: {type(result)}")
                                 elif scope == "metadata":
                                     if isinstance(result, list):
                                         metadata_results_by_db.setdefault(
@@ -1206,8 +1208,13 @@ def _model_generator(
                                 }
                             }
                             
+                            # DEBUG: Log subagent creation
+                            logger.info(f"🎯 Creating subagent_item for {db_display_name}: {subagent_item}")
+                            logger.info(f"📄 Response content for {db_name}: {subagent_item['response'][:200]}..." if subagent_item.get('response') else f"⚠️ No response content for {db_name}")
+                            
                             # Stream the subagent data as soon as this database completes
                             status_block = f"SUBAGENT_COMPLETE:{json.dumps(subagent_item)}\n"
+                            logger.info(f"📡 Yielding SUBAGENT_COMPLETE for {db_name}: {status_block[:100]}...")
                             yield status_block
 
                     logger.info("All concurrent database queries completed processing.")

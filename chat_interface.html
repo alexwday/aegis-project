@@ -986,17 +986,23 @@
                 }
                 
                 // Create individual dropdowns for each database instead of one big section
+                console.log('🏗️ Creating dropdowns for allSubagentData:', allSubagentData);
                 allSubagentData.forEach(subagent => {
                     const dbName = subagent.database_display_name || subagent.database_name || 'Unknown Database';
+                    console.log('🔍 Processing subagent for database:', dbName, 'Data:', subagent);
                     let existingDropdown = messageContentDiv.querySelector(`[data-db-name="${dbName}"]`);
                     
                     if (!existingDropdown) {
                         // Create new individual database dropdown
+                        console.log('➕ Creating NEW dropdown for:', dbName);
                         existingDropdown = this.createDatabaseDropdown(dbName, subagent);
                         messageContentDiv.appendChild(existingDropdown);
+                        console.log('✅ NEW dropdown added to DOM for:', dbName);
                     } else {
                         // Update existing dropdown
+                        console.log('🔄 UPDATING existing dropdown for:', dbName);
                         this.updateDatabaseDropdown(existingDropdown, subagent);
+                        console.log('✅ UPDATED dropdown for:', dbName);
                     }
                 });
             }
@@ -1108,21 +1114,32 @@
                         const chunk = decoder.decode(value, { stream: true });
                         fullResponse += chunk;
                         
+                        // DEBUG: Log all received chunks
+                        console.log('🔍 Raw chunk received:', chunk);
+                        
                         // Check for real-time subagent completion in the chunk
                         if (chunk.includes('SUBAGENT_COMPLETE:')) {
+                            console.log('✅ Found SUBAGENT_COMPLETE in chunk:', chunk);
                             const subagentMatches = chunk.match(/SUBAGENT_COMPLETE:(.+?)(?=\n|$)/g);
+                            console.log('📊 Subagent matches found:', subagentMatches);
                             if (subagentMatches) {
                                 subagentMatches.forEach(match => {
                                     try {
                                         const jsonData = match.replace('SUBAGENT_COMPLETE:', '');
+                                        console.log('📝 Raw JSON data:', jsonData);
                                         const subagentItem = JSON.parse(jsonData);
+                                        console.log('🎯 Parsed subagent item:', subagentItem);
+                                        console.log('📄 Subagent response content:', subagentItem.response);
                                         allSubagentData.push(subagentItem);
+                                        console.log('📚 Updated allSubagentData (length=' + allSubagentData.length + '):', allSubagentData);
                                         
                                         // Create or update the research details section
+                                        console.log('🔧 Calling addOrUpdateResearchDetails...');
                                         this.addOrUpdateResearchDetails(assistantContentDiv, allSubagentData);
                                         this.scrollToBottom();
                                     } catch (e) {
-                                        console.error('Failed to parse subagent completion data:', e);
+                                        console.error('❌ Failed to parse subagent completion data:', e);
+                                        console.error('❌ Raw data that failed:', match);
                                     }
                                 });
                                 
@@ -1271,6 +1288,10 @@
             }
             
             createSubagentItem(subagent) {
+                console.log('🛠️ Creating subagent item for:', subagent);
+                console.log('📄 Subagent response content:', subagent.response);
+                console.log('📊 Subagent metadata:', subagent.metadata);
+                
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'subagent-item';
                 
@@ -1298,15 +1319,22 @@
                 contentDiv.className = 'subagent-content';
                 
                 if (subagent.response) {
+                    console.log('✍️ Populating content with response:', subagent.response);
                     contentDiv.innerHTML = marked.parse(subagent.response);
+                    console.log('✅ Content populated, innerHTML length:', contentDiv.innerHTML.length);
+                } else {
+                    console.log('⚠️ No response content found for subagent');
                 }
                 
                 // Add metadata if available
                 if (subagent.metadata) {
+                    console.log('📋 Adding metadata:', subagent.metadata);
                     const metadataDiv = document.createElement('div');
                     metadataDiv.className = 'subagent-metadata';
                     metadataDiv.innerHTML = this.formatSubagentMetadata(subagent.metadata);
                     contentDiv.appendChild(metadataDiv);
+                } else {
+                    console.log('⚠️ No metadata found for subagent');
                 }
                 
                 itemDiv.appendChild(headerDiv);
