@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Chat - Financial Market Assistant (Enhanced)</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f7f7f8;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-size: 14px;
+        }
+        
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            color: #1a1a1a;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message.assistant {
+            align-self: flex-start;
+        }
+        
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        
+        .avatar.user {
+            background: #007aff;
+            color: white;
+        }
+        
+        .avatar.assistant {
+            background: #34c759;
+            color: white;
+        }
+        
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e5e5;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .message.user .message-content {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+        }
+        
+        .message-content p {
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+        
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .message-content h1,
+        .message-content h2,
+        .message-content h3,
+        .message-content h4,
+        .message-content h5,
+        .message-content h6 {
+            margin: 16px 0 8px 0;
+            color: #1a1a1a;
+        }
+        
+        .message-content h1:first-child,
+        .message-content h2:first-child,
+        .message-content h3:first-child,
+        .message-content h4:first-child,
+        .message-content h5:first-child,
+        .message-content h6:first-child {
+            margin-top: 0;
+        }
+        
+        .message-content ul,
+        .message-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .message-content li {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+        
+        .message-content code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .message-content pre {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+        
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+        
+        .message-content strong {
+            font-weight: 600;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            color: #8e8e93;
+            font-style: italic;
+            padding: 8px 0;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .typing-dot {
+            width: 4px;
+            height: 4px;
+            background: #8e8e93;
+            border-radius: 50%;
+            animation: typingAnimation 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
+        
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e5e5e5;
+        }
+        
+        .database-selector {
+            margin-bottom: 16px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            background: #fafafa;
+            overflow: hidden;
+        }
+        
+        .filter-header {
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .filter-toggle {
+            background: none;
+            border: none;
+            color: #007aff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .filter-toggle:hover {
+            background: #e3f2fd;
+        }
+        
+        .selected-count {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        .database-groups {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .database-groups.show {
+            max-height: 300px;
+        }
+        
+        .database-group {
+            padding: 16px;
+        }
+        
+        .group-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #374151;
+            font-size: 14px;
+        }
+        
+        .checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #007aff;
+        }
+        
+        .checkbox-item label {
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .control-buttons {
+            padding: 12px 16px;
+            border-top: 1px solid #e5e5e5;
+            background: #f8f9fa;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-buttons button {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background: white;
+            color: #374151;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .control-buttons button:hover {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+        
+        .control-buttons button.secondary {
+            background: #f8f9fa;
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+        
+        .input-box {
+            flex: 1;
+            min-height: 44px;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 22px;
+            resize: none;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.4;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+        }
+        
+        .input-box:focus {
+            border-color: #007aff;
+        }
+        
+        .input-box::placeholder {
+            color: #8e8e93;
+        }
+        
+        .send-button {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: #007aff;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover:not(:disabled) {
+            background: #0056cc;
+        }
+        
+        .send-button:disabled {
+            background: #8e8e93;
+            cursor: not-allowed;
+        }
+        
+        .send-button svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+            border: 1px solid #fecaca;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+        
+        .status-indicator.connected {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-indicator.disconnected {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        /* Enhanced Database Research Dropdowns */
+        .database-dropdown {
+            margin: 16px 0;
+            border: 2px solid #e5e5e5;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .database-dropdown.pending {
+            border-color: #ffa726;
+        }
+
+        .database-dropdown.streaming {
+            border-color: #42a5f5;
+            box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2);
+        }
+
+        .database-dropdown.completed {
+            border-color: #66bb6a;
+        }
+
+        .database-dropdown.error {
+            border-color: #ef5350;
+        }
+
+        .dropdown-header {
+            padding: 14px 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: background-color 0.2s;
+            background: #f8f9fa;
+        }
+
+        .dropdown-header:hover {
+            background: #e9ecef;
+        }
+
+        .dropdown-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .status-icon {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-chevron {
+            transition: transform 0.3s ease;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .database-dropdown.expanded .dropdown-chevron {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .database-dropdown.expanded .dropdown-content {
+            max-height: 500px;
+        }
+
+        .dropdown-inner {
+            padding: 20px;
+            background: #ffffff;
+        }
+
+        /* Scrollbar styling */
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .messages::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+        
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator disconnected" id="statusIndicator">❌ Connecting...</div>
+    
+    <div class="header">
+        <h1>AEGIS Financial Market Assistant (Enhanced)</h1>
+    </div>
+    
+    <div class="chat-container">
+        <div class="messages" id="messages">
+            <!-- Messages will be inserted here -->
+        </div>
+        
+        <div class="input-container">
+            <div class="database-selector">
+                <div class="filter-header">
+                    <button class="filter-toggle" id="filterToggle">Show Filters</button>
+                    <div class="selected-count" id="selectedCount">4 sources selected</div>
+                </div>
+                <div class="database-groups" id="databaseGroups">
+                    <div class="database-group">
+                        <div class="group-title">Financial Data Sources</div>
+                        <div class="checkboxes">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="earnings_transcripts" value="earnings_transcripts" checked>
+                                <label for="earnings_transcripts">Earnings Call Transcripts</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="quarterly_reports" value="quarterly_reports" checked>
+                                <label for="quarterly_reports">Quarterly Report to Shareholders</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="supplementary_packages" value="supplementary_packages" checked>
+                                <label for="supplementary_packages">Peer Benchmarking</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="ir_call_summaries" value="ir_call_summaries" checked>
+                                <label for="ir_call_summaries">Investor Relations Call Summaries ETL</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="selectAllBtn">Select All</button>
+                        <button id="clearAllBtn" class="secondary">Clear All</button>
+                    </div>
+                </div>
+            </div>
+            <div class="input-wrapper">
+                <textarea 
+                    class="input-box" 
+                    id="messageInput" 
+                    placeholder="Ask me about financial data, earnings, or bank performance..."
+                    rows="1"
+                ></textarea>
+                <button class="send-button" id="sendButton">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AEGISChat {
+            constructor() {
+                this.apiUrl = 'http://localhost:8000';
+                this.messages = [];
+                this.isStreaming = false;
+                this.databaseDropdowns = new Map(); // Track database dropdowns
+                
+                this.messagesContainer = document.getElementById('messages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.statusIndicator = document.getElementById('statusIndicator');
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.checkAPIConnection();
+                this.autoResizeTextarea();
+                this.updateSelectedCount();
+            }
+            
+            setupEventListeners() {
+                this.sendButton.addEventListener('click', () => this.sendMessage());
+                this.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+                
+                this.messageInput.addEventListener('input', () => {
+                    this.autoResizeTextarea();
+                });
+                
+                // Database selector event listeners
+                document.getElementById('filterToggle').addEventListener('click', () => {
+                    const groups = document.getElementById('databaseGroups');
+                    const toggle = document.getElementById('filterToggle');
+                    
+                    if (groups.classList.contains('show')) {
+                        groups.classList.remove('show');
+                        toggle.textContent = 'Show Filters';
+                    } else {
+                        groups.classList.add('show');
+                        toggle.textContent = 'Hide Filters';
+                    }
+                });
+                
+                document.getElementById('selectAllBtn').addEventListener('click', () => {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => cb.checked = true);
+                    this.updateSelectedCount();
+                });
+                
+                document.getElementById('clearAllBtn').addEventListener('click', () => {
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => cb.checked = false);
+                    this.updateSelectedCount();
+                });
+                
+                // Add change listeners to all checkboxes
+                document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', () => this.updateSelectedCount());
+                });
+            }
+            
+            updateSelectedCount() {
+                const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
+                const count = checkedBoxes.length;
+                document.getElementById('selectedCount').textContent = `${count} source${count !== 1 ? 's' : ''} selected`;
+            }
+            
+            autoResizeTextarea() {
+                const textarea = this.messageInput;
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+            }
+            
+            async checkAPIConnection() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/health`);
+                    if (response.ok) {
+                        this.updateStatus('connected', '✅ Connected');
+                    } else {
+                        this.updateStatus('disconnected', '❌ API Error');
+                    }
+                } catch (error) {
+                    this.updateStatus('disconnected', '❌ Disconnected');
+                }
+            }
+            
+            updateStatus(status, text) {
+                this.statusIndicator.className = `status-indicator ${status}`;
+                this.statusIndicator.textContent = text;
+            }
+            
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isStreaming) return;
+                
+                // Add user message
+                this.addMessage('user', message);
+                this.messageInput.value = '';
+                this.autoResizeTextarea();
+                
+                // Prepare messages for API
+                const apiMessages = this.messages.map(msg => ({
+                    role: msg.role,
+                    content: msg.content
+                }));
+                
+                try {
+                    this.setInputState(false);
+                    await this.streamResponse(apiMessages);
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    this.showError('Failed to send message. Please try again.');
+                } finally {
+                    this.setInputState(true);
+                }
+            }
+            
+            addMessage(role, content) {
+                this.messages.push({ role, content });
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${role}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = `avatar ${role}`;
+                avatar.textContent = role === 'user' ? 'U' : 'AI';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                if (role === 'assistant') {
+                    // Will be updated during streaming
+                } else {
+                    contentDiv.textContent = content;
+                }
+                
+                if (role === 'user') {
+                    messageDiv.appendChild(contentDiv);
+                    messageDiv.appendChild(avatar);
+                } else {
+                    messageDiv.appendChild(avatar);
+                    messageDiv.appendChild(contentDiv);
+                }
+                
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                
+                return contentDiv;
+            }
+            
+            createDatabaseDropdown(dbName, status) {
+                const dropdown = document.createElement('div');
+                dropdown.className = `database-dropdown ${status}`;
+                dropdown.dataset.dbName = dbName;
+                
+                const header = document.createElement('div');
+                header.className = 'dropdown-header';
+                header.addEventListener('click', () => this.toggleDropdown(dropdown));
+                
+                const title = document.createElement('div');
+                title.className = 'dropdown-title';
+                
+                const icon = document.createElement('span');
+                icon.className = 'status-icon';
+                icon.textContent = this.getStatusIcon(status);
+                
+                const name = document.createElement('span');
+                name.textContent = dbName;
+                
+                title.appendChild(icon);
+                title.appendChild(name);
+                
+                const chevron = document.createElement('span');
+                chevron.className = 'dropdown-chevron';
+                chevron.textContent = '▼';
+                
+                header.appendChild(title);
+                header.appendChild(chevron);
+                
+                const content = document.createElement('div');
+                content.className = 'dropdown-content';
+                
+                const inner = document.createElement('div');
+                inner.className = 'dropdown-inner';
+                inner.textContent = 'Waiting for response...';
+                
+                content.appendChild(inner);
+                dropdown.appendChild(header);
+                dropdown.appendChild(content);
+                
+                return dropdown;
+            }
+            
+            getStatusIcon(status) {
+                const icons = {
+                    'pending': '⏳',
+                    'streaming': '🔄',
+                    'completed': '✅',
+                    'error': '❌'
+                };
+                return icons[status] || '❓';
+            }
+            
+            toggleDropdown(dropdown) {
+                dropdown.classList.toggle('expanded');
+            }
+            
+            updateDropdown(dbName, status, content) {
+                const dropdown = document.querySelector(`[data-db-name="${dbName}"]`);
+                if (!dropdown) return;
+                
+                // Update status
+                dropdown.className = `database-dropdown ${status}`;
+                
+                // Update icon
+                const icon = dropdown.querySelector('.status-icon');
+                icon.textContent = this.getStatusIcon(status);
+                
+                // Update content
+                const inner = dropdown.querySelector('.dropdown-inner');
+                inner.innerHTML = marked.parse(content);
+                
+                // Auto-expand if streaming or completed
+                if (status === 'streaming' || status === 'completed') {
+                    dropdown.classList.add('expanded');
+                }
+            }
+            
+            async streamResponse(messages) {
+                this.isStreaming = true;
+                this.databaseDropdowns.clear();
+                
+                // Add typing indicator
+                const typingDiv = this.addTypingIndicator();
+                
+                try {
+                    const response = await fetch(`${this.apiUrl}/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            messages: messages,
+                            stream: true 
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    // Remove typing indicator and create assistant message
+                    typingDiv.remove();
+                    const assistantContentDiv = this.addMessage('assistant', '');
+                    let fullResponse = '';
+                    
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        fullResponse += chunk;
+                        
+                        // Check for database status blocks
+                        if (chunk.includes('**Database:**') && chunk.includes('**Status:**')) {
+                            this.processDatabaseStatus(chunk, assistantContentDiv);
+                        }
+                        
+                        // Update the main content (excluding database status blocks)
+                        const cleanResponse = this.cleanResponseText(fullResponse);
+                        assistantContentDiv.innerHTML = marked.parse(cleanResponse);
+                        
+                        this.scrollToBottom();
+                    }
+                    
+                    // Final update
+                    const cleanResponse = this.cleanResponseText(fullResponse);
+                    this.messages[this.messages.length - 1].content = cleanResponse;
+                    
+                } catch (error) {
+                    typingDiv.remove();
+                    console.error('Streaming error:', error);
+                    this.showError('Connection error. Please try again.');
+                } finally {
+                    this.isStreaming = false;
+                }
+            }
+            
+            processDatabaseStatus(chunk, contentDiv) {
+                const lines = chunk.split('\n');
+                let dbName = '';
+                let status = '';
+                
+                for (const line of lines) {
+                    if (line.startsWith('**Database:**')) {
+                        dbName = line.replace('**Database:**', '').trim();
+                    } else if (line.startsWith('**Status:**')) {
+                        status = line.replace('**Status:**', '').trim();
+                    }
+                }
+                
+                if (dbName && status) {
+                    if (!this.databaseDropdowns.has(dbName)) {
+                        // Create new dropdown
+                        const dropdown = this.createDatabaseDropdown(dbName, 'completed');
+                        this.updateDropdown(dbName, 'completed', status);
+                        contentDiv.appendChild(dropdown);
+                        this.databaseDropdowns.set(dbName, dropdown);
+                    } else {
+                        // Update existing dropdown
+                        this.updateDropdown(dbName, 'completed', status);
+                    }
+                }
+            }
+            
+            cleanResponseText(text) {
+                // Remove database status blocks from the main response
+                return text.replace(/\*\*Database:\*\*[^*]+\*\*Status:\*\*[^*\n]+---?\n?/g, '');
+            }
+            
+            addTypingIndicator() {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar assistant';
+                avatar.textContent = 'AI';
+                
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message-content typing-indicator';
+                typingDiv.innerHTML = `
+                    <span>Thinking</span>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(typingDiv);
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+                
+                return messageDiv;
+            }
+            
+            setInputState(enabled) {
+                this.messageInput.disabled = !enabled;
+                this.sendButton.disabled = !enabled;
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.innerHTML = `
+                    <span>⚠️</span>
+                    <span>${message}</span>
+                `;
+                
+                this.messagesContainer.appendChild(errorDiv);
+                this.scrollToBottom();
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+            
+            scrollToBottom() {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+        }
+        
+        // Initialize the chat when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AEGISChat();
+        });
+    </script>
+</body>
+</html>
