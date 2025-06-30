@@ -83,27 +83,36 @@ The enhanced model yields structured data:
 
 ## Installation and Setup
 
-### Prerequisites
-Make sure you have the virtual environment activated and dependencies installed:
+### Your Current Setup (Keep Using This!)
+You currently use:
 ```bash
-# Activate virtual environment
+# Start your FastAPI server
+python start_server.py
+
+# Then open chat_interface.html in your browser
+```
+
+### Enhanced Setup with Dropdowns
+To get the dropdown functionality, simply:
+```bash
+# Start your server (same as always)
+python start_server.py
+
+# Open the enhanced interface instead
+# Navigate to: chat_interface_with_dropdowns.html
+```
+
+**No code changes needed!** Your existing server and API work perfectly with the enhanced interface.
+
+### Alternative: Standalone Dash Apps (Optional)
+If you prefer standalone Python apps:
+```bash
+# Activate virtual environment first
 source venv/bin/activate
 
-# Install required packages
-pip install -e .
-pip install -e ".[dev]"
-```
-
-### Running the Enhanced Chat App
-```bash
-# Run the enhanced version with dropdowns
+# Run standalone version with dropdowns
 python3 aegis_chat_app_enhanced.py
-
-# Or run the alternative version
-python3 aegis_chat_app_with_dropdowns.py
 ```
-
-The app will start on `http://localhost:8052` (enhanced) or `http://localhost:8051` (alternative).
 
 ## Usage
 
