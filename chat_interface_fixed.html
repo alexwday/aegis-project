@@ -874,12 +874,12 @@
                         const chunk = decoder.decode(value, { stream: true });
                         fullResponse += chunk;
                         
-                        // Check for database status blocks
-                        if (chunk.includes('**Database:**') && chunk.includes('**Status:**')) {
-                            this.processDatabaseStatus(chunk, assistantContentDiv);
+                        // Check for SUBAGENT_COMPLETE data (actual format from your server)
+                        if (chunk.includes('SUBAGENT_COMPLETE:')) {
+                            this.processSubagentComplete(chunk, assistantContentDiv);
                         }
                         
-                        // Update the main content (excluding database status blocks)
+                        // Update the main content (excluding SUBAGENT_COMPLETE data)
                         const cleanResponse = this.cleanResponseText(fullResponse);
                         assistantContentDiv.innerHTML = marked.parse(cleanResponse);
                         
@@ -899,36 +899,40 @@
                 }
             }
             
-            processDatabaseStatus(chunk, contentDiv) {
-                const lines = chunk.split('\n');
-                let dbName = '';
-                let status = '';
-                
-                for (const line of lines) {
-                    if (line.startsWith('**Database:**')) {
-                        dbName = line.replace('**Database:**', '').trim();
-                    } else if (line.startsWith('**Status:**')) {
-                        status = line.replace('**Status:**', '').trim();
-                    }
-                }
-                
-                if (dbName && status) {
-                    if (!this.databaseDropdowns.has(dbName)) {
-                        // Create new dropdown
-                        const dropdown = this.createDatabaseDropdown(dbName, 'completed');
-                        this.updateDropdown(dbName, 'completed', status);
-                        contentDiv.appendChild(dropdown);
-                        this.databaseDropdowns.set(dbName, dropdown);
-                    } else {
-                        // Update existing dropdown
-                        this.updateDropdown(dbName, 'completed', status);
-                    }
+            processSubagentComplete(chunk, contentDiv) {
+                const subagentMatches = chunk.match(/SUBAGENT_COMPLETE:(.+?)(?=\n|$)/g);
+                if (subagentMatches) {
+                    subagentMatches.forEach(match => {
+                        try {
+                            const jsonData = match.replace('SUBAGENT_COMPLETE:', '');
+                            const subagentItem = JSON.parse(jsonData);
+                            
+                            // Extract database info from subagent data
+                            const dbName = subagentItem.database_display_name || subagentItem.database_name || 'Unknown Database';
+                            const status = subagentItem.status_summary || 'Processing complete';
+                            const detailedResearch = subagentItem.detailed_research || '';
+                            
+                            if (!this.databaseDropdowns.has(dbName)) {
+                                // Create new dropdown
+                                const dropdown = this.createDatabaseDropdown(dbName, 'completed');
+                                this.updateDropdown(dbName, 'completed', `${status}\n\n${detailedResearch}`);
+                                contentDiv.appendChild(dropdown);
+                                this.databaseDropdowns.set(dbName, dropdown);
+                            } else {
+                                // Update existing dropdown
+                                this.updateDropdown(dbName, 'completed', `${status}\n\n${detailedResearch}`);
+                            }
+                            
+                        } catch (e) {
+                            console.error('Failed to parse subagent completion data:', e);
+                        }
+                    });
                 }
             }
             
             cleanResponseText(text) {
-                // Remove database status blocks from the main response
-                return text.replace(/\*\*Database:\*\*[^*]+\*\*Status:\*\*[^*\n]+---?\n?/g, '');
+                // Remove SUBAGENT_COMPLETE data from the main response (same as original interface)
+                return text.replace(/SUBAGENT_COMPLETE:.+?(?=\n|$)/g, '').replace(/\n\nDEBUG_DATA:.+$/s, '');
             }
             
             addTypingIndicator() {
