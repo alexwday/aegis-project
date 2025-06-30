@@ -900,31 +900,41 @@
             }
             
             processSubagentComplete(chunk, contentDiv) {
+                console.log('Processing chunk for SUBAGENT_COMPLETE:', chunk);
                 const subagentMatches = chunk.match(/SUBAGENT_COMPLETE:(.+?)(?=\n|$)/g);
+                console.log('Found subagent matches:', subagentMatches);
+                
                 if (subagentMatches) {
                     subagentMatches.forEach(match => {
                         try {
                             const jsonData = match.replace('SUBAGENT_COMPLETE:', '');
+                            console.log('JSON data to parse:', jsonData);
                             const subagentItem = JSON.parse(jsonData);
+                            console.log('Parsed subagent item:', subagentItem);
                             
                             // Extract database info from subagent data
-                            const dbName = subagentItem.database_display_name || subagentItem.database_name || 'Unknown Database';
+                            const dbName = subagentItem.database_display_name || subagentItem.database_name || subagentItem.db_name || 'Unknown Database';
                             const status = subagentItem.status_summary || 'Processing complete';
                             const detailedResearch = subagentItem.detailed_research || '';
                             
+                            console.log('Extracted info - dbName:', dbName, 'status:', status);
+                            
                             if (!this.databaseDropdowns.has(dbName)) {
                                 // Create new dropdown
+                                console.log('Creating new dropdown for:', dbName);
                                 const dropdown = this.createDatabaseDropdown(dbName, 'completed');
                                 this.updateDropdown(dbName, 'completed', `${status}\n\n${detailedResearch}`);
                                 contentDiv.appendChild(dropdown);
                                 this.databaseDropdowns.set(dbName, dropdown);
                             } else {
                                 // Update existing dropdown
+                                console.log('Updating existing dropdown for:', dbName);
                                 this.updateDropdown(dbName, 'completed', `${status}\n\n${detailedResearch}`);
                             }
                             
                         } catch (e) {
                             console.error('Failed to parse subagent completion data:', e);
+                            console.error('Raw match:', match);
                         }
                     });
                 }
