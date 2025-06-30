@@ -1134,8 +1134,17 @@
                         // Clean up debug data too
                         const cleanResponse = fullResponse.replace(/\n\nDEBUG_DATA:.+$/s, '');
                         
+                        // Save any existing research details before updating content
+                        const existingResearchDetails = assistantContentDiv.querySelector('.research-details');
+                        
                         // Update the message content with markdown rendering
                         assistantContentDiv.innerHTML = marked.parse(cleanResponse);
+                        
+                        // Restore research details if they existed
+                        if (existingResearchDetails) {
+                            assistantContentDiv.appendChild(existingResearchDetails);
+                        }
+                        
                         this.scrollToBottom();
                     }
                     
