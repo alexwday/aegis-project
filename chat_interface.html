@@ -1001,18 +1001,37 @@
                     return;
                 }
                 
-                // Create individual dropdowns for each database instead of one big section
+                // Find or create a container for all dropdowns
+                let dropdownContainer = messageContentDiv.querySelector('.database-dropdowns-container');
+                if (!dropdownContainer) {
+                    dropdownContainer = document.createElement('div');
+                    dropdownContainer.className = 'database-dropdowns-container';
+                    dropdownContainer.style.marginTop = '20px';
+                    
+                    // Add a header for the dropdowns section
+                    const headerDiv = document.createElement('div');
+                    headerDiv.style.marginBottom = '12px';
+                    headerDiv.style.padding = '8px 0';
+                    headerDiv.style.borderBottom = '2px solid #e5e7eb';
+                    headerDiv.innerHTML = '<h3 style="font-size: 16px; font-weight: 600; color: #374151;">📊 Database Query Results</h3>';
+                    dropdownContainer.appendChild(headerDiv);
+                    
+                    messageContentDiv.appendChild(dropdownContainer);
+                }
+                
+                // Create individual dropdowns for each database
                 console.log('🏗️ Creating dropdowns for allSubagentData:', allSubagentData);
                 allSubagentData.forEach(subagent => {
-                    const dbName = subagent.database_display_name || subagent.database_name || 'Unknown Database';
+                    const dbName = subagent.name || subagent.database_key || 'Unknown Database';
                     console.log('🔍 Processing subagent for database:', dbName, 'Data:', subagent);
-                    let existingDropdown = messageContentDiv.querySelector(`[data-db-name="${dbName}"]`);
+                    
+                    let existingDropdown = dropdownContainer.querySelector(`[data-db-name="${dbName}"]`);
                     
                     if (!existingDropdown) {
                         // Create new individual database dropdown
                         console.log('➕ Creating NEW dropdown for:', dbName);
                         existingDropdown = this.createDatabaseDropdown(dbName, subagent);
-                        messageContentDiv.appendChild(existingDropdown);
+                        dropdownContainer.appendChild(existingDropdown);
                         console.log('✅ NEW dropdown added to DOM for:', dbName);
                     } else {
                         // Update existing dropdown
@@ -1025,7 +1044,7 @@
             
             createDatabaseDropdown(dbName, subagent) {
                 const dropdown = document.createElement('div');
-                dropdown.className = 'database-dropdown expanded'; // Start expanded
+                dropdown.className = 'database-dropdown'; // Start collapsed
                 dropdown.setAttribute('data-db-name', dbName);
                 
                 // Create header with database name and status
@@ -1037,14 +1056,14 @@
                 
                 const statusIcon = document.createElement('span');
                 statusIcon.className = 'database-status-icon';
-                statusIcon.textContent = '✅'; // Completed
+                statusIcon.textContent = subagent.status === 'error' ? '❌' : '✅';
                 
                 const nameSpan = document.createElement('span');
                 nameSpan.textContent = dbName;
                 
                 const statusSpan = document.createElement('span');
                 statusSpan.className = 'database-status-text';
-                statusSpan.textContent = 'Complete';
+                statusSpan.textContent = subagent.status === 'error' ? 'Error' : 'Complete';
                 
                 title.appendChild(statusIcon);
                 title.appendChild(nameSpan);
@@ -1057,13 +1076,39 @@
                 header.appendChild(title);
                 header.appendChild(toggle);
                 
-                // Create content area
+                // Create content area with the actual response
                 const content = document.createElement('div');
                 content.className = 'database-dropdown-content';
+                content.style.padding = '16px';
                 
-                // Add subagent details
-                const subagentDiv = this.createSubagentItem(subagent);
-                content.appendChild(subagentDiv);
+                // Parse and display the response content
+                if (subagent.response) {
+                    content.innerHTML = marked.parse(subagent.response);
+                } else {
+                    content.innerHTML = '<p style="color: #6b7280; font-style: italic;">No response data available</p>';
+                }
+                
+                // Add metadata footer if available
+                if (subagent.metadata) {
+                    const metadataDiv = document.createElement('div');
+                    metadataDiv.style.marginTop = '12px';
+                    metadataDiv.style.paddingTop = '12px';
+                    metadataDiv.style.borderTop = '1px solid #e5e7eb';
+                    metadataDiv.style.fontSize = '11px';
+                    metadataDiv.style.color = '#6b7280';
+                    
+                    if (subagent.metadata.documents > 0) {
+                        metadataDiv.innerHTML += `<div>📄 Documents: ${subagent.metadata.documents}</div>`;
+                    }
+                    if (subagent.metadata.scope) {
+                        metadataDiv.innerHTML += `<div>🔍 Scope: ${subagent.metadata.scope}</div>`;
+                    }
+                    if (subagent.metadata.status_summary) {
+                        metadataDiv.innerHTML += `<div>📊 Status: ${subagent.metadata.status_summary}</div>`;
+                    }
+                    
+                    content.appendChild(metadataDiv);
+                }
                 
                 dropdown.appendChild(header);
                 dropdown.appendChild(content);
@@ -1077,10 +1122,50 @@
             }
             
             updateDatabaseDropdown(dropdown, subagent) {
-                // Update the content of existing dropdown
+                // Update the header status
+                const statusIcon = dropdown.querySelector('.database-status-icon');
+                const statusText = dropdown.querySelector('.database-status-text');
+                
+                if (statusIcon) {
+                    statusIcon.textContent = subagent.status === 'error' ? '❌' : '✅';
+                }
+                if (statusText) {
+                    statusText.textContent = subagent.status === 'error' ? 'Error' : 'Complete';
+                }
+                
+                // Update the content
                 const content = dropdown.querySelector('.database-dropdown-content');
-                const subagentDiv = this.createSubagentItem(subagent);
-                content.appendChild(subagentDiv);
+                content.innerHTML = ''; // Clear existing content
+                content.style.padding = '16px';
+                
+                // Parse and display the response content
+                if (subagent.response) {
+                    content.innerHTML = marked.parse(subagent.response);
+                } else {
+                    content.innerHTML = '<p style="color: #6b7280; font-style: italic;">No response data available</p>';
+                }
+                
+                // Add metadata footer if available
+                if (subagent.metadata) {
+                    const metadataDiv = document.createElement('div');
+                    metadataDiv.style.marginTop = '12px';
+                    metadataDiv.style.paddingTop = '12px';
+                    metadataDiv.style.borderTop = '1px solid #e5e7eb';
+                    metadataDiv.style.fontSize = '11px';
+                    metadataDiv.style.color = '#6b7280';
+                    
+                    if (subagent.metadata.documents > 0) {
+                        metadataDiv.innerHTML += `<div>📄 Documents: ${subagent.metadata.documents}</div>`;
+                    }
+                    if (subagent.metadata.scope) {
+                        metadataDiv.innerHTML += `<div>🔍 Scope: ${subagent.metadata.scope}</div>`;
+                    }
+                    if (subagent.metadata.status_summary) {
+                        metadataDiv.innerHTML += `<div>📊 Status: ${subagent.metadata.status_summary}</div>`;
+                    }
+                    
+                    content.appendChild(metadataDiv);
+                }
             }
             
             async streamResponse(messages) {
@@ -1167,15 +1252,15 @@
                         // Clean up debug data too
                         const cleanResponse = fullResponse.replace(/\n\nDEBUG_DATA:.+$/s, '');
                         
-                        // Save any existing research details before updating content
-                        const existingResearchDetails = assistantContentDiv.querySelector('.research-details');
+                        // Save any existing dropdowns container before updating content
+                        const existingDropdowns = assistantContentDiv.querySelector('.database-dropdowns-container');
                         
                         // Update the message content with markdown rendering
                         assistantContentDiv.innerHTML = marked.parse(cleanResponse);
                         
-                        // Restore research details if they existed
-                        if (existingResearchDetails) {
-                            assistantContentDiv.appendChild(existingResearchDetails);
+                        // Restore dropdowns container if it existed
+                        if (existingDropdowns) {
+                            assistantContentDiv.appendChild(existingDropdowns);
                         }
                         
                         this.scrollToBottom();

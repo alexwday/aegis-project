@@ -1193,26 +1193,47 @@ def _model_generator(
                                 priority = "secondary"
                             
                             # Create subagent data for this database
+                            # Get the actual response content based on scope
+                            subagent_response = ""
+                            if scope == "research" and db_name in aggregated_detailed_research:
+                                subagent_response = aggregated_detailed_research[db_name]
+                            elif scope == "metadata" and db_name in metadata_results_by_db:
+                                # Format metadata results as markdown
+                                items = metadata_results_by_db[db_name]
+                                if items:
+                                    subagent_response = f"Found {len(items)} matching documents:\n\n"
+                                    for item in items[:10]:  # Show first 10 items
+                                        if isinstance(item, dict):
+                                            if "error" in item:
+                                                subagent_response += f"- Error: {item['error']}\n"
+                                            else:
+                                                doc_name = item.get("document_name", "Unknown")
+                                                doc_desc = item.get("document_description", "No description")
+                                                subagent_response += f"- **{doc_name}**: {doc_desc}\n"
+                                    if len(items) > 10:
+                                        subagent_response += f"\n... and {len(items) - 10} more documents"
+                            
                             subagent_item = {
                                 "name": db_display_name,
                                 "database_key": db_name,
                                 "priority": priority,
-                                "status": "success" if result and not isinstance(result, str) else "error",
-                                "response": aggregated_detailed_research.get(db_name, "No data available"),
+                                "status": "success" if result and not task_exception else "error",
+                                "response": subagent_response or status_summary,
                                 "metadata": {
                                     "scope": scope,
                                     "documents": len(file_links) if file_links else 0,
-                                    "duration": None
+                                    "duration": None,
+                                    "status_summary": status_summary
                                 }
                             }
                             
                             # DEBUG: Log subagent creation
-                            logger.info(f"🎯 Creating subagent_item for {db_display_name}: {subagent_item}")
-                            logger.info(f"📄 Response content for {db_name}: {subagent_item['response'][:200]}..." if subagent_item.get('response') else f"⚠️ No response content for {db_name}")
+                            logger.info(f"🎯 Creating subagent_item for {db_display_name}: name={subagent_item['name']}, status={subagent_item['status']}")
+                            logger.info(f"📄 Response content for {db_name}: {len(subagent_response)} chars")
                             
                             # Stream the subagent data as soon as this database completes
                             status_block = f"SUBAGENT_COMPLETE:{json.dumps(subagent_item)}\n"
-                            logger.info(f"📡 Yielding SUBAGENT_COMPLETE for {db_name}: {status_block[:100]}...")
+                            logger.info(f"📡 Yielding SUBAGENT_COMPLETE for {db_name}")
                             yield status_block
 
                     logger.info("All concurrent database queries completed processing.")
