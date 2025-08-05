@@ -1183,13 +1183,13 @@ def _model_generator(
 
                             # Determine priority based on database type
                             priority = "primary"
-                            if db_name == "benchmarking":
+                            if db_name == "subagent_benchmarking":
                                 priority = "primary"
-                            elif db_name == "transcripts":
+                            elif db_name == "subagent_transcripts":
                                 priority = "primary"
-                            elif db_name == "rts":
+                            elif db_name == "subagent_rts":
                                 priority = "secondary"
-                            elif db_name.startswith("report_") or db_name == "ir_quarterly_newsletter":
+                            elif db_name.startswith("report_"):
                                 priority = "secondary"
                             
                             # Create subagent data for this database

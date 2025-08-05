@@ -46,16 +46,16 @@ T = TypeVar("T")
 
 # Available databases are imported from the central configuration above
 
-# Define mapping of financial databases to their subagents
+# Define mapping of financial databases to their subagent folders
 FINANCIAL_DATABASES = {
-    "transcripts": "transcripts",
-    "rts": "rts", 
-    "benchmarking": "benchmarking",
+    "subagent_transcripts": "subagent_transcripts",
+    "subagent_rts": "subagent_rts", 
+    "subagent_benchmarking": "subagent_benchmarking",
     "report_transcript_summaries": "report_transcript_summaries",
     "report_transcript_key_themes": "report_transcript_key_themes",
     "report_wm_readthrough": "report_wm_readthrough",
     "report_cm_readthrough": "report_cm_readthrough",
-    "ir_quarterly_newsletter": "ir_quarterly_newsletter",
+    "report_ir_quarterly_newsletter": "report_ir_quarterly_newsletter",
 }
 
 # Get module logger

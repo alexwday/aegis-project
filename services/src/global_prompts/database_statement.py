@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Complete database configuration for all available databases
 AVAILABLE_DATABASES = {
-    "transcripts": {
+    "subagent_transcripts": {
         "name": "Earnings Call Transcripts",
         "description": "Complete earnings call transcripts from all global banks and insurance companies in scope. Contains management discussion, guidance, context, logic/reasoning/explanation around financial results. Includes some key line items but primarily focused on capturing management commentary and providing context around the numbers.",
         "query_type": "semantic search and RAG retrieval",
@@ -20,14 +20,14 @@ AVAILABLE_DATABASES = {
         "use_when": "PRIMARY Source for Management Discussion & Context: Official management commentary, guidance, outlook, strategic initiatives, market discussion, reasoning behind financial results. Use when you need management's perspective or explanation of financial performance. **Query:** Use bank name, quarter, year, and specific topics or themes.",
         "priority": "primary",
     },
-    "rts": {
+    "subagent_rts": {
         "name": "Report to Shareholders (RTS) / 10-Q/10-K",
         "description": "Report to shareholders for Canadian banks and 10-Q/10-K filings from US banks in scope. Used as secondary source for either raw numbers (benchmarking) or context when primary sources don't have the information needed.",
         "query_type": "semantic search and RAG retrieval",
         "content_type": "official regulatory filings",
         "use_when": "SECONDARY Source for Both Context & Line Items: When information is not found in primary sources (Benchmarking for line items, Transcripts for context). **Strategy:** Query when primary databases don't contain the needed information. **Query:** Use precise metric names, bank identifiers, and time periods.",
     },
-    "benchmarking": {
+    "subagent_benchmarking": {
         "name": "Financial Benchmarking Data",
         "description": "Income statement, balance sheet, and business-specific line items from all major Canadian and US banks in scope. This is the primary source for financial line items, amounts, and historical data. Contains comprehensive financial metrics, ratios, and comparative data across institutions.",
         "query_type": "structured data query and RAG retrieval",
@@ -62,7 +62,7 @@ AVAILABLE_DATABASES = {
         "content_type": "pre-generated CM readthrough reports",
         "use_when": "SPECIFIC REPORT REQUEST: When users specifically ask for CM (Capital Markets) readthrough reports by name. This subagent pulls already generated data from Postgres and formats it for response. **Query:** Use report name, quarter, year, or CM-specific requirements.",
     },
-    "ir_quarterly_newsletter": {
+    "report_ir_quarterly_newsletter": {
         "name": "Investor Relations Quarterly Newsletter",
         "description": "Pre-generated quarterly newsletter highlighting key topics and themes across all global banks. Distributed across all of finance as a comprehensive quarterly summary. Created based on investor relations team requirements and combines insights from all institutions.",
         "query_type": "report retrieval",
