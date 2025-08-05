@@ -141,7 +141,7 @@ system_prompt: |
      - ❌ "all quarters of 2024" or "full year 2024"
   3. **Financial Metrics**: Net income, revenue, operating margin, EPS, etc.
   4. **Comparison Context**: "compared to Q1 2023", "versus industry peers"
-  5. **Data Sources**: Earnings calls, quarterly reports, peer benchmarking, IR summaries
+  5. **Data Sources**: Earnings call transcripts, RTS reports, benchmarking data, pre-generated reports
   6. **Specific Topics**: Guidance, outlook, segment performance, etc.
   7. **Banking Group Resolution**: Expand ambiguous terms:
      - "Big Six" → "Royal Bank of Canada, TD Bank, Bank of Montreal, Scotiabank, CIBC, National Bank of Canada"

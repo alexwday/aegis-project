@@ -29,9 +29,9 @@ This project serves financial analysts and investors by implementing an intellig
 <KNOWLEDGE_SOURCES>
 <PRIMARY_DATA_SOURCES>
 The system accesses three primary data sources:
-- Transcripts: Earnings call transcripts with management discussion and guidance from global banks and insurance companies
-- RTS: Report to Shareholders for Canadian banks and 10-Q/10-K filings from US banks
-- Benchmarking: Income statement, balance sheet, and business-specific line items (PRIMARY source for financial metrics)
+- Transcripts: Earnings call transcripts from quarterly earnings calls where company executives discuss financial results with analysts. Includes prepared remarks from management and Q&A sessions covering financial performance, business updates, and forward guidance from global banks and insurance companies
+- RTS (Reports to Shareholders): Mandatory regulatory filings including US SEC filings (10-K annual reports, 10-Q quarterly reports) and equivalent Canadian shareholder reports. These include business descriptions, risk factors, financial statements, management discussion and analysis, and other required regulatory disclosures
+- Benchmarking: Standardized financial metrics and line items extracted from various reporting sources, organized in a consistent format to enable comparison across companies and time periods. Includes key financial ratios, performance indicators, and regulatory metrics (PRIMARY source for financial metrics)
 </PRIMARY_DATA_SOURCES>
 
 <REPORT_SOURCES>

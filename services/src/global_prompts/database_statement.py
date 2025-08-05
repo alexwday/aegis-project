@@ -18,6 +18,7 @@ AVAILABLE_DATABASES = {
         "query_type": "semantic search and RAG retrieval",
         "content_type": "earnings call transcripts",
         "use_when": "PRIMARY Source for Management Discussion & Context: Official management commentary, guidance, outlook, strategic initiatives, market discussion, reasoning behind financial results. Use when you need management's perspective or explanation of financial performance. **Query:** Use bank name, quarter, year, and specific topics or themes.",
+        "priority": "primary",
     },
     "rts": {
         "name": "Report to Shareholders (RTS) / 10-Q/10-K",
