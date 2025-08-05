@@ -233,7 +233,7 @@ def generate_streaming_summary(
 
             # --- Synchronous LLM Call ---
             # Directly call the synchronous call_llm function
-            llm_stream = call_llm(
+            llm_stream, _ = call_llm(
                 oauth_token=token,
                 model=model_name,
                 messages=messages,

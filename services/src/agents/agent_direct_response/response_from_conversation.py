@@ -214,7 +214,7 @@ def response_from_conversation(
         logger.debug(f"Generating direct response using model: {MODEL_NAME}")
 
         # Make the API call with streaming
-        response_stream = call_llm(
+        response_stream, _ = call_llm(
             oauth_token=token,
             model=MODEL_NAME,
             messages=messages,
