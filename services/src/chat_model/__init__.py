@@ -3,3 +3,7 @@
 Chat model module for AEGIS project.
 Contains chat model implementations and conversation handling.
 """
+
+from .model import model, process_request_async
+
+__all__ = ["model", "process_request_async"]

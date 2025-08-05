@@ -66,15 +66,17 @@ from openai import (
 
 from ..initial_setup.env_config import config
 
-# Get settings from config
-BASE_URL = config.BASE_URL
+# Get settings from config - defer validation to runtime
 MAX_RETRY_ATTEMPTS = config.MAX_RETRY_ATTEMPTS
 REQUEST_TIMEOUT = config.REQUEST_TIMEOUT
 RETRY_DELAY_SECONDS = config.RETRY_DELAY_SECONDS
 
-# Validate configuration
-if not BASE_URL:
-    raise ValueError("BASE_URL not configured in environment")
+def _get_base_url():
+    """Get and validate BASE_URL at runtime."""
+    base_url = config.BASE_URL
+    if not base_url:
+        raise ValueError("BASE_URL not configured in environment")
+    return base_url
 
 # Get module logger
 logger = logging.getLogger(__name__)
@@ -169,7 +171,7 @@ def call_llm(
     call_start_time = time.time()
 
     # Create the OpenAI client
-    client = OpenAI(api_key=oauth_token, base_url=BASE_URL)
+    client = OpenAI(api_key=oauth_token, base_url=_get_base_url())
 
     logger.info("Making chat completion API call to %s", params.get("model", "unknown"))
 
@@ -306,7 +308,7 @@ def call_llm_embedding(
     last_exception: Optional[Exception] = None
 
     # Create the OpenAI client
-    client = OpenAI(api_key=oauth_token, base_url=BASE_URL)
+    client = OpenAI(api_key=oauth_token, base_url=_get_base_url())
 
     logger.info("Making embedding API call to %s", params.get("model", "unknown"))
 
