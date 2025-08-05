@@ -73,3 +73,9 @@ dmypy.json
 *.crt
 *.key
 *.pem
+
+# Claude files
+CLAUDE.md
+CLAUDE_TEMPLATE.md
+**/CLAUDE.md
+**/CLAUDE_TEMPLATE.md
