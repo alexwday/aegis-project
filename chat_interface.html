@@ -701,12 +701,13 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.2s ease-out;
-            border-top: 1px solid #e5e7eb;
         }
 
         .database-dropdown.expanded .database-dropdown-content {
             max-height: 600px;
             overflow-y: auto;
+            border-top: 1px solid #e5e7eb;
+            padding: 12px;
         }
         
         /* Mobile responsiveness */
@@ -851,6 +852,18 @@
                 
                 this.messageInput.addEventListener('input', () => {
                     this.autoResizeTextarea();
+                });
+                
+                // Add event delegation for database dropdown toggles
+                // This allows dropdowns to be interactive even during streaming
+                this.messagesContainer.addEventListener('click', (e) => {
+                    const header = e.target.closest('.database-dropdown-header');
+                    if (header) {
+                        const dropdown = header.closest('.database-dropdown');
+                        if (dropdown) {
+                            dropdown.classList.toggle('expanded');
+                        }
+                    }
                 });
                 
                 // Database selector event listeners
@@ -1108,7 +1121,6 @@
                 // Create content area with the actual response
                 const content = document.createElement('div');
                 content.className = 'database-dropdown-content';
-                content.style.padding = '12px';
                 
                 // Parse and display the response content
                 if (subagent.response) {
@@ -1145,10 +1157,7 @@
                 dropdown.appendChild(header);
                 dropdown.appendChild(content);
                 
-                // Add toggle functionality
-                header.addEventListener('click', () => {
-                    dropdown.classList.toggle('expanded');
-                });
+                // Don't add event listener here - use delegation instead for better streaming support
                 
                 return dropdown;
             }
@@ -1168,7 +1177,6 @@
                 // Update the content
                 const content = dropdown.querySelector('.database-dropdown-content');
                 content.innerHTML = ''; // Clear existing content
-                content.style.padding = '12px';
                 
                 // Parse and display the response content
                 if (subagent.response) {
