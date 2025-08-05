@@ -45,6 +45,8 @@ Returns demo financial data for AEGIS testing.
 """
 
 import logging
+import time
+import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ....initial_setup.env_config import config
@@ -113,6 +115,11 @@ def query_database_sync(
         )
     
     try:
+        # PLACEHOLDER: Add random delay to simulate processing time (3-7 seconds for benchmarking)
+        delay = random.uniform(3.0, 7.0)
+        logger.info(f"PLACEHOLDER: Simulating database query with {delay:.1f}s delay for benchmarking database")
+        time.sleep(delay)
+        
         logger.debug("PLACEHOLDER: Connecting to PostgreSQL benchmarking database")
         logger.debug(f"PLACEHOLDER: Querying financial metrics for: {query}")
         

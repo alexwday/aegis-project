@@ -1026,10 +1026,10 @@ def _model_generator(
                 )
                 if scope == "metadata":
                     yield "# 🔍 File Search Plan\n\n"
-                    yield f"## Search Criteria\n{research_statement}\n\n"
+                    yield f"{research_statement}\n\n"
                 else:
                     yield "# 📋 Research Plan\n\n"
-                    yield f"## Research Statement\n{research_statement}\n\n"
+                    yield f"{research_statement}\n\n"
                 
                 # Don't display the database list - they'll see it in the dropdowns
                 logger.info("Displayed database selection plan.")

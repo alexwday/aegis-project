@@ -50,6 +50,8 @@ This implementation returns demo data for testing AEGIS agent capabilities.
 """
 
 import logging
+import time
+import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Import existing AEGIS components for reference
@@ -118,6 +120,11 @@ def query_database_sync(
         )
     
     try:
+        # PLACEHOLDER: Add random delay to simulate processing time (2-5 seconds)
+        delay = random.uniform(2.0, 5.0)
+        logger.info(f"PLACEHOLDER: Simulating database query with {delay:.1f}s delay for transcripts database")
+        time.sleep(delay)
+        
         # PLACEHOLDER: Simulate database connection and query
         logger.debug("PLACEHOLDER: Connecting to PostgreSQL transcripts database")
         logger.debug(f"PLACEHOLDER: Performing semantic search for: {query}")

@@ -639,28 +639,41 @@
             min-width: 80px;
         }
 
-        /* Individual Database Dropdown Styles - Subtle and Condensed */
+        /* Individual Database Dropdown Styles - Enhanced Look */
         .database-dropdown {
-            margin: 6px 0;
+            margin: 8px 0;
             border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: #fafafa;
-            transition: all 0.2s ease;
+            border-radius: 8px;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .database-dropdown.expanded {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+            border-width: 1.5px;
         }
 
         .database-dropdown-header {
-            padding: 8px 12px;
+            padding: 10px 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
             user-select: none;
-            transition: background-color 0.15s;
-            background: #f9fafb;
+            transition: all 0.2s;
+            background: #ffffff;
+            border-radius: 8px 8px 0 0;
         }
 
         .database-dropdown-header:hover {
-            background: #f3f4f6;
+            background: #f8f9fa;
+        }
+
+        .database-dropdown.expanded .database-dropdown-header {
+            background: #f0f1ff;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .database-dropdown-title {
@@ -669,45 +682,56 @@
             gap: 8px;
             font-weight: 500;
             font-size: 13px;
-            color: #6b7280;
+            color: #4b5563;
+        }
+
+        .database-dropdown.expanded .database-dropdown-title {
+            color: #4338ca;
+            font-weight: 600;
         }
 
         .database-status-icon {
             font-size: 12px;
-            opacity: 0.7;
         }
 
         .database-status-text {
             font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
             font-weight: 500;
-            background: #f0f0f0;
-            color: #9ca3af;
+            background: #f3f4f6;
+            color: #6b7280;
             margin-left: 6px;
         }
 
+        .database-dropdown.expanded .database-status-text {
+            background: #ddd6fe;
+            color: #5b21b6;
+        }
+
         .database-dropdown-toggle {
-            transition: transform 0.2s ease;
-            font-size: 10px;
+            transition: transform 0.3s ease;
+            font-size: 12px;
             color: #9ca3af;
         }
 
         .database-dropdown.expanded .database-dropdown-toggle {
             transform: rotate(180deg);
+            color: #6366f1;
         }
 
         .database-dropdown-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.2s ease-out;
+            transition: max-height 0.3s ease-out;
+            background: #fafbff;
         }
 
         .database-dropdown.expanded .database-dropdown-content {
             max-height: 600px;
             overflow-y: auto;
-            border-top: 1px solid #e5e7eb;
-            padding: 12px;
+            padding: 16px;
+            border-radius: 0 0 8px 8px;
         }
         
         /* Mobile responsiveness */
@@ -825,6 +849,8 @@
                 this.apiUrl = 'http://localhost:8000';
                 this.messages = [];
                 this.isStreaming = false;
+                this.autoScrollEnabled = true;
+                this.lastScrollPosition = 0;
                 
                 this.messagesContainer = document.getElementById('messages');
                 this.messageInput = document.getElementById('messageInput');
@@ -864,6 +890,25 @@
                             dropdown.classList.toggle('expanded');
                         }
                     }
+                });
+                
+                // Detect user scroll to disable auto-scroll
+                this.messagesContainer.addEventListener('scroll', () => {
+                    const container = this.messagesContainer;
+                    const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 50;
+                    
+                    if (this.isStreaming) {
+                        // If user scrolls away from bottom during streaming, disable auto-scroll
+                        if (!isAtBottom && container.scrollTop < this.lastScrollPosition - 5) {
+                            this.autoScrollEnabled = false;
+                        }
+                        // Re-enable if they scroll back to bottom
+                        else if (isAtBottom) {
+                            this.autoScrollEnabled = true;
+                        }
+                    }
+                    
+                    this.lastScrollPosition = container.scrollTop;
                 });
                 
                 // Database selector event listeners
@@ -1012,14 +1057,14 @@
             
             // Helper method to position dropdown container correctly
             positionDropdownContainer(messageContentDiv, dropdownContainer) {
-                // Find the research statement header and insert dropdowns right after it
-                const researchHeader = Array.from(messageContentDiv.querySelectorAll('h2')).find(
-                    h2 => h2.textContent.includes('Research Statement') || h2.textContent.includes('Search Criteria')
+                // Find the Research Plan or File Search Plan header
+                const planHeader = Array.from(messageContentDiv.querySelectorAll('h1')).find(
+                    h1 => h1.textContent.includes('Research Plan') || h1.textContent.includes('File Search Plan')
                 );
                 
-                if (researchHeader) {
-                    // Find the paragraph that follows the header
-                    let nextElement = researchHeader.nextElementSibling;
+                if (planHeader) {
+                    // Find the first paragraph after the plan header (this is the research statement)
+                    let nextElement = planHeader.nextElementSibling;
                     
                     // Skip past the research statement paragraph to insert after it
                     if (nextElement && nextElement.tagName === 'P') {
@@ -1031,14 +1076,14 @@
                         }
                     } else {
                         // Insert directly after the header if no paragraph
-                        if (researchHeader.nextElementSibling) {
-                            messageContentDiv.insertBefore(dropdownContainer, researchHeader.nextElementSibling);
+                        if (planHeader.nextElementSibling) {
+                            messageContentDiv.insertBefore(dropdownContainer, planHeader.nextElementSibling);
                         } else {
                             messageContentDiv.appendChild(dropdownContainer);
                         }
                     }
                 } else {
-                    // If no research header found yet, append at the end (will be repositioned later)
+                    // If no plan header found yet, append at the end (will be repositioned later)
                     messageContentDiv.appendChild(dropdownContainer);
                 }
             }
@@ -1213,6 +1258,7 @@
             
             async streamResponse(messages) {
                 this.isStreaming = true;
+                this.autoScrollEnabled = true; // Re-enable auto-scroll for new message
                 
                 // Add typing indicator
                 const typingDiv = this.addTypingIndicator();
@@ -1366,7 +1412,10 @@
             }
             
             scrollToBottom() {
-                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                // Only scroll if auto-scroll is enabled
+                if (this.autoScrollEnabled) {
+                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                }
             }
             
             getSelectedDatabases() {
