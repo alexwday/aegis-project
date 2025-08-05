@@ -1030,23 +1030,8 @@ def _model_generator(
                 else:
                     yield "# 📋 Research Plan\n\n"
                     yield f"## Research Statement\n{research_statement}\n\n"
-                selected_db_display_names = [
-                    available_databases.get(db_name, {}).get("name", db_name)
-                    for db_name in selected_databases
-                ]
-                if selected_db_display_names:
-                    if len(selected_db_display_names) == 1:
-                        names_str = selected_db_display_names[0]
-                    elif len(selected_db_display_names) == 2:
-                        names_str = f"{selected_db_display_names[0]} and {selected_db_display_names[1]}"
-                    else:
-                        names_str = (
-                            ", ".join(selected_db_display_names[:-1])
-                            + f", and {selected_db_display_names[-1]}"
-                        )
-                    yield f"Searching the following databases: {names_str}.\n\n---\n"
-                else:
-                    yield "No databases selected for search.\n\n---\n"
+                
+                # Don't display the database list - they'll see it in the dropdowns
                 logger.info("Displayed database selection plan.")
 
                 if not selected_databases:
@@ -1244,8 +1229,9 @@ def _model_generator(
 
                 if scope == "research":
                     if aggregated_detailed_research:
-                        yield "\n\n---\n"
-                        yield "\n\n## 📊 Research Summary\n"
+                        # Add separator after dropdowns
+                        yield "\n---\n"
+                        yield "\n## 📊 Research Summary\n"
                         process_monitor.start_stage("summary")
                         process_monitor.add_stage_details(
                             "summary",

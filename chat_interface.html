@@ -639,58 +639,58 @@
             min-width: 80px;
         }
 
-        /* Individual Database Dropdown Styles */
+        /* Individual Database Dropdown Styles - Subtle and Condensed */
         .database-dropdown {
-            margin: 16px 0;
-            border: 2px solid #66bb6a;
-            border-radius: 8px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            margin: 6px 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fafafa;
+            transition: all 0.2s ease;
         }
 
         .database-dropdown-header {
-            padding: 14px 18px;
+            padding: 8px 12px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
             user-select: none;
-            transition: background-color 0.2s;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
+            transition: background-color 0.15s;
+            background: #f9fafb;
         }
 
         .database-dropdown-header:hover {
-            background: #e9ecef;
+            background: #f3f4f6;
         }
 
         .database-dropdown-title {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 600;
-            font-size: 15px;
+            gap: 8px;
+            font-weight: 500;
+            font-size: 13px;
+            color: #6b7280;
         }
 
         .database-status-icon {
-            font-size: 18px;
+            font-size: 12px;
+            opacity: 0.7;
         }
 
         .database-status-text {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 12px;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
             font-weight: 500;
-            background: #e8f5e8;
-            color: #388e3c;
-            margin-left: 8px;
+            background: #f0f0f0;
+            color: #9ca3af;
+            margin-left: 6px;
         }
 
         .database-dropdown-toggle {
-            transition: transform 0.3s ease;
-            font-size: 14px;
-            color: #6b7280;
+            transition: transform 0.2s ease;
+            font-size: 10px;
+            color: #9ca3af;
         }
 
         .database-dropdown.expanded .database-dropdown-toggle {
@@ -700,11 +700,13 @@
         .database-dropdown-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            transition: max-height 0.2s ease-out;
+            border-top: 1px solid #e5e7eb;
         }
 
         .database-dropdown.expanded .database-dropdown-content {
-            max-height: 1000px;
+            max-height: 600px;
+            overflow-y: auto;
         }
         
         /* Mobile responsiveness */
@@ -1006,17 +1008,26 @@
                 if (!dropdownContainer) {
                     dropdownContainer = document.createElement('div');
                     dropdownContainer.className = 'database-dropdowns-container';
-                    dropdownContainer.style.marginTop = '20px';
+                    dropdownContainer.style.marginTop = '8px';
+                    dropdownContainer.style.marginBottom = '16px';
                     
-                    // Add a header for the dropdowns section
-                    const headerDiv = document.createElement('div');
-                    headerDiv.style.marginBottom = '12px';
-                    headerDiv.style.padding = '8px 0';
-                    headerDiv.style.borderBottom = '2px solid #e5e7eb';
-                    headerDiv.innerHTML = '<h3 style="font-size: 16px; font-weight: 600; color: #374151;">📊 Database Query Results</h3>';
-                    dropdownContainer.appendChild(headerDiv);
+                    // Find the research statement header and insert dropdowns right after it
+                    const researchHeader = Array.from(messageContentDiv.querySelectorAll('h2')).find(
+                        h2 => h2.textContent.includes('Research Statement') || h2.textContent.includes('Search Criteria')
+                    );
                     
-                    messageContentDiv.appendChild(dropdownContainer);
+                    if (researchHeader && researchHeader.nextSibling) {
+                        // Insert after the research statement paragraph
+                        const nextParagraph = researchHeader.nextSibling;
+                        if (nextParagraph && nextParagraph.nextSibling) {
+                            messageContentDiv.insertBefore(dropdownContainer, nextParagraph.nextSibling);
+                        } else {
+                            messageContentDiv.appendChild(dropdownContainer);
+                        }
+                    } else {
+                        // Fallback to appending at the end
+                        messageContentDiv.appendChild(dropdownContainer);
+                    }
                 }
                 
                 // Create individual dropdowns for each database
@@ -1079,13 +1090,16 @@
                 // Create content area with the actual response
                 const content = document.createElement('div');
                 content.className = 'database-dropdown-content';
-                content.style.padding = '16px';
+                content.style.padding = '12px';
                 
                 // Parse and display the response content
                 if (subagent.response) {
                     content.innerHTML = marked.parse(subagent.response);
+                    // Make the content text smaller
+                    content.style.fontSize = '12px';
+                    content.style.lineHeight = '1.4';
                 } else {
-                    content.innerHTML = '<p style="color: #6b7280; font-style: italic;">No response data available</p>';
+                    content.innerHTML = '<p style="color: #6b7280; font-style: italic; font-size: 12px;">No response data available</p>';
                 }
                 
                 // Add metadata footer if available
@@ -1136,13 +1150,16 @@
                 // Update the content
                 const content = dropdown.querySelector('.database-dropdown-content');
                 content.innerHTML = ''; // Clear existing content
-                content.style.padding = '16px';
+                content.style.padding = '12px';
                 
                 // Parse and display the response content
                 if (subagent.response) {
                     content.innerHTML = marked.parse(subagent.response);
+                    // Make the content text smaller
+                    content.style.fontSize = '12px';
+                    content.style.lineHeight = '1.4';
                 } else {
-                    content.innerHTML = '<p style="color: #6b7280; font-style: italic;">No response data available</p>';
+                    content.innerHTML = '<p style="color: #6b7280; font-style: italic; font-size: 12px;">No response data available</p>';
                 }
                 
                 // Add metadata footer if available
