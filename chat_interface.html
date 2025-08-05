@@ -997,6 +997,39 @@
                 }
             }
             
+            // Helper method to position dropdown container correctly
+            positionDropdownContainer(messageContentDiv, dropdownContainer) {
+                // Find the research statement header and insert dropdowns right after it
+                const researchHeader = Array.from(messageContentDiv.querySelectorAll('h2')).find(
+                    h2 => h2.textContent.includes('Research Statement') || h2.textContent.includes('Search Criteria')
+                );
+                
+                if (researchHeader) {
+                    // Find the paragraph that follows the header
+                    let nextElement = researchHeader.nextElementSibling;
+                    
+                    // Skip past the research statement paragraph to insert after it
+                    if (nextElement && nextElement.tagName === 'P') {
+                        // Insert after the paragraph
+                        if (nextElement.nextElementSibling) {
+                            messageContentDiv.insertBefore(dropdownContainer, nextElement.nextElementSibling);
+                        } else {
+                            messageContentDiv.appendChild(dropdownContainer);
+                        }
+                    } else {
+                        // Insert directly after the header if no paragraph
+                        if (researchHeader.nextElementSibling) {
+                            messageContentDiv.insertBefore(dropdownContainer, researchHeader.nextElementSibling);
+                        } else {
+                            messageContentDiv.appendChild(dropdownContainer);
+                        }
+                    }
+                } else {
+                    // If no research header found yet, append at the end (will be repositioned later)
+                    messageContentDiv.appendChild(dropdownContainer);
+                }
+            }
+            
             // Method to progressively update research details as databases complete
             addOrUpdateResearchDetails(messageContentDiv, allSubagentData) {
                 if (!allSubagentData || allSubagentData.length === 0) {
@@ -1011,23 +1044,8 @@
                     dropdownContainer.style.marginTop = '8px';
                     dropdownContainer.style.marginBottom = '16px';
                     
-                    // Find the research statement header and insert dropdowns right after it
-                    const researchHeader = Array.from(messageContentDiv.querySelectorAll('h2')).find(
-                        h2 => h2.textContent.includes('Research Statement') || h2.textContent.includes('Search Criteria')
-                    );
-                    
-                    if (researchHeader && researchHeader.nextSibling) {
-                        // Insert after the research statement paragraph
-                        const nextParagraph = researchHeader.nextSibling;
-                        if (nextParagraph && nextParagraph.nextSibling) {
-                            messageContentDiv.insertBefore(dropdownContainer, nextParagraph.nextSibling);
-                        } else {
-                            messageContentDiv.appendChild(dropdownContainer);
-                        }
-                    } else {
-                        // Fallback to appending at the end
-                        messageContentDiv.appendChild(dropdownContainer);
-                    }
+                    // Position the container after the research statement
+                    this.positionDropdownContainer(messageContentDiv, dropdownContainer);
                 }
                 
                 // Create individual dropdowns for each database
@@ -1275,9 +1293,9 @@
                         // Update the message content with markdown rendering
                         assistantContentDiv.innerHTML = marked.parse(cleanResponse);
                         
-                        // Restore dropdowns container if it existed
+                        // Restore dropdowns container in the correct position
                         if (existingDropdowns) {
-                            assistantContentDiv.appendChild(existingDropdowns);
+                            this.positionDropdownContainer(assistantContentDiv, existingDropdowns);
                         }
                         
                         this.scrollToBottom();
