@@ -126,8 +126,10 @@ def route_query_sync(
     try:
         # Check if this is a financial database
         if database in FINANCIAL_DATABASES:
+            # Get the folder name from the mapping
+            subagent_folder = FINANCIAL_DATABASES[database]
             # Use dynamic import for the specific financial database subagent
-            module_path = f"services.src.agents.database_subagents.{database}.subagent"
+            module_path = f"services.src.agents.database_subagents.{subagent_folder}.subagent"
             try:
                 subagent_module = importlib.import_module(module_path)
                 logger.debug(f"Successfully imported module: {module_path}")
