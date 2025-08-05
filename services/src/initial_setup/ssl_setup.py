@@ -44,6 +44,26 @@ _MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 SSL_CERT_DIR = _MODULE_DIR
 SSL_CERT_PATH = os.path.join(SSL_CERT_DIR, SSL_CERT_FILENAME)
 
+def _validate_certificate_path(cert_path: str) -> bool:
+    """
+    Validate that the certificate path is within expected boundaries.
+    
+    Args:
+        cert_path (str): Path to validate
+        
+    Returns:
+        bool: True if path is valid, False otherwise
+    """
+    try:
+        # Resolve any relative paths and symbolic links
+        resolved_path = os.path.realpath(cert_path)
+        expected_dir = os.path.realpath(SSL_CERT_DIR)
+        
+        # Check if the resolved path is within the expected directory
+        return resolved_path.startswith(expected_dir)
+    except (OSError, ValueError):
+        return False
+
 # Get module logger (no configuration here - using centralized config)
 logger = logging.getLogger(__name__)
 
@@ -68,7 +88,7 @@ def check_certificate_expiry(cert_path: str) -> bool:
         return True
 
     try:
-        logger.debug(f"Checking certificate expiry for: {cert_path}")
+        logger.debug("Checking certificate expiry")
 
         # Read certificate data
         with open(cert_path, "rb") as cert_file:
@@ -85,23 +105,26 @@ def check_certificate_expiry(cert_path: str) -> bool:
 
         # Check if expired
         if current_date > expiry_date:
-            logger.error(f"Certificate expired on {expiry_date.strftime('%Y-%m-%d')}")
+            logger.error("Certificate has expired")
             return False
 
         # Check if expiring soon
         days_until_expiry = (expiry_date - current_date).days
         if days_until_expiry <= EXPIRY_WARNING_DAYS:
-            logger.warning(
-                f"Certificate will expire in {days_until_expiry} days "
-                f"(on {expiry_date.strftime('%Y-%m-%d')})"
-            )
+            logger.warning(f"Certificate will expire in {days_until_expiry} days")
             return True
 
-        logger.debug(f"Certificate valid until {expiry_date.strftime('%Y-%m-%d')}")
+        logger.debug("Certificate is valid")
         return True
 
+    except (OSError, IOError) as e:
+        logger.error("Error reading certificate file")
+        raise FileNotFoundError("Certificate file could not be read") from e
+    except x509.InvalidCertificate as e:
+        logger.error("Invalid certificate format")
+        raise ValueError("Certificate file is not valid") from e
     except Exception as e:
-        logger.error(f"Error checking certificate expiry: {str(e)}")
+        logger.error("Unexpected error during certificate validation")
         raise
 
 
@@ -121,27 +144,26 @@ def setup_ssl() -> str:
         FileNotFoundError: If certificate file does not exist
         Exception: If certificate validation fails
     """
-    # Proceed with SSL certificate setup
-    # Log settings being used
-    logger.debug(f"SSL setup starting with settings from: {__file__}")
-    logger.debug(f"Using certificate directory: {SSL_CERT_DIR}")
-    logger.debug(f"Using certificate filename: {SSL_CERT_FILENAME}")
-    logger.debug(f"Full certificate path: {SSL_CERT_PATH}")
+    logger.debug("SSL setup starting")
+    
+    # Validate certificate path is within expected boundaries
+    if not _validate_certificate_path(SSL_CERT_PATH):
+        logger.error("Certificate path validation failed")
+        raise ValueError("Certificate path is not within expected directory")
 
     # Verify the certificate exists
     if not os.path.exists(SSL_CERT_PATH):
-        error_msg = f"Certificate not found at {SSL_CERT_PATH}"
-        logger.error(error_msg)
-        raise FileNotFoundError(error_msg)
+        logger.error("Certificate file not found")
+        raise FileNotFoundError("SSL certificate file does not exist")
 
-    logger.debug(f"Certificate file exists at {SSL_CERT_PATH}")
+    logger.debug("Certificate file located successfully")
 
     # Check certificate expiry if enabled
     if CHECK_CERT_EXPIRY:
         try:
             check_certificate_expiry(SSL_CERT_PATH)
         except Exception as e:
-            logger.warning(f"Certificate expiry check failed: {str(e)}")
+            logger.warning("Certificate expiry check failed")
     else:
         logger.debug("Certificate expiry check disabled")
 
@@ -149,7 +171,5 @@ def setup_ssl() -> str:
     os.environ["SSL_CERT_FILE"] = SSL_CERT_PATH
     os.environ["REQUESTS_CA_BUNDLE"] = SSL_CERT_PATH
 
-    logger.debug(
-        f"SSL environment configured successfully. Certificate path: {SSL_CERT_PATH}"
-    )
+    logger.debug("SSL environment configured successfully")
     return SSL_CERT_PATH

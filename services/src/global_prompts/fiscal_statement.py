@@ -7,7 +7,7 @@ Fiscal year runs from November 1 to October 31.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Tuple
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def get_fiscal_period() -> Tuple[int, int]:
     Returns:
         Tuple[int, int]: Fiscal year and quarter
     """
-    current_date = datetime.now()
+    current_date = datetime.now(timezone.utc)
     current_month = current_date.month
     calendar_year = current_date.year
 
@@ -45,10 +45,11 @@ def get_quarter_dates(fiscal_year: int, fiscal_quarter: int) -> Dict[str, dateti
     Returns:
         Dict[str, datetime]: Dictionary containing start and end dates
     """
-    if fiscal_quarter < 1 or fiscal_quarter > 4:
-        raise ValueError(
-            f"Invalid fiscal quarter: {fiscal_quarter}. Must be between 1 and 4."
-        )
+    if not isinstance(fiscal_quarter, int) or fiscal_quarter < 1 or fiscal_quarter > 4:
+        raise ValueError("Invalid fiscal quarter. Must be integer between 1 and 4.")
+    
+    if not isinstance(fiscal_year, int) or fiscal_year < 1900 or fiscal_year > 2100:
+        raise ValueError("Invalid fiscal year. Must be reasonable integer value.")
 
     # Calculate the calendar year for the start date
     calendar_start_year = fiscal_year - 1 if fiscal_quarter == 1 else fiscal_year
@@ -122,8 +123,8 @@ def get_fiscal_statement() -> str:
         str: Formatted fiscal statement
     """
     try:
-        current_date = datetime.now()
-        formatted_date = current_date.strftime("%Y-%m-%d")  # Format as YYYY-MM-DD
+        current_date = datetime.now(timezone.utc)
+        formatted_date = current_date.strftime("%Y-%m-%d UTC")  # Format as YYYY-MM-DD UTC
         fiscal_year, fiscal_quarter = get_fiscal_period()
         current_quarter_range = get_quarter_range_str(fiscal_quarter)
 
@@ -137,6 +138,6 @@ def get_fiscal_statement() -> str:
 
         return statement
     except Exception as e:
-        logger.debug(f"Error generating fiscal statement: {str(e)}")
+        logger.debug("Error generating fiscal statement")
         # Fallback statement in case of errors
         return "<FISCAL_CONTEXT>Standard fiscal year runs from November 1st through October 31st.</FISCAL_CONTEXT>"

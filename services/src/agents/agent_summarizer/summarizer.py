@@ -59,8 +59,13 @@ def load_agent_config():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         yaml_path = os.path.join(current_dir, "summarizer_prompt.yaml")
 
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            yaml_config = yaml.safe_load(f)
+        try:
+            with open(yaml_path, "r", encoding="utf-8") as f:
+                yaml_config = yaml.safe_load(f)
+        except (OSError, IOError) as e:
+            raise SummarizerError("Configuration file could not be read") from e
+        except yaml.YAMLError as e:
+            raise SummarizerError("Configuration file format is invalid") from e
 
         # Extract model configuration from YAML
         model_config = yaml_config.get("model", {})
@@ -71,7 +76,7 @@ def load_agent_config():
         # Extract system prompt from YAML
         system_prompt = yaml_config.get("system_prompt", "")
         if not system_prompt:
-            raise Exception("No system_prompt found in YAML configuration")
+            raise SummarizerError("System prompt not found in configuration")
 
         # Replace the context placeholder
         system_prompt = system_prompt.replace(
@@ -85,9 +90,11 @@ def load_agent_config():
             "system_prompt": system_prompt,
         }
 
+    except SummarizerError:
+        raise  # Re-raise specific SummarizerError exceptions
     except Exception as e:
-        logger.error(f"Error loading agent configuration: {str(e)}", exc_info=True)
-        raise SummarizerError(f"Failed to load agent configuration: {str(e)}") from e
+        logger.error("Error loading agent configuration")
+        raise SummarizerError("Failed to load agent configuration") from e
 
 
 # Load configuration once at module level
@@ -100,9 +107,7 @@ try:
 
 
 except Exception as e:
-    logger.error(
-        f"Failed to initialize summarizer agent from YAML: {str(e)}", exc_info=True
-    )
+    logger.error("Failed to initialize summarizer agent configuration")
     raise
 
 
@@ -160,11 +165,9 @@ def generate_streaming_summary(
             prompt_token_cost = model_config["prompt_token_cost"]
             completion_token_cost = model_config["completion_token_cost"]
         except Exception as config_err:
-            logger.error(
-                f"Failed to get model configuration: {config_err}", exc_info=True
-            )
+            logger.error("Failed to get model configuration")
             yield f"\n\n**Internal Error:** Failed to load summarizer configuration.\n"
-            raise SummarizerError(f"Configuration error: {config_err}")
+            raise SummarizerError("Configuration error") from config_err
 
         try:
             # Prepare system message with summary prompt
@@ -268,15 +271,11 @@ def generate_streaming_summary(
                 yield {"usage_details": {"error": "Usage data missing from stream"}}
 
         except Exception as e:
-            logger.error(
-                f"Error generating streaming research summary: {str(e)}", exc_info=True
-            )
+            logger.error("Error generating streaming research summary")
             # Yield error message before raising
-            yield f"\n\n**Error generating research summary:** {str(e)}\n"
+            yield f"\n\n**Error generating research summary**\n"
             # Re-raise to signal failure upstream
-            raise SummarizerError(
-                f"Failed to generate streaming summary: {str(e)}"
-            ) from e
+            raise SummarizerError("Failed to generate streaming summary") from e
 
     # --- Metadata Scope (Simplified) ---
     elif scope == "metadata":

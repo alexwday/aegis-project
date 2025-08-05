@@ -26,7 +26,7 @@ from ...initial_setup.env_config import config
 from ...llm_connectors.rbc_openai import call_llm
 from ...global_prompts.project_statement import get_project_statement
 from ...global_prompts.fiscal_statement import get_fiscal_statement
-from ...global_prompts.database_statement import get_database_statement
+from ...global_prompts.database_statement import get_database_statement, get_filtered_database_statement
 from ...global_prompts.restrictions_statement import get_restrictions_statement
 
 # Get module logger (no configuration here - using centralized config)
@@ -39,55 +39,7 @@ class RouterError(Exception):
     pass
 
 
-def get_filtered_database_statement(available_databases):
-    """
-    Generate a filtered database statement containing only the specified databases.
-
-    Args:
-        available_databases (dict): Dictionary of available database configurations
-
-    Returns:
-        str: Formatted database statement with only filtered databases
-    """
-    statement = """<AVAILABLE_DATABASES>
-The following databases are available for research:
-
-"""
-
-    # Group databases by type for better organization
-    internal_dbs = {
-        k: v for k, v in available_databases.items() if k.startswith("internal_")
-    }
-    external_dbs = {
-        k: v for k, v in available_databases.items() if k.startswith("external_")
-    }
-
-    # Add internal databases section if any exist
-    if internal_dbs:
-        statement += "<INTERNAL_DATABASES>\n"
-        for db_name, db_info in internal_dbs.items():
-            statement += f"""<DATABASE id="{db_name}">
-  <NAME>{db_info['name']}</NAME>
-  <DESCRIPTION>{db_info['description']}</DESCRIPTION>
-</DATABASE>
-
-"""
-        statement += "</INTERNAL_DATABASES>\n\n"
-
-    # Add external databases section if any exist
-    if external_dbs:
-        statement += "<EXTERNAL_DATABASES>\n"
-        for db_name, db_info in external_dbs.items():
-            statement += f"""<DATABASE id="{db_name}">
-  <NAME>{db_info['name']}</NAME>
-  <DESCRIPTION>{db_info['description']}</DESCRIPTION>
-</DATABASE>
-
-"""
-        statement += "</EXTERNAL_DATABASES>\n\n"
-
-    statement += "</AVAILABLE_DATABASES>"
-    return statement
+# Note: get_filtered_database_statement is now imported from global_prompts
 
 
 def load_agent_config(available_databases=None):
@@ -120,8 +72,13 @@ def load_agent_config(available_databases=None):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         yaml_path = os.path.join(current_dir, "router_prompt.yaml")
 
-        with open(yaml_path, "r", encoding="utf-8") as f:
-            yaml_config = yaml.safe_load(f)
+        try:
+            with open(yaml_path, "r", encoding="utf-8") as f:
+                yaml_config = yaml.safe_load(f)
+        except (OSError, IOError) as e:
+            raise RouterError("Configuration file could not be read") from e
+        except yaml.YAMLError as e:
+            raise RouterError("Configuration file format is invalid") from e
 
         # Extract model configuration from YAML
         model_config = yaml_config.get("model", {})
@@ -132,7 +89,7 @@ def load_agent_config(available_databases=None):
         # Extract system prompt from YAML
         system_prompt = yaml_config.get("system_prompt", "")
         if not system_prompt:
-            raise Exception("No system_prompt found in YAML configuration")
+            raise RouterError("System prompt not found in configuration")
 
         # Replace the context placeholder
         system_prompt = system_prompt.replace(
@@ -172,9 +129,11 @@ def load_agent_config(available_databases=None):
             "tool_definitions": tools,
         }
 
+    except RouterError:
+        raise  # Re-raise specific RouterError exceptions
     except Exception as e:
-        logger.error(f"Error loading agent configuration: {str(e)}", exc_info=True)
-        raise RouterError(f"Failed to load agent configuration: {str(e)}") from e
+        logger.error("Error loading agent configuration")
+        raise RouterError("Failed to load agent configuration") from e
 
 
 # Load configuration once at module level
@@ -194,9 +153,7 @@ try:
 
 
 except Exception as e:
-    logger.error(
-        f"Failed to initialize router agent from YAML: {str(e)}", exc_info=True
-    )
+    logger.error("Failed to initialize router agent configuration")
     raise
 
 
@@ -265,12 +222,7 @@ def get_routing_decision(
         message = response.choices[0].message
         if not message or not message.tool_calls:
             # Handle cases where the model might return content instead of a tool call
-            content_returned = (
-                message.content if message and message.content else "No content"
-            )
-            logger.warning(
-                f"Expected tool call but received content: {content_returned[:100]}..."
-            )
+            logger.warning("Expected tool call but received content instead")
             # Decide on fallback behavior - perhaps default routing or raise error
             # For now, raise error as tool call is expected
             raise RouterError(
@@ -287,11 +239,8 @@ def get_routing_decision(
         # Parse the arguments
         try:
             arguments = json.loads(tool_call.function.arguments)
-        except json.JSONDecodeError:
-            err_arg = tool_call.function.arguments
-            # Break long f-string assignment
-            msg = f"Invalid JSON in tool arguments: {err_arg}"
-            raise RouterError(msg)
+        except json.JSONDecodeError as e:
+            raise RouterError("Invalid JSON in tool call arguments") from e
 
         # Extract function name only
         function_name = arguments.get("function_name")
@@ -304,11 +253,8 @@ def get_routing_decision(
         # Return both decision and usage details
         return {"function_name": function_name}, usage_details
 
+    except RouterError:
+        raise  # Re-raise specific RouterError exceptions
     except Exception as e:
-        logger.error(
-            f"Error getting routing decision: {str(e)}", exc_info=True
-        )  # Add exc_info
-        # Return default decision and None for usage on error
-        # Or re-raise, depending on desired handling in model.py
-        # Re-raising seems appropriate to signal failure upstream
-        raise RouterError(f"Failed to get routing decision: {str(e)}") from e
+        logger.error("Error getting routing decision")
+        raise RouterError("Failed to get routing decision") from e

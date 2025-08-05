@@ -17,9 +17,10 @@ Dependencies:
 
 import logging
 import time
-from typing import Dict, Tuple
+from typing import Optional
 
 import requests
+from requests.auth import HTTPBasicAuth
 
 from .env_config import config
 
@@ -38,10 +39,10 @@ logger = logging.getLogger(__name__)
 
 def setup_oauth() -> str:
     """
-    Obtain OAuth authentication token for RBC API access.
+    Obtain OAuth authentication token for API access.
 
-    Uses OAuth client credentials flow to obtain a token with retry logic
-    and detailed logging for operational monitoring.
+    Uses OAuth client credentials flow with HTTP Basic authentication
+    according to RFC 6749, with retry logic and operational monitoring.
 
     Returns:
         str: OAuth authentication token for API access
@@ -50,7 +51,7 @@ def setup_oauth() -> str:
         requests.exceptions.RequestException: If API request fails after retries
         ValueError: If token is not found or settings are invalid
     """
-    logger.debug(f"OAuth setup starting with settings from: {__file__}")
+    logger.debug("OAuth setup starting")
 
     # Validate settings
     if not all([OAUTH_URL, CLIENT_ID, CLIENT_SECRET]):
@@ -58,16 +59,10 @@ def setup_oauth() -> str:
         logger.error(error_msg)
         raise ValueError(error_msg)
 
-    logger.debug(f"OAuth URL endpoint: {OAUTH_URL}")
-    logger.debug(
-        f"Using client ID: {CLIENT_ID[:4]}****"
-    )  # Show only first 4 chars for security
+    logger.debug("OAuth endpoint configured")
+    logger.debug("Client credentials validated")
 
-    payload = {
-        "grant_type": "client_credentials",
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
-    }
+    payload = {"grant_type": "client_credentials"}
 
     attempts = 0
     last_exception = None
@@ -87,7 +82,12 @@ def setup_oauth() -> str:
                 f"Attempt {attempts}/{MAX_RETRY_ATTEMPTS}: Requesting OAuth token"
             )
 
-            response = requests.post(OAUTH_URL, data=payload, timeout=REQUEST_TIMEOUT)
+            response = requests.post(
+                OAUTH_URL, 
+                data=payload, 
+                auth=HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET),
+                timeout=REQUEST_TIMEOUT
+            )
             response.raise_for_status()
 
             attempt_time = time.time() - attempt_start
@@ -96,26 +96,17 @@ def setup_oauth() -> str:
             token_data = response.json()
             token = token_data.get("access_token")
 
-            if not token:
-                raise ValueError("OAuth token not found in response")
+            if not token or not isinstance(token, str):
+                raise ValueError("OAuth token not found or invalid in response")
 
-            # Ensure token is a string
-            token_str: str = str(token)
-
-            # Create a preview of the token for logging
-            token_preview = (
-                token_str[:TOKEN_PREVIEW_LENGTH] + "..."
-                if len(token_str) > TOKEN_PREVIEW_LENGTH
-                else token_str
-            )
-            logger.debug(f"Successfully obtained OAuth token: {token_preview}")
+            logger.debug("Successfully obtained OAuth token")
 
             total_time_seconds = time.time() - start_time
             logger.debug(
-                f"Total OAuth process completed in {total_time_seconds:.2f} seconds after {attempts} attempt(s)"
+                f"OAuth process completed in {total_time_seconds:.2f} seconds after {attempts} attempt(s)"
             )
 
-            return token_str
+            return token
 
         except (requests.exceptions.RequestException, ValueError) as e:
             last_exception = e
@@ -133,6 +124,8 @@ def setup_oauth() -> str:
     logger.error(
         f"Failed to obtain OAuth token after {attempts} attempts and {total_time_seconds:.2f} seconds"
     )
-    raise last_exception or requests.exceptions.RequestException(
-        "Failed to obtain OAuth token"
-    )
+    
+    if last_exception:
+        raise last_exception
+    else:
+        raise requests.exceptions.RequestException("Failed to obtain OAuth token after all retry attempts")

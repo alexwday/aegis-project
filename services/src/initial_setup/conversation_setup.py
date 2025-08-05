@@ -60,7 +60,7 @@ def process_conversation(conversation: Any) -> Dict[str, List[Dict[str, str]]]:
         for msg in messages:
             # Check for required fields
             if "role" not in msg or "content" not in msg:
-                logger.warning(f"Skipping message missing required fields: {msg}")
+                logger.warning("Skipping message missing required fields")
                 continue
 
             # Check if role is allowed
@@ -84,6 +84,5 @@ def process_conversation(conversation: Any) -> Dict[str, List[Dict[str, str]]]:
         return {"messages": recent_messages}
 
     except Exception as e:
-        error_msg = f"Error processing conversation: {str(e)}"
-        logger.error(error_msg)
-        raise
+        logger.error("Error processing conversation")
+        raise ValueError("Invalid conversation format") from e

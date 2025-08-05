@@ -48,10 +48,14 @@ T = TypeVar("T")
 
 # Define mapping of financial databases to their subagents
 FINANCIAL_DATABASES = {
-    "earnings_transcripts": "earnings_transcripts",
-    "quarterly_reports": "quarterly_reports",
-    "supplementary_packages": "supplementary_packages",
-    "ir_call_summaries": "ir_call_summaries",
+    "transcripts": "transcripts",
+    "rts": "rts", 
+    "benchmarking": "benchmarking",
+    "report_transcript_summaries": "report_transcript_summaries",
+    "report_transcript_key_themes": "report_transcript_key_themes",
+    "report_wm_readthrough": "report_wm_readthrough",
+    "report_cm_readthrough": "report_cm_readthrough",
+    "ir_quarterly_newsletter": "ir_quarterly_newsletter",
 }
 
 # Get module logger
@@ -128,7 +132,7 @@ def route_query_sync(
                 subagent_module = importlib.import_module(module_path)
                 logger.debug(f"Successfully imported module: {module_path}")
             except ImportError as e:
-                error_msg = f"Failed to import subagent module for '{database}': {str(e)}"
+                error_msg = f"Failed to import subagent module for '{database}'"
                 logger.error(error_msg)
                 
                 if process_monitor:
@@ -298,8 +302,8 @@ def route_query_sync(
 
     except (ImportError, AttributeError) as e:
         # Handle errors related to module loading or function signature
-        error_msg = f"Error loading/calling subagent for {database}: {str(e)}"
-        logger.error(error_msg, exc_info=True)
+        error_msg = f"Error loading/calling subagent for {database}"
+        logger.error(error_msg)
         if scope == "metadata":
             error_response: DatabaseResponse = []
         else:  # research scope
@@ -323,9 +327,9 @@ def route_query_sync(
     except Exception as e:
         # Catch other potential exceptions during subagent execution
         error_msg = (
-            f"Error during query execution for {database} (scope: {scope}): {str(e)}"
+            f"Error during query execution for {database} (scope: {scope})"
         )
-        logger.error(error_msg, exc_info=True)
+        logger.error(error_msg)
         if scope == "metadata":
             error_response: DatabaseResponse = []
         else:  # research scope

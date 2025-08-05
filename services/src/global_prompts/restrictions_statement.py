@@ -51,7 +51,7 @@ This applies to ALL agents, including Direct Response.
 
         return statement
     except Exception as e:
-        logger.debug(f"Error generating compliance restrictions: {str(e)}")
+        logger.debug("Error generating compliance restrictions")
         # Fallback statement in case of errors
         return "Responses must include appropriate disclaimers and should not provide investment advice."
 
@@ -83,7 +83,7 @@ def get_quality_guidelines() -> str:
 
         return statement
     except Exception as e:
-        logger.debug(f"Error generating quality guidelines: {str(e)}")
+        logger.debug("Error generating quality guidelines")
         # Fallback statement in case of errors
         return "Responses should be well-structured, include source citations, and specify time periods."
 
@@ -126,7 +126,7 @@ Example: "The available databases do not contain data for this specific metric/t
 
         return statement
     except Exception as e:
-        logger.debug(f"Error generating confidence signaling guidelines: {str(e)}")
+        logger.debug("Error generating confidence signaling guidelines")
         # Fallback statement in case of errors
         return "<CONFIDENCE_SIGNALING>Indicate your level of confidence in responses based on data availability and quality.</CONFIDENCE_SIGNALING>"
 
@@ -153,7 +153,7 @@ def get_restrictions_statement() -> str:
 </RESTRICTIONS_AND_GUIDELINES>"""
         return combined_statement
     except Exception as e:
-        logger.debug(f"Error generating combined restrictions statement: {str(e)}")
+        logger.debug("Error generating combined restrictions statement")
         # Fallback combined statement
         return """<RESTRICTIONS_AND_GUIDELINES>
 Responses must include appropriate disclaimers and should not provide investment advice. 

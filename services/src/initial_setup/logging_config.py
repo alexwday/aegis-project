@@ -37,7 +37,12 @@ def configure_logging(level=None):
     """
     # Use environment config if level not provided
     if level is None:
-        level = getattr(logging, config.LOG_LEVEL.upper(), logging.DEBUG)
+        # Validate log level is acceptable
+        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        log_level_str = config.LOG_LEVEL.upper()
+        if log_level_str not in valid_levels:
+            log_level_str = 'DEBUG'  # Safe fallback
+        level = getattr(logging, log_level_str, logging.DEBUG)
     # Configure root logger
     root_logger = logging.getLogger()
 
@@ -55,6 +60,6 @@ def configure_logging(level=None):
     root_logger.addHandler(handler)
     root_logger.setLevel(level)
 
-    logging.info("Logging system initialized")
+    logging.info("Logging configured")
 
     return root_logger

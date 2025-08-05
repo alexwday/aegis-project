@@ -19,9 +19,9 @@ def get_project_statement() -> str:
         str: Formatted project statement
     """
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone
 
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
         statement = f"""<PROJECT_CONTEXT timestamp="{current_time}">
 This project serves financial analysts and investors by implementing an intelligent research and response system for financial market data inquiries. The system combines comprehensive earnings transcripts, quarterly reports, supplementary packages, and peer benchmarking data with an autonomous agent-based RAG (Retrieval-Augmented Generation) process. Users can engage in natural conversations about company performance, financial metrics, and market comparisons, and the system will independently research and generate responses as needed.
@@ -46,7 +46,7 @@ data-driven insights. The system ensures queries include specific banks, quarter
 </PROJECT_CONTEXT>"""
 
         return statement
-    except Exception as e:
-        logger.debug(f"Error generating project statement: {str(e)}")
+    except (ImportError, ValueError) as e:
+        logger.debug("Error generating project statement")
         # Fallback basic statement in case of errors
         return """<PROJECT_CONTEXT>This project serves financial analysts and investors by implementing an intelligent research and response system for financial market data inquiries using RAG (Retrieval-Augmented Generation).</PROJECT_CONTEXT>"""

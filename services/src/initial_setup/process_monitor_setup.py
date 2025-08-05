@@ -21,7 +21,6 @@ import uuid  # Import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import json
-from psycopg2.extras import Json  # For inserting JSONB
 from ..initial_setup.env_config import config
 
 # Configure module logger
@@ -43,11 +42,8 @@ def _extract_decision_details(
             return f"Selected DBs: {', '.join(dbs)}" if dbs else "No DBs selected"
         elif stage_name == "clarifier":
             action = details.get("action")
-            # Assuming 'output' holds statement/questions from clarifier_decision
-            output = details.get("decision", {}).get("output", "")
-            return (
-                f"Action: {action}, Output: {output[:250]}..."  # Truncate long outputs
-            )
+            # Don't log potentially sensitive clarifier output
+            return f"Action: {action}"
         elif stage_name == "summary":
             # Extract details from summary agent
             scope = details.get("scope", "N/A")
@@ -93,8 +89,7 @@ def _extract_decision_details(
             elif details.get("result_count") is not None:
                 return f"Result Count: {details.get('result_count')}"  # Less likely now
         elif stage_name == "ssl_setup":
-            cert_path = details.get("cert_path", "default")
-            return f"Certificate Path: {cert_path}"
+            return "SSL certificate configured"
         elif stage_name == "oauth_setup":
             # Extract token details (don't include actual tokens)
             token_type = details.get("token_type", "N/A")
@@ -106,9 +101,7 @@ def _extract_decision_details(
             return f"Messages: {message_count}"
         # Add more specific stage handlers if needed
     except Exception as e:
-        logger.warning(
-            f"Error extracting decision details for stage '{stage_name}': {e}"
-        )
+        logger.warning(f"Error extracting decision details for stage '{stage_name}'")
     # Return None if no specific detail is extracted
     return None
 
@@ -293,8 +286,9 @@ class ProcessMonitor:
                 duration_ms = (
                     int(stage.duration * 1000) if stage.duration is not None else None
                 )
+                # Convert to JSON string for SQLAlchemy compatibility
                 llm_calls_json = (
-                    Json(stage.llm_calls_data) if stage.llm_calls_data else None
+                    json.dumps(stage.llm_calls_data) if stage.llm_calls_data else None
                 )
 
                 # Calculate totals from llm_calls_data
@@ -332,10 +326,7 @@ class ProcessMonitor:
                 )
                 records_to_insert.append(record)
             except Exception as e:
-                logger.error(
-                    f"Error preparing stage '{stage.name}' data for DB logging: {e}",
-                    exc_info=True,
-                )
+                logger.error(f"Error preparing stage '{stage.name}' data for DB logging")
                 # Continue to next stage if possible
 
         if not records_to_insert:
@@ -351,10 +342,7 @@ class ProcessMonitor:
             )
         except Exception as db_err:
             # Log the error, but let the caller handle transaction rollback/commit
-            logger.error(
-                f"Database error during process monitor logging for run_uuid {self.run_uuid}: {db_err}",
-                exc_info=True,
-            )
+            logger.error(f"Database error during process monitor logging for run_uuid {self.run_uuid}")
             # Re-raise the exception so the caller knows the logging failed and can rollback
             raise
 
@@ -408,9 +396,7 @@ class ProcessMonitor:
             call_details (Dict[str, Any]): Dictionary with LLM call info.
         """
         if not self.enabled or stage_name not in self.stages:
-            logger.warning(
-                f"Attempted to add LLM details to non-existent or disabled stage: {stage_name}"
-            )
+            logger.warning("Attempted to add LLM details to non-existent or disabled stage")
             return
 
         self.stages[stage_name].add_llm_call_details(call_details)
@@ -616,14 +602,12 @@ def enable_monitoring(enabled: bool = True) -> None:
         try:
             process_monitor = ProcessMonitor(enabled=enabled)
         except Exception as e:
-            logger.error(f"Error creating ProcessMonitor: {e}", exc_info=True)
+            logger.error("Error creating ProcessMonitor")
     elif enabled and not process_monitor.enabled:
         try:
             process_monitor = ProcessMonitor(enabled=True)
         except Exception as e:
-            logger.error(
-                f"Error explicitly enabling ProcessMonitor: {e}", exc_info=True
-            )
+            logger.error("Error explicitly enabling ProcessMonitor")
 
 
 def get_process_monitor() -> ProcessMonitor:
