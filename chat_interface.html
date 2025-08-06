@@ -557,19 +557,22 @@
         }
         
         .info-tab-drawer {
-            position: absolute;
-            bottom: 100%;
+            position: fixed;
+            bottom: auto;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -50%) scale(0.95);
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-xl);
             max-height: 0;
             overflow: hidden;
+            opacity: 0;
             transition: all var(--transition-slow);
             width: 90vw;
             max-width: 1200px;
+            z-index: 1000;
         }
         
         .info-tab-drawer#databaseDrawer {
@@ -585,9 +588,29 @@
         }
         
         .info-tab-drawer.open {
-            max-height: 500px;
+            max-height: 80vh;
             overflow-y: auto;
-            margin-bottom: var(--spacing-sm);
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        
+        /* Backdrop for drawers */
+        .drawer-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-base);
+            z-index: 999;
+        }
+        
+        .drawer-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
         }
         
         .info-tab-content {
@@ -1063,6 +1086,9 @@
         </div>
     </header>
     
+    <!-- Drawer Backdrop -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    
     <!-- Main Chat Container -->
     <main class="chat-container">
         <!-- Messages Area -->
@@ -1467,6 +1493,31 @@
                 // Check connection immediately and periodically
                 this.checkConnection();
                 setInterval(() => this.checkConnection(), 5000);
+                
+                // Setup backdrop click handler
+                const backdrop = document.getElementById('drawerBackdrop');
+                if (backdrop) {
+                    backdrop.addEventListener('click', () => {
+                        this.closeAllDrawers();
+                    });
+                }
+                
+                // Setup escape key handler
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeAllDrawers();
+                    }
+                });
+            }
+            
+            closeAllDrawers() {
+                const allDrawers = document.querySelectorAll('.info-tab-drawer');
+                const allButtons = document.querySelectorAll('.info-tab-button');
+                const backdrop = document.getElementById('drawerBackdrop');
+                
+                allDrawers.forEach(d => d.classList.remove('open'));
+                allButtons.forEach(btn => btn.classList.remove('active'));
+                backdrop.classList.remove('active');
             }
             
             setupEventListeners() {
@@ -1671,6 +1722,7 @@
             toggleDrawer(drawerId) {
                 console.log('Toggling drawer:', drawerId);
                 const drawer = document.getElementById(drawerId);
+                const backdrop = document.getElementById('drawerBackdrop');
                 const allDrawers = document.querySelectorAll('.info-tab-drawer');
                 const allButtons = document.querySelectorAll('.info-tab-button');
                 
@@ -1696,6 +1748,7 @@
                 if (drawer) {
                     const isOpen = drawer.classList.contains('open');
                     drawer.classList.toggle('open');
+                    backdrop.classList.toggle('active', !isOpen);
                     if (targetButton) {
                         targetButton.classList.toggle('active', !isOpen);
                     }
