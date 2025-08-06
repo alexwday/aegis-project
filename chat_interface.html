@@ -912,11 +912,10 @@
             color: var(--text-primary);
             max-height: 150px;
             line-height: 1.5;
-            overflow-y: hidden;
+            overflow-y: auto;
         }
         
         .message-input:focus {
-            overflow-y: auto;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(80, 70, 229, 0.1);
         }
@@ -1239,18 +1238,6 @@
                 </div>
             </div>
             
-            <!-- Report Request Buttons -->
-            <div class="report-buttons-container">
-                <button class="report-button" data-report="transcript-summary">Transcript Summary</button>
-                <button class="report-button" data-report="key-themes">Key Themes Report</button>
-                <button class="report-button" data-report="wm-readthrough">WM Readthrough</button>
-                <button class="report-button" data-report="cm-readthrough">CM Readthrough</button>
-                <button class="report-button" data-report="quarterly-newsletter">Quarterly Newsletter</button>
-                <button class="report-button" data-report="financial-comparison">Financial Comparison</button>
-                <button class="report-button" data-report="earnings-preview">Earnings Preview</button>
-                <button class="report-button" data-report="market-analysis">Market Analysis</button>
-            </div>
-            
             <!-- Message Input -->
             <div class="input-container">
                 <div class="input-wrapper">
@@ -1266,6 +1253,18 @@
                         <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
                     </svg>
                 </button>
+            </div>
+            
+            <!-- Report Request Buttons -->
+            <div class="report-buttons-container">
+                <button class="report-button" data-report="transcript-summary">Transcript Summary</button>
+                <button class="report-button" data-report="key-themes">Key Themes Report</button>
+                <button class="report-button" data-report="wm-readthrough">WM Readthrough</button>
+                <button class="report-button" data-report="cm-readthrough">CM Readthrough</button>
+                <button class="report-button" data-report="quarterly-newsletter">Quarterly Newsletter</button>
+                <button class="report-button" data-report="financial-comparison">Financial Comparison</button>
+                <button class="report-button" data-report="earnings-preview">Earnings Preview</button>
+                <button class="report-button" data-report="market-analysis">Market Analysis</button>
             </div>
         </div>
     </main>
@@ -1295,8 +1294,11 @@
             
             init() {
                 this.setupEventListeners();
-                this.checkConnection();
                 this.updateDatabaseCount();
+                // Set initial connection status to connecting
+                this.statusText.textContent = 'Connecting...';
+                // Check connection after a short delay
+                setTimeout(() => this.checkConnection(), 500);
             }
             
             setupEventListeners() {
@@ -1367,19 +1369,20 @@
                 });
                 
                 // Report buttons
-                document.querySelectorAll('.report-btn').forEach(button => {
+                document.querySelectorAll('.report-button').forEach(button => {
                     button.addEventListener('click', (e) => {
-                        const reportType = e.target.dataset.report;
+                        const reportType = e.currentTarget.dataset.report;
                         this.sendReportRequest(reportType);
                     });
                 });
                 
-                // Tab buttons for drawer panels
-                document.querySelectorAll('.tab-btn').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const tabType = e.target.dataset.tab;
-                        this.switchTab(tabType);
-                    });
+                // Info tab buttons for drawer panels
+                document.getElementById('availabilityTabBtn').addEventListener('click', () => {
+                    this.toggleDrawer('availabilityDrawer');
+                });
+                
+                document.getElementById('calendarTabBtn').addEventListener('click', () => {
+                    this.toggleDrawer('calendarDrawer');
                 });
             }
             
@@ -1403,18 +1406,20 @@
                 }
             }
             
-            switchTab(tabType) {
-                // Remove active class from all tabs and panels
-                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelectorAll('.drawer-panel').forEach(panel => panel.classList.remove('visible'));
+            toggleDrawer(drawerId) {
+                const drawer = document.getElementById(drawerId);
+                const allDrawers = document.querySelectorAll('.info-tab-drawer');
                 
-                // Add active class to selected tab and show corresponding panel
-                const selectedTab = document.querySelector(`.tab-btn[data-tab="${tabType}"]`);
-                const selectedPanel = document.getElementById(`${tabType}Panel`);
+                // Close all other drawers
+                allDrawers.forEach(d => {
+                    if (d.id !== drawerId) {
+                        d.classList.remove('open');
+                    }
+                });
                 
-                if (selectedTab && selectedPanel) {
-                    selectedTab.classList.add('active');
-                    selectedPanel.classList.add('visible');
+                // Toggle the selected drawer
+                if (drawer) {
+                    drawer.classList.toggle('open');
                 }
             }
             
