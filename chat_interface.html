@@ -565,14 +565,14 @@
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            box-shadow: var(--shadow-xl);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             max-height: 0;
             overflow: hidden;
             opacity: 0;
             transition: all var(--transition-slow);
             width: 90vw;
             max-width: 1200px;
-            z-index: 1000;
+            z-index: 10000;
         }
         
         .info-tab-drawer#databaseDrawer {
@@ -601,11 +601,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.4);
             opacity: 0;
             pointer-events: none;
             transition: opacity var(--transition-base);
-            z-index: 999;
+            z-index: 9999;
         }
         
         .drawer-backdrop.active {
