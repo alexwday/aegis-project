@@ -98,6 +98,10 @@ def query_database_sync(
     
     logger.info(f"Transcript Summaries subagent processing query: '{query}' with scope: '{scope}'")
     
+    # Special handling for report generation requests
+    if "Generate Transcript Summary Report" in query:
+        logger.info("Report generation request detected - returning clarification response")
+    
     if process_monitor:
         process_monitor.add_stage_details(
             stage_name,
@@ -155,6 +159,69 @@ def query_database_sync(
                 )
                 
         else:  # scope == "research"
+            # Check if this is a report generation request needing clarification
+            if "Generate Transcript Summary Report" in query:
+                logger.info("Generating clarification response for report request")
+                
+                response: ResearchResponse = {
+                    "detailed_research": f"""
+## Transcript Summary Report - Clarification Needed
+
+To generate the Transcript Summary Report, I need to know which specific earnings call(s) you'd like summarized.
+
+### Available Options:
+
+**Recent Earnings Calls (Q3 2024):**
+- Royal Bank of Canada (RBC) - August 23, 2024
+- TD Bank - August 22, 2024
+- Bank of Montreal (BMO) - August 27, 2024
+- Scotiabank - August 27, 2024
+- CIBC - August 29, 2024
+
+**Previous Quarter (Q2 2024):**
+- All major Canadian banks available
+
+### Please Specify:
+
+1. **Which bank(s)?** (e.g., "RBC", "TD", or "All Big 5")
+2. **Which quarter/year?** (e.g., "Q3 2024", "Q2 2024")
+3. **Any specific focus areas?** (optional - e.g., "credit quality", "digital initiatives")
+
+### Example Requests:
+- "Generate Transcript Summary Report for RBC Q3 2024"
+- "Generate Transcript Summary Report for all Big 5 banks Q3 2024"
+- "Generate Transcript Summary Report for TD Q2 2024 focusing on US operations"
+
+### Report Contents Will Include:
+- Executive Summary
+- Key Financial Highlights
+- Management Guidance & Outlook
+- Major Q&A Themes
+- Strategic Initiatives Discussion
+- Risk & Credit Commentary
+
+Please provide the specific parameters so I can generate the appropriate transcript summary report.
+""",
+                    "status_summary": "🔍 Clarification needed: Please specify which bank(s) and quarter for the transcript summary report"
+                }
+                
+                if process_monitor:
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        status="clarification_needed",
+                        report_type="transcript_summary",
+                        awaiting_parameters=True
+                    )
+                
+                return (
+                    response,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            
             logger.debug("PLACEHOLDER: Retrieving pre-generated transcript summary report")
             
             response: ResearchResponse = {

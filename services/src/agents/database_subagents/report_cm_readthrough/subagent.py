@@ -98,6 +98,10 @@ def query_database_sync(
     
     logger.info(f"CM Readthrough subagent processing query: '{query}' with scope: '{scope}'")
     
+    # Special handling for report generation requests
+    if "Generate CM Readthrough Report" in query:
+        logger.info("Report generation request detected - returning clarification response")
+    
     if process_monitor:
         process_monitor.add_stage_details(
             stage_name,
@@ -159,6 +163,74 @@ def query_database_sync(
                 )
                 
         else:  # scope == "research"
+            # Check if this is a report generation request needing clarification
+            if "Generate CM Readthrough Report" in query:
+                logger.info("Generating clarification response for report request")
+                
+                response: ResearchResponse = {
+                    "detailed_research": f"""
+## Capital Markets Readthrough Report - Clarification Needed
+
+To generate the Capital Markets Readthrough Report, I need to know which period and banks you'd like analyzed.
+
+### Available Options:
+
+**Recent Quarters with CM Data:**
+- Q3 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q2 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q1 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q4 2023 - RBC, TD, BMO, Scotiabank, CIBC
+
+**Report Types:**
+- **Comprehensive CM Analysis**: All banks, all CM business lines
+- **Trading Revenue Focus**: FICC and Equities trading performance
+- **Investment Banking Focus**: Advisory and underwriting analysis
+- **Single Bank Deep Dive**: Detailed CM analysis for one institution
+- **YoY Trend Analysis**: Multi-quarter CM trends
+
+### Please Specify:
+
+1. **Which banks?** (e.g., "All Big 5", "RBC and TD", "RBC only")
+2. **Which quarter/year?** (e.g., "Q3 2024", "Last 2 quarters")
+3. **Business lines?** (optional - e.g., "Trading only", "IB focus", "All CM")
+
+### Example Requests:
+- "Generate CM Readthrough Report for all Big 5 banks Q3 2024"
+- "Generate CM Readthrough Report for RBC Capital Markets Q3 2024"
+- "Generate CM Readthrough Report focusing on trading revenues Q3 2024"
+
+### Report Contents Will Include:
+- Trading revenue breakdown (FICC vs Equities)
+- Investment banking fees analysis
+- Deal pipeline commentary
+- Market share analysis
+- Risk metrics and VAR trends
+- Regulatory capital impacts
+- Management outlook and guidance
+- Competitive positioning
+
+Please provide the specific parameters so I can generate the appropriate capital markets readthrough report.
+""",
+                    "status_summary": "🔍 Clarification needed: Please specify which banks and quarter for the CM readthrough report"
+                }
+                
+                if process_monitor:
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        status="clarification_needed",
+                        report_type="cm_readthrough",
+                        awaiting_parameters=True
+                    )
+                
+                return (
+                    response,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            
             logger.debug("PLACEHOLDER: Retrieving pre-generated CM readthrough report")
             
             response: ResearchResponse = {

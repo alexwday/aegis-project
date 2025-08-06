@@ -98,6 +98,10 @@ def query_database_sync(
     
     logger.info(f"Transcript Key Themes subagent processing query: '{query}' with scope: '{scope}'")
     
+    # Special handling for report generation requests
+    if "Generate Key Themes Report" in query:
+        logger.info("Report generation request detected - returning clarification response")
+    
     if process_monitor:
         process_monitor.add_stage_details(
             stage_name,
@@ -157,6 +161,71 @@ def query_database_sync(
                 )
                 
         else:  # scope == "research"
+            # Check if this is a report generation request needing clarification
+            if "Generate Key Themes Report" in query:
+                logger.info("Generating clarification response for report request")
+                
+                response: ResearchResponse = {
+                    "detailed_research": f"""
+## Key Themes Report - Clarification Needed
+
+To generate the Key Themes Report, I need to know which earnings calls you'd like analyzed for thematic insights.
+
+### Available Options:
+
+**Recent Quarters:**
+- Q3 2024 - All Big 5 Canadian banks
+- Q2 2024 - All Big 5 Canadian banks
+- Q1 2024 - All Big 5 Canadian banks
+- Q4 2023 - All Big 5 Canadian banks
+
+**Analysis Types:**
+- **Cross-Bank Themes**: Common themes across all banks in a quarter
+- **Bank-Specific Themes**: Deep dive into one bank's key topics
+- **Trend Analysis**: Theme evolution across multiple quarters
+- **Sector Comparison**: Canadian vs US bank themes
+
+### Please Specify:
+
+1. **Scope?** (e.g., "All Big 5", "RBC only", "Canadian banks")
+2. **Time Period?** (e.g., "Q3 2024", "Last 4 quarters")
+3. **Theme Focus?** (optional - e.g., "Technology", "Credit", "ESG")
+
+### Example Requests:
+- "Generate Key Themes Report for all Big 5 banks Q3 2024"
+- "Generate Key Themes Report for RBC last 4 quarters"
+- "Generate Key Themes Report focusing on digital transformation Q3 2024"
+
+### Report Contents Will Include:
+- Top 10 Key Themes with frequency analysis
+- Theme sentiment (positive/negative/neutral)
+- Supporting quotes from management
+- Cross-bank theme comparison
+- Emerging vs declining themes
+- Strategic implications
+
+Please provide the specific parameters so I can generate the appropriate key themes report.
+""",
+                    "status_summary": "🔍 Clarification needed: Please specify scope and time period for the key themes analysis"
+                }
+                
+                if process_monitor:
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        status="clarification_needed",
+                        report_type="key_themes",
+                        awaiting_parameters=True
+                    )
+                
+                return (
+                    response,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            
             logger.debug("PLACEHOLDER: Retrieving pre-generated transcript key themes report")
             
             response: ResearchResponse = {

@@ -98,6 +98,10 @@ def query_database_sync(
     
     logger.info(f"WM Readthrough subagent processing query: '{query}' with scope: '{scope}'")
     
+    # Special handling for report generation requests
+    if "Generate WM Readthrough Report" in query:
+        logger.info("Report generation request detected - returning clarification response")
+    
     if process_monitor:
         process_monitor.add_stage_details(
             stage_name,
@@ -159,6 +163,73 @@ def query_database_sync(
                 )
                 
         else:  # scope == "research"
+            # Check if this is a report generation request needing clarification
+            if "Generate WM Readthrough Report" in query:
+                logger.info("Generating clarification response for report request")
+                
+                response: ResearchResponse = {
+                    "detailed_research": f"""
+## Wealth Management Readthrough Report - Clarification Needed
+
+To generate the Wealth Management Readthrough Report, I need to know which period and banks you'd like analyzed.
+
+### Available Options:
+
+**Recent Quarters with WM Data:**
+- Q3 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q2 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q1 2024 - RBC, TD, BMO, Scotiabank, CIBC
+- Q4 2023 - RBC, TD, BMO, Scotiabank, CIBC
+
+**Report Types:**
+- **Comprehensive WM Analysis**: All banks, all WM metrics
+- **Competitive Comparison**: Side-by-side WM performance
+- **Single Bank Deep Dive**: Detailed WM analysis for one institution
+- **YoY Trend Analysis**: Multi-quarter WM trends
+
+### Please Specify:
+
+1. **Which banks?** (e.g., "All Big 5", "RBC and TD", "RBC only")
+2. **Which quarter/year?** (e.g., "Q3 2024", "Last 2 quarters")
+3. **Focus areas?** (optional - e.g., "AUM growth", "Fee income", "Digital wealth")
+
+### Example Requests:
+- "Generate WM Readthrough Report for all Big 5 banks Q3 2024"
+- "Generate WM Readthrough Report for RBC and TD comparing Q3 2024 vs Q3 2023"
+- "Generate WM Readthrough Report focusing on AUM and fee income Q3 2024"
+
+### Report Contents Will Include:
+- Assets Under Management (AUM) analysis
+- Fee income trends and drivers
+- Net flows and client acquisition
+- Product mix and margin analysis
+- Digital wealth initiatives
+- Competitive positioning
+- Management commentary highlights
+- Forward-looking guidance
+
+Please provide the specific parameters so I can generate the appropriate wealth management readthrough report.
+""",
+                    "status_summary": "🔍 Clarification needed: Please specify which banks and quarter for the WM readthrough report"
+                }
+                
+                if process_monitor:
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        status="clarification_needed",
+                        report_type="wm_readthrough",
+                        awaiting_parameters=True
+                    )
+                
+                return (
+                    response,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            
             logger.debug("PLACEHOLDER: Retrieving pre-generated WM readthrough report")
             
             response: ResearchResponse = {

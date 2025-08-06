@@ -504,68 +504,242 @@
             border-top: 1px solid var(--border-color);
             padding: var(--spacing-lg);
             box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
+            position: relative;
         }
         
-        /* ==================== Database Selector ==================== */
-        .database-selector {
-            margin-bottom: var(--spacing-md);
+        /* ==================== Info Tabs (Drawer Style) ==================== */
+        .info-tabs-container {
+            position: absolute;
+            bottom: 100%;
+            left: var(--spacing-lg);
+            right: var(--spacing-lg);
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            z-index: 50;
+        }
+        
+        .info-tab {
+            position: relative;
+        }
+        
+        .info-tab-button {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 8px 16px;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info-tab-button:hover {
             background: var(--bg-secondary);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        
+        .info-tab-button.active {
+            background: var(--primary-bg);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .info-tab-icon {
+            font-size: 14px;
+        }
+        
+        .info-tab-drawer {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: var(--spacing-md);
-            transition: all var(--transition-base);
+            box-shadow: var(--shadow-lg);
+            max-height: 0;
+            overflow: hidden;
+            transition: all var(--transition-slow);
+            min-width: 400px;
         }
         
-        .database-selector-header {
+        .info-tab-drawer.open {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .info-tab-content {
+            padding: var(--spacing-lg);
+        }
+        
+        /* ==================== Data Availability Styles ==================== */
+        .data-availability-grid {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: var(--spacing-xs);
+            flex-direction: column;
+            gap: var(--spacing-lg);
         }
         
-        .database-selector-title {
-            font-size: var(--font-size-sm);
+        .data-source-section {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+        }
+        
+        .data-source-title {
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .availability-matrix {
+            display: grid;
+            grid-template-columns: 100px repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .matrix-cell {
+            background: var(--bg-primary);
+            padding: 8px;
+            text-align: center;
+            font-size: var(--font-size-xs);
+        }
+        
+        .matrix-cell.header {
+            background: var(--bg-tertiary);
             font-weight: 600;
             color: var(--text-secondary);
+        }
+        
+        .matrix-cell.bank-name {
+            text-align: left;
+            font-weight: 500;
+            background: var(--bg-tertiary);
+        }
+        
+        .matrix-cell.available {
+            background: #dcfce7;
+            color: #166534;
+            font-weight: 500;
+        }
+        
+        .matrix-cell.unavailable {
+            background: var(--bg-primary);
+            color: var(--text-muted);
+        }
+        
+        /* ==================== Calendar Styles ==================== */
+        .calendar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+        }
+        
+        .calendar-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .calendar-month {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .calendar-nav {
+            display: flex;
             gap: var(--spacing-sm);
         }
         
-        .database-count {
-            font-size: var(--font-size-xs);
-            color: var(--text-muted);
-            font-weight: 400;
+        .calendar-nav button {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
         }
         
-        .filter-toggle-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 6px 12px;
+        .calendar-nav button:hover {
+            background: var(--primary-bg);
+            color: var(--primary-color);
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .calendar-day {
+            background: var(--bg-primary);
+            min-height: 80px;
+            padding: 6px;
             font-size: var(--font-size-xs);
+            position: relative;
+        }
+        
+        .calendar-day.header {
+            min-height: auto;
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            text-align: center;
+            padding: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .calendar-day-number {
             font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .calendar-event {
+            background: var(--primary-bg);
+            border-left: 3px solid var(--primary-color);
+            padding: 2px 4px;
+            margin: 2px 0;
+            border-radius: 2px;
+            font-size: 10px;
             cursor: pointer;
             transition: all var(--transition-fast);
         }
         
-        .filter-toggle-btn:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-base);
+        .calendar-event:hover {
+            background: var(--primary-light);
+            transform: translateX(2px);
         }
         
-        .database-filters {
-            display: none;
-            margin-top: var(--spacing-md);
-            padding-top: var(--spacing-md);
-            border-top: 1px solid var(--border-color);
+        .calendar-event-time {
+            font-weight: 600;
+            color: var(--primary-color);
         }
         
-        .database-filters.visible {
-            display: block;
-            animation: slideDown 0.3s ease-out;
+        .calendar-event-bank {
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         @keyframes slideDown {
@@ -626,6 +800,54 @@
             color: var(--text-primary);
             cursor: pointer;
             flex: 1;
+        }
+        
+        /* ==================== Report Request Buttons ==================== */
+        .report-buttons-container {
+            display: flex;
+            gap: var(--spacing-sm);
+            overflow-x: auto;
+            padding: var(--spacing-sm) 0;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .report-buttons-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .report-buttons-container::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+        
+        .report-buttons-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        
+        .report-button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .report-button:hover {
+            background: var(--primary-bg);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            transform: translateY(-1px);
+        }
+        
+        .report-button:active {
+            transform: translateY(0);
         }
         
         .filter-actions {
@@ -690,9 +912,11 @@
             color: var(--text-primary);
             max-height: 150px;
             line-height: 1.5;
+            overflow-y: hidden;
         }
         
         .message-input:focus {
+            overflow-y: auto;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(80, 70, 229, 0.1);
         }
@@ -812,60 +1036,219 @@
         
         <!-- Input Section -->
         <div class="input-section">
-            <!-- Database Selector -->
-            <div class="database-selector">
-                <div class="database-selector-header">
-                    <div class="database-selector-title">
-                        🗄️ Database Sources
-                        <span class="database-count" id="databaseCount">All sources active (8)</span>
-                    </div>
-                    <button class="filter-toggle-btn" id="filterToggle">Configure</button>
-                </div>
-                
-                <div class="database-filters" id="databaseFilters">
-                    <div class="database-group">
-                        <div class="database-group-title">Financial Market Data</div>
-                        <div class="database-options">
-                            <div class="database-option">
-                                <input type="checkbox" id="db_transcripts" value="subagent_transcripts" checked>
-                                <label for="db_transcripts">Earnings Call Transcripts</label>
+            <!-- Info Tabs Container -->
+            <div class="info-tabs-container">
+                <!-- Database Sources Tab -->
+                <div class="info-tab">
+                    <button class="info-tab-button" id="databaseTabBtn">
+                        <span class="info-tab-icon">🗄️</span>
+                        <span>Database Sources</span>
+                        <span class="database-count" id="databaseCount">(8)</span>
+                    </button>
+                    <div class="info-tab-drawer" id="databaseDrawer">
+                        <div class="info-tab-content">
+                            <div class="database-group">
+                                <div class="database-group-title">Financial Market Data</div>
+                                <div class="database-options">
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_transcripts" value="subagent_transcripts" checked>
+                                        <label for="db_transcripts">Earnings Call Transcripts</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_rts" value="subagent_rts" checked>
+                                        <label for="db_rts">Reports to Shareholders</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_benchmarking" value="subagent_benchmarking" checked>
+                                        <label for="db_benchmarking">Financial Benchmarking</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_transcript_summaries" value="report_transcript_summaries" checked>
+                                        <label for="db_transcript_summaries">Transcript Summaries</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_transcript_themes" value="report_transcript_key_themes" checked>
+                                        <label for="db_transcript_themes">Key Themes Analysis</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_wm" value="report_wm_readthrough" checked>
+                                        <label for="db_wm">WM Readthrough</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_cm" value="report_cm_readthrough" checked>
+                                        <label for="db_cm">CM Readthrough</label>
+                                    </div>
+                                    <div class="database-option">
+                                        <input type="checkbox" id="db_newsletter" value="report_ir_quarterly_newsletter" checked>
+                                        <label for="db_newsletter">IR Quarterly Newsletter</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_rts" value="subagent_rts" checked>
-                                <label for="db_rts">Reports to Shareholders</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_benchmarking" value="subagent_benchmarking" checked>
-                                <label for="db_benchmarking">Financial Benchmarking</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_transcript_summaries" value="report_transcript_summaries" checked>
-                                <label for="db_transcript_summaries">Transcript Summaries</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_transcript_themes" value="report_transcript_key_themes" checked>
-                                <label for="db_transcript_themes">Key Themes Analysis</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_wm" value="report_wm_readthrough" checked>
-                                <label for="db_wm">WM Readthrough</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_cm" value="report_cm_readthrough" checked>
-                                <label for="db_cm">CM Readthrough</label>
-                            </div>
-                            <div class="database-option">
-                                <input type="checkbox" id="db_newsletter" value="report_ir_quarterly_newsletter" checked>
-                                <label for="db_newsletter">IR Quarterly Newsletter</label>
+                            
+                            <div class="filter-actions">
+                                <button class="filter-btn primary" id="selectAllBtn">Select All</button>
+                                <button class="filter-btn secondary" id="clearAllBtn">Clear All</button>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="filter-actions">
-                        <button class="filter-btn primary" id="selectAllBtn">Select All</button>
-                        <button class="filter-btn secondary" id="clearAllBtn">Clear All</button>
+                </div>
+                
+                <!-- Data Availability Tab -->
+                <div class="info-tab">
+                    <button class="info-tab-button" id="availabilityTabBtn">
+                        <span class="info-tab-icon">📊</span>
+                        <span>Data Availability</span>
+                    </button>
+                    <div class="info-tab-drawer" id="availabilityDrawer">
+                        <div class="info-tab-content">
+                            <div class="data-availability-grid">
+                                <!-- Transcripts -->
+                                <div class="data-source-section">
+                                    <div class="data-source-title">Earnings Call Transcripts</div>
+                                    <div class="availability-matrix">
+                                        <div class="matrix-cell header">Bank</div>
+                                        <div class="matrix-cell header">Q1 2024</div>
+                                        <div class="matrix-cell header">Q2 2024</div>
+                                        <div class="matrix-cell header">Q3 2024</div>
+                                        <div class="matrix-cell header">Q4 2024</div>
+                                        
+                                        <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">TD</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">BMO</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- RTS -->
+                                <div class="data-source-section">
+                                    <div class="data-source-title">Reports to Shareholders (10-Q/10-K)</div>
+                                    <div class="availability-matrix">
+                                        <div class="matrix-cell header">Bank</div>
+                                        <div class="matrix-cell header">Q1 2024</div>
+                                        <div class="matrix-cell header">Q2 2024</div>
+                                        <div class="matrix-cell header">Q3 2024</div>
+                                        <div class="matrix-cell header">Q4 2024</div>
+                                        
+                                        <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">TD</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">BMO</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Benchmarking -->
+                                <div class="data-source-section">
+                                    <div class="data-source-title">Financial Benchmarking Data</div>
+                                    <div class="availability-matrix">
+                                        <div class="matrix-cell header">Bank</div>
+                                        <div class="matrix-cell header">Q1 2024</div>
+                                        <div class="matrix-cell header">Q2 2024</div>
+                                        <div class="matrix-cell header">Q3 2024</div>
+                                        <div class="matrix-cell header">Q4 2024</div>
+                                        
+                                        <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">TD</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">BMO</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                        
+                                        <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell unavailable">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Release Calendar Tab -->
+                <div class="info-tab">
+                    <button class="info-tab-button" id="calendarTabBtn">
+                        <span class="info-tab-icon">📅</span>
+                        <span>Release Calendar</span>
+                    </button>
+                    <div class="info-tab-drawer" id="calendarDrawer">
+                        <div class="info-tab-content">
+                            <div class="calendar-container">
+                                <div class="calendar-header">
+                                    <div class="calendar-month">January 2025</div>
+                                    <div class="calendar-nav">
+                                        <button id="prevMonth">←</button>
+                                        <button id="nextMonth">→</button>
+                                    </div>
+                                </div>
+                                <div class="calendar-grid" id="calendarGrid">
+                                    <!-- Calendar will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Report Request Buttons -->
+            <div class="report-buttons-container">
+                <button class="report-button" data-report="transcript-summary">Transcript Summary</button>
+                <button class="report-button" data-report="key-themes">Key Themes Report</button>
+                <button class="report-button" data-report="wm-readthrough">WM Readthrough</button>
+                <button class="report-button" data-report="cm-readthrough">CM Readthrough</button>
+                <button class="report-button" data-report="quarterly-newsletter">Quarterly Newsletter</button>
+                <button class="report-button" data-report="financial-comparison">Financial Comparison</button>
+                <button class="report-button" data-report="earnings-preview">Earnings Preview</button>
+                <button class="report-button" data-report="market-analysis">Market Analysis</button>
             </div>
             
             <!-- Message Input -->
@@ -982,6 +1365,57 @@
                 document.querySelectorAll('.database-option input').forEach(checkbox => {
                     checkbox.addEventListener('change', () => this.updateDatabaseCount());
                 });
+                
+                // Report buttons
+                document.querySelectorAll('.report-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const reportType = e.target.dataset.report;
+                        this.sendReportRequest(reportType);
+                    });
+                });
+                
+                // Tab buttons for drawer panels
+                document.querySelectorAll('.tab-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const tabType = e.target.dataset.tab;
+                        this.switchTab(tabType);
+                    });
+                });
+            }
+            
+            sendReportRequest(reportType) {
+                const reportMessages = {
+                    'transcript-summary': 'Generate Transcript Summary Report',
+                    'key-themes': 'Generate Key Themes Report',
+                    'wm-readthrough': 'Generate WM Readthrough Report',
+                    'cm-readthrough': 'Generate CM Readthrough Report',
+                    'quarterly-newsletter': 'Generate Quarterly Newsletter Report'
+                };
+                
+                const message = reportMessages[reportType];
+                if (message) {
+                    // Set the message in the input field
+                    this.messageInput.value = message;
+                    // Auto-resize the textarea
+                    this.autoResizeTextarea();
+                    // Send the message
+                    this.sendMessage();
+                }
+            }
+            
+            switchTab(tabType) {
+                // Remove active class from all tabs and panels
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.drawer-panel').forEach(panel => panel.classList.remove('visible'));
+                
+                // Add active class to selected tab and show corresponding panel
+                const selectedTab = document.querySelector(`.tab-btn[data-tab="${tabType}"]`);
+                const selectedPanel = document.getElementById(`${tabType}Panel`);
+                
+                if (selectedTab && selectedPanel) {
+                    selectedTab.classList.add('active');
+                    selectedPanel.classList.add('visible');
+                }
             }
             
             autoResizeTextarea() {
@@ -1167,7 +1601,13 @@
                 
                 const statusIcon = document.createElement('span');
                 statusIcon.className = 'database-status-icon';
-                statusIcon.textContent = data.status === 'error' ? '❌' : '✅';
+                if (data.status === 'processing') {
+                    statusIcon.textContent = '⏳';
+                } else if (data.status === 'error') {
+                    statusIcon.textContent = '❌';
+                } else {
+                    statusIcon.textContent = '✅';
+                }
                 
                 const dbName = document.createElement('span');
                 dbName.className = 'database-name';
@@ -1175,7 +1615,13 @@
                 
                 const statusBadge = document.createElement('span');
                 statusBadge.className = 'database-status-badge';
-                statusBadge.textContent = data.status === 'error' ? 'Error' : 'Complete';
+                if (data.status === 'processing') {
+                    statusBadge.textContent = 'Processing...';
+                } else if (data.status === 'error') {
+                    statusBadge.textContent = 'Error';
+                } else {
+                    statusBadge.textContent = 'Complete';
+                }
                 
                 info.appendChild(statusIcon);
                 info.appendChild(dbName);
@@ -1204,6 +1650,40 @@
                 dropdown.appendChild(content);
                 
                 return dropdown;
+            }
+            
+            updateDatabaseDropdown(dropdown, data) {
+                // Update status icon
+                const statusIcon = dropdown.querySelector('.database-status-icon');
+                if (statusIcon) {
+                    if (data.status === 'processing') {
+                        statusIcon.textContent = '⏳';
+                    } else if (data.status === 'error') {
+                        statusIcon.textContent = '❌';
+                    } else {
+                        statusIcon.textContent = '✅';
+                    }
+                }
+                
+                // Update status badge
+                const statusBadge = dropdown.querySelector('.database-status-badge');
+                if (statusBadge) {
+                    if (data.status === 'processing') {
+                        statusBadge.textContent = 'Processing...';
+                    } else if (data.status === 'error') {
+                        statusBadge.textContent = 'Error';
+                    } else {
+                        statusBadge.textContent = 'Complete';
+                    }
+                }
+                
+                // Update content
+                const content = dropdown.querySelector('.database-dropdown-content');
+                if (content && data.response) {
+                    content.innerHTML = marked.parse(data.response);
+                    content.style.fontSize = '13px';
+                    content.style.lineHeight = '1.6';
+                }
             }
             
             async streamResponse() {
@@ -1256,6 +1736,40 @@
                         const chunk = decoder.decode(value, { stream: true });
                         fullResponse += chunk;
                         
+                        // Handle subagent processing markers
+                        if (chunk.includes('SUBAGENT_PROCESSING:')) {
+                            const matches = chunk.match(/SUBAGENT_PROCESSING:(.+?)(?=\n|$)/g);
+                            if (matches) {
+                                matches.forEach(match => {
+                                    try {
+                                        const jsonData = match.replace('SUBAGENT_PROCESSING:', '');
+                                        const item = JSON.parse(jsonData);
+                                        
+                                        // Create or update dropdowns container
+                                        let container = assistantContent.querySelector('.database-dropdowns-container');
+                                        if (!container) {
+                                            container = document.createElement('div');
+                                            container.className = 'database-dropdowns-container';
+                                            this.positionDropdownContainer(assistantContent, container);
+                                        }
+                                        
+                                        // Check if dropdown already exists
+                                        let existingDropdown = container.querySelector(`[data-db-name="${item.name}"]`);
+                                        if (!existingDropdown) {
+                                            // Create new processing dropdown
+                                            const dropdown = this.createDatabaseDropdown(item.name, item);
+                                            container.appendChild(dropdown);
+                                        }
+                                        
+                                    } catch (e) {
+                                        console.error('Failed to parse processing data:', e);
+                                    }
+                                });
+                                
+                                fullResponse = fullResponse.replace(/SUBAGENT_PROCESSING:.+?(?=\n|$)/g, '');
+                            }
+                        }
+                        
                         // Handle subagent completions
                         if (chunk.includes('SUBAGENT_COMPLETE:')) {
                             const matches = chunk.match(/SUBAGENT_COMPLETE:(.+?)(?=\n|$)/g);
@@ -1274,9 +1788,16 @@
                                             this.positionDropdownContainer(assistantContent, container);
                                         }
                                         
-                                        // Add dropdown
-                                        const dropdown = this.createDatabaseDropdown(item.name, item);
-                                        container.appendChild(dropdown);
+                                        // Update existing dropdown or create new one
+                                        let existingDropdown = container.querySelector(`[data-db-name="${item.name}"]`);
+                                        if (existingDropdown) {
+                                            // Update the existing dropdown with complete data
+                                            this.updateDatabaseDropdown(existingDropdown, item);
+                                        } else {
+                                            // Add new dropdown
+                                            const dropdown = this.createDatabaseDropdown(item.name, item);
+                                            container.appendChild(dropdown);
+                                        }
                                         
                                     } catch (e) {
                                         console.error('Failed to parse subagent data:', e);

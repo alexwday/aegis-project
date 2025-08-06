@@ -98,6 +98,10 @@ def query_database_sync(
     
     logger.info(f"Quarterly Newsletter subagent processing query: '{query}' with scope: '{scope}'")
     
+    # Special handling for report generation requests
+    if "Generate Quarterly Newsletter Report" in query:
+        logger.info("Report generation request detected - returning clarification response")
+    
     if process_monitor:
         process_monitor.add_stage_details(
             stage_name,
@@ -161,6 +165,73 @@ def query_database_sync(
                 )
                 
         else:  # scope == "research"
+            # Check if this is a report generation request needing clarification
+            if "Generate Quarterly Newsletter Report" in query:
+                logger.info("Generating clarification response for report request")
+                
+                response: ResearchResponse = {
+                    "detailed_research": f"""
+## Quarterly Newsletter Report - Clarification Needed
+
+To generate the Quarterly Newsletter Report, I need to know which quarter and scope you'd like covered.
+
+### Available Options:
+
+**Recent Quarters:**
+- Q3 2024 - Complete (All earnings reported)
+- Q2 2024 - Complete
+- Q1 2024 - Complete
+- Q4 2023 - Complete
+
+**Coverage Options:**
+- **Global Banks Newsletter**: All major Canadian and US banks
+- **Canadian Banks Focus**: Big 5 Canadian banks deep dive
+- **US Banks Focus**: Major US money center banks
+- **Regional Newsletter**: Specific geographic focus
+
+### Please Specify:
+
+1. **Which quarter?** (e.g., "Q3 2024", "Q2 2024")
+2. **Coverage scope?** (e.g., "Global", "Canadian only", "North America")
+3. **Special themes?** (optional - e.g., "ESG focus", "Digital transformation")
+
+### Example Requests:
+- "Generate Quarterly Newsletter Report for Q3 2024 Global Banks"
+- "Generate Quarterly Newsletter Report for Q3 2024 Canadian banks only"
+- "Generate Quarterly Newsletter Report for Q2 2024 with ESG focus"
+
+### Newsletter Contents Will Include:
+- Executive Summary & Key Takeaways
+- Quarterly Performance Rankings
+- Major Announcements & Strategic Updates
+- Regulatory & Market Developments
+- Earnings Highlights by Region
+- Forward-Looking Themes
+- Notable Management Changes
+- Upcoming Events Calendar
+
+Please provide the specific parameters so I can generate the appropriate quarterly newsletter report.
+""",
+                    "status_summary": "🔍 Clarification needed: Please specify which quarter and coverage scope for the newsletter"
+                }
+                
+                if process_monitor:
+                    process_monitor.add_stage_details(
+                        stage_name,
+                        status="clarification_needed",
+                        report_type="quarterly_newsletter",
+                        awaiting_parameters=True
+                    )
+                
+                return (
+                    response,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            
             logger.debug("PLACEHOLDER: Retrieving pre-generated quarterly newsletter report")
             
             response: ResearchResponse = {

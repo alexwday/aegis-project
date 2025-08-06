@@ -1042,6 +1042,23 @@ def _model_generator(
                     logger.info(
                         f"Starting {len(selected_databases)} database queries concurrently..."
                     )
+                    
+                    # Send processing markers immediately for all selected databases
+                    logger.info("Sending processing markers for selected databases")
+                    for db_name in selected_databases:
+                        db_display_name = available_databases.get(db_name, {}).get("name", db_name)
+                        processing_item = {
+                            "name": db_display_name,
+                            "database_key": db_name,
+                            "status": "processing",
+                            "response": "Querying database...",
+                            "metadata": {
+                                "scope": scope,
+                                "status_summary": "⏳ Processing..."
+                            }
+                        }
+                        yield f"SUBAGENT_PROCESSING:{json.dumps(processing_item)}\n"
+                    
                     aggregated_detailed_research = {}
                     metadata_results_by_db: Dict[str, List[Dict[str, Any]]] = {}
                     total_metadata_items = 0
