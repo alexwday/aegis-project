@@ -806,8 +806,8 @@
         }
         
         .database-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: var(--spacing-sm);
         }
         
@@ -886,8 +886,8 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: var(--spacing-md);
-            min-width: 160px;
-            min-height: 100px;
+            width: 180px;
+            height: 110px;
             display: flex;
             flex-direction: column;
             gap: var(--spacing-xs);
@@ -918,6 +918,11 @@
             font-size: var(--font-size-xs);
             color: var(--text-secondary);
             line-height: 1.4;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
         }
         
         .filter-actions {
@@ -954,6 +959,68 @@
         
         .filter-btn.secondary:hover {
             background: var(--border-color);
+        }
+        
+        /* ==================== Pregenerated Reports Section ==================== */
+        .pregenerated-reports-section {
+            margin-bottom: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            overflow: hidden;
+            transition: all var(--transition-base);
+        }
+        
+        .pregenerated-reports-header {
+            padding: var(--spacing-md);
+            background: var(--bg-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: all var(--transition-fast);
+        }
+        
+        .pregenerated-reports-header:hover {
+            background: var(--primary-bg);
+        }
+        
+        .pregenerated-reports-title {
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .pregenerated-reports-icon {
+            font-size: var(--font-size-lg);
+        }
+        
+        .pregenerated-reports-toggle {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+            transition: transform var(--transition-base);
+        }
+        
+        .pregenerated-reports-section.expanded .pregenerated-reports-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .pregenerated-reports-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-slow);
+            padding: 0 var(--spacing-md);
+        }
+        
+        .pregenerated-reports-section.expanded .pregenerated-reports-content {
+            max-height: 300px;
+            padding: var(--spacing-md);
+            overflow-x: auto;
+            overflow-y: hidden;
         }
         
         /* ==================== Message Input ==================== */
@@ -1150,39 +1217,50 @@
                 </button>
             </div>
             
-            <!-- Report Request Buttons -->
-            <div class="report-buttons-container">
-                <div class="report-button" data-report="transcript-summary">
-                    <div class="report-button-title">Transcript Summary</div>
-                    <div class="report-button-description">Summarized earnings call transcripts based on IR requirements</div>
+            <!-- Pregenerated Reports Section -->
+            <div class="pregenerated-reports-section" id="pregeneratedReportsSection">
+                <div class="pregenerated-reports-header" id="pregeneratedReportsHeader">
+                    <div class="pregenerated-reports-title">
+                        <span class="pregenerated-reports-icon">📊</span>
+                        <span>Pregenerated Reports</span>
+                    </div>
+                    <span class="pregenerated-reports-toggle">▼</span>
                 </div>
-                <div class="report-button" data-report="key-themes">
-                    <div class="report-button-title">Key Themes</div>
-                    <div class="report-button-description">Thematic analysis and key topics from earnings calls</div>
-                </div>
-                <div class="report-button" data-report="wm-readthrough">
-                    <div class="report-button-title">WM Readthrough</div>
-                    <div class="report-button-description">Wealth Management insights across all US banks</div>
-                </div>
-                <div class="report-button" data-report="cm-readthrough">
-                    <div class="report-button-title">CM Readthrough</div>
-                    <div class="report-button-description">Capital Markets themes across all US banks</div>
-                </div>
-                <div class="report-button" data-report="quarterly-newsletter">
-                    <div class="report-button-title">IR Newsletter</div>
-                    <div class="report-button-description">Quarterly highlights across all global banks</div>
-                </div>
-                <div class="report-button" data-report="financial-comparison">
-                    <div class="report-button-title">Financial Comparison</div>
-                    <div class="report-button-description">Cross-bank financial metrics and benchmarking</div>
-                </div>
-                <div class="report-button" data-report="earnings-preview">
-                    <div class="report-button-title">Earnings Preview</div>
-                    <div class="report-button-description">Preview of upcoming earnings releases</div>
-                </div>
-                <div class="report-button" data-report="market-analysis">
-                    <div class="report-button-title">Market Analysis</div>
-                    <div class="report-button-description">Market trends and insights across sectors</div>
+                <div class="pregenerated-reports-content">
+                    <div class="report-buttons-container">
+                        <div class="report-button" data-report="transcript-summary">
+                            <div class="report-button-title">Transcript Summary</div>
+                            <div class="report-button-description">Summarized earnings call transcripts based on IR requirements</div>
+                        </div>
+                        <div class="report-button" data-report="key-themes">
+                            <div class="report-button-title">Key Themes</div>
+                            <div class="report-button-description">Thematic analysis and key topics from earnings calls</div>
+                        </div>
+                        <div class="report-button" data-report="wm-readthrough">
+                            <div class="report-button-title">WM Readthrough</div>
+                            <div class="report-button-description">Wealth Management insights across all US banks</div>
+                        </div>
+                        <div class="report-button" data-report="cm-readthrough">
+                            <div class="report-button-title">CM Readthrough</div>
+                            <div class="report-button-description">Capital Markets themes across all US banks</div>
+                        </div>
+                        <div class="report-button" data-report="quarterly-newsletter">
+                            <div class="report-button-title">IR Newsletter</div>
+                            <div class="report-button-description">Quarterly highlights across all global banks</div>
+                        </div>
+                        <div class="report-button" data-report="financial-comparison">
+                            <div class="report-button-title">Financial Comparison</div>
+                            <div class="report-button-description">Cross-bank financial metrics and benchmarking</div>
+                        </div>
+                        <div class="report-button" data-report="earnings-preview">
+                            <div class="report-button-title">Earnings Preview</div>
+                            <div class="report-button-description">Preview of upcoming earnings releases</div>
+                        </div>
+                        <div class="report-button" data-report="market-analysis">
+                            <div class="report-button-title">Market Analysis</div>
+                            <div class="report-button-description">Market trends and insights across sectors</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1604,6 +1682,15 @@
                         this.sendReportRequest(reportType);
                     });
                 });
+                
+                // Pregenerated Reports expandable section
+                const pregeneratedHeader = document.getElementById('pregeneratedReportsHeader');
+                const pregeneratedSection = document.getElementById('pregeneratedReportsSection');
+                if (pregeneratedHeader && pregeneratedSection) {
+                    pregeneratedHeader.addEventListener('click', () => {
+                        pregeneratedSection.classList.toggle('expanded');
+                    });
+                }
                 
                 // Data Availability tab button
                 if (this.availabilityTabBtn) {
