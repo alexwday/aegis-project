@@ -511,11 +511,11 @@
         .info-tabs-container {
             position: absolute;
             bottom: 100%;
-            left: var(--spacing-lg);
-            right: var(--spacing-lg);
+            left: 0;
+            right: 0;
             display: flex;
             gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
+            padding: 0 var(--spacing-lg);
             z-index: 50;
         }
         
@@ -559,8 +559,8 @@
         .info-tab-drawer {
             position: absolute;
             bottom: 100%;
-            left: 0;
-            right: 0;
+            left: 50%;
+            transform: translateX(-50%);
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -568,7 +568,20 @@
             max-height: 0;
             overflow: hidden;
             transition: all var(--transition-slow);
-            min-width: 400px;
+            width: 90vw;
+            max-width: 1200px;
+        }
+        
+        .info-tab-drawer#databaseDrawer {
+            max-width: 800px;
+        }
+        
+        .info-tab-drawer#availabilityDrawer {
+            max-width: 1400px;
+        }
+        
+        .info-tab-drawer#calendarDrawer {
+            max-width: 1200px;
         }
         
         .info-tab-drawer.open {
@@ -774,8 +787,8 @@
         
         .database-option {
             display: flex;
-            align-items: center;
-            padding: var(--spacing-sm) 12px;
+            align-items: flex-start;
+            padding: var(--spacing-md);
             background: var(--bg-primary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
@@ -796,58 +809,89 @@
         }
         
         .database-option label {
-            font-size: var(--font-size-sm);
-            color: var(--text-primary);
             cursor: pointer;
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .database-label-title {
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .database-label-desc {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            line-height: 1.4;
         }
         
         /* ==================== Report Request Buttons ==================== */
         .report-buttons-container {
             display: flex;
-            gap: var(--spacing-sm);
+            gap: var(--spacing-md);
             overflow-x: auto;
-            padding: var(--spacing-sm) 0;
+            padding: var(--spacing-md) 0;
             margin-bottom: var(--spacing-md);
         }
         
         .report-buttons-container::-webkit-scrollbar {
-            height: 6px;
+            height: 8px;
         }
         
         .report-buttons-container::-webkit-scrollbar-track {
             background: var(--bg-tertiary);
-            border-radius: 3px;
+            border-radius: 4px;
         }
         
         .report-buttons-container::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 3px;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .report-buttons-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
         
         .report-button {
-            background: var(--bg-secondary);
+            background: var(--bg-primary);
             border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 6px 14px;
-            font-size: var(--font-size-xs);
-            font-weight: 500;
-            color: var(--text-secondary);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            min-width: 160px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
             cursor: pointer;
             transition: all var(--transition-fast);
-            white-space: nowrap;
             flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
         }
         
         .report-button:hover {
             background: var(--primary-bg);
             border-color: var(--primary-color);
-            color: var(--primary-color);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
         
         .report-button:active {
             transform: translateY(0);
+        }
+        
+        .report-button-title {
+            font-size: var(--font-size-sm);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .report-button-description {
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+            line-height: 1.4;
         }
         
         .filter-actions {
@@ -890,7 +934,7 @@
         .input-container {
             display: flex;
             gap: var(--spacing-sm);
-            align-items: flex-end;
+            align-items: center;
         }
         
         .input-wrapper {
@@ -912,14 +956,12 @@
             color: var(--text-primary);
             max-height: 150px;
             line-height: 1.5;
-            overflow-y: hidden;
-            overflow-x: hidden;
+            overflow: hidden;
         }
         
         .message-input:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(80, 70, 229, 0.1);
-            overflow-y: auto;
         }
         
         .message-input::placeholder {
@@ -1049,39 +1091,28 @@
                     <div class="info-tab-drawer" id="databaseDrawer">
                         <div class="info-tab-content">
                             <div class="database-group">
-                                <div class="database-group-title">Financial Market Data</div>
+                                <div class="database-group-title">Data Sources</div>
                                 <div class="database-options">
                                     <div class="database-option">
                                         <input type="checkbox" id="db_transcripts" value="subagent_transcripts" checked>
-                                        <label for="db_transcripts">Earnings Call Transcripts</label>
+                                        <label for="db_transcripts">
+                                            <div class="database-label-title">Earnings Call Transcripts</div>
+                                            <div class="database-label-desc">Management discussion, guidance, and context around financial results</div>
+                                        </label>
                                     </div>
                                     <div class="database-option">
                                         <input type="checkbox" id="db_rts" value="subagent_rts" checked>
-                                        <label for="db_rts">Reports to Shareholders</label>
+                                        <label for="db_rts">
+                                            <div class="database-label-title">Reports to Shareholders (10-Q/10-K)</div>
+                                            <div class="database-label-desc">Official regulatory filings and financial statements</div>
+                                        </label>
                                     </div>
                                     <div class="database-option">
                                         <input type="checkbox" id="db_benchmarking" value="subagent_benchmarking" checked>
-                                        <label for="db_benchmarking">Financial Benchmarking</label>
-                                    </div>
-                                    <div class="database-option">
-                                        <input type="checkbox" id="db_transcript_summaries" value="report_transcript_summaries" checked>
-                                        <label for="db_transcript_summaries">Transcript Summaries</label>
-                                    </div>
-                                    <div class="database-option">
-                                        <input type="checkbox" id="db_transcript_themes" value="report_transcript_key_themes" checked>
-                                        <label for="db_transcript_themes">Key Themes Analysis</label>
-                                    </div>
-                                    <div class="database-option">
-                                        <input type="checkbox" id="db_wm" value="report_wm_readthrough" checked>
-                                        <label for="db_wm">WM Readthrough</label>
-                                    </div>
-                                    <div class="database-option">
-                                        <input type="checkbox" id="db_cm" value="report_cm_readthrough" checked>
-                                        <label for="db_cm">CM Readthrough</label>
-                                    </div>
-                                    <div class="database-option">
-                                        <input type="checkbox" id="db_newsletter" value="report_ir_quarterly_newsletter" checked>
-                                        <label for="db_newsletter">IR Quarterly Newsletter</label>
+                                        <label for="db_benchmarking">
+                                            <div class="database-label-title">Financial Benchmarking Data</div>
+                                            <div class="database-label-desc">Income statements, balance sheets, and financial metrics across banks</div>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -1106,14 +1137,28 @@
                                 <!-- Transcripts -->
                                 <div class="data-source-section">
                                     <div class="data-source-title">Earnings Call Transcripts</div>
-                                    <div class="availability-matrix">
+                                    <div class="availability-matrix" style="grid-template-columns: 100px repeat(11, 1fr);">
                                         <div class="matrix-cell header">Bank</div>
-                                        <div class="matrix-cell header">Q1 2024</div>
-                                        <div class="matrix-cell header">Q2 2024</div>
-                                        <div class="matrix-cell header">Q3 2024</div>
-                                        <div class="matrix-cell header">Q4 2024</div>
+                                        <div class="matrix-cell header">2017</div>
+                                        <div class="matrix-cell header">2018</div>
+                                        <div class="matrix-cell header">2019</div>
+                                        <div class="matrix-cell header">2020</div>
+                                        <div class="matrix-cell header">2021</div>
+                                        <div class="matrix-cell header">2022</div>
+                                        <div class="matrix-cell header">2023</div>
+                                        <div class="matrix-cell header">Q1'24</div>
+                                        <div class="matrix-cell header">Q2'24</div>
+                                        <div class="matrix-cell header">Q3'24</div>
+                                        <div class="matrix-cell header">Q4'24</div>
                                         
                                         <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1123,15 +1168,36 @@
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">BMO</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1142,14 +1208,28 @@
                                 <!-- RTS -->
                                 <div class="data-source-section">
                                     <div class="data-source-title">Reports to Shareholders (10-Q/10-K)</div>
-                                    <div class="availability-matrix">
+                                    <div class="availability-matrix" style="grid-template-columns: 100px repeat(11, 1fr);">
                                         <div class="matrix-cell header">Bank</div>
-                                        <div class="matrix-cell header">Q1 2024</div>
-                                        <div class="matrix-cell header">Q2 2024</div>
-                                        <div class="matrix-cell header">Q3 2024</div>
-                                        <div class="matrix-cell header">Q4 2024</div>
+                                        <div class="matrix-cell header">2017</div>
+                                        <div class="matrix-cell header">2018</div>
+                                        <div class="matrix-cell header">2019</div>
+                                        <div class="matrix-cell header">2020</div>
+                                        <div class="matrix-cell header">2021</div>
+                                        <div class="matrix-cell header">2022</div>
+                                        <div class="matrix-cell header">2023</div>
+                                        <div class="matrix-cell header">Q1'24</div>
+                                        <div class="matrix-cell header">Q2'24</div>
+                                        <div class="matrix-cell header">Q3'24</div>
+                                        <div class="matrix-cell header">Q4'24</div>
                                         
                                         <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1159,15 +1239,36 @@
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">BMO</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1178,14 +1279,28 @@
                                 <!-- Benchmarking -->
                                 <div class="data-source-section">
                                     <div class="data-source-title">Financial Benchmarking Data</div>
-                                    <div class="availability-matrix">
+                                    <div class="availability-matrix" style="grid-template-columns: 100px repeat(11, 1fr);">
                                         <div class="matrix-cell header">Bank</div>
-                                        <div class="matrix-cell header">Q1 2024</div>
-                                        <div class="matrix-cell header">Q2 2024</div>
-                                        <div class="matrix-cell header">Q3 2024</div>
-                                        <div class="matrix-cell header">Q4 2024</div>
+                                        <div class="matrix-cell header">2017</div>
+                                        <div class="matrix-cell header">2018</div>
+                                        <div class="matrix-cell header">2019</div>
+                                        <div class="matrix-cell header">2020</div>
+                                        <div class="matrix-cell header">2021</div>
+                                        <div class="matrix-cell header">2022</div>
+                                        <div class="matrix-cell header">2023</div>
+                                        <div class="matrix-cell header">Q1'24</div>
+                                        <div class="matrix-cell header">Q2'24</div>
+                                        <div class="matrix-cell header">Q3'24</div>
+                                        <div class="matrix-cell header">Q4'24</div>
                                         
                                         <div class="matrix-cell bank-name">RBC</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1195,15 +1310,36 @@
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">BMO</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell unavailable">-</div>
                                         
                                         <div class="matrix-cell bank-name">Scotia</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
+                                        <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
                                         <div class="matrix-cell available">✓</div>
@@ -1259,14 +1395,38 @@
             
             <!-- Report Request Buttons -->
             <div class="report-buttons-container">
-                <button class="report-button" data-report="transcript-summary">Transcript Summary</button>
-                <button class="report-button" data-report="key-themes">Key Themes Report</button>
-                <button class="report-button" data-report="wm-readthrough">WM Readthrough</button>
-                <button class="report-button" data-report="cm-readthrough">CM Readthrough</button>
-                <button class="report-button" data-report="quarterly-newsletter">Quarterly Newsletter</button>
-                <button class="report-button" data-report="financial-comparison">Financial Comparison</button>
-                <button class="report-button" data-report="earnings-preview">Earnings Preview</button>
-                <button class="report-button" data-report="market-analysis">Market Analysis</button>
+                <div class="report-button" data-report="transcript-summary">
+                    <div class="report-button-title">Transcript Summary</div>
+                    <div class="report-button-description">Summarized earnings call transcripts based on IR requirements</div>
+                </div>
+                <div class="report-button" data-report="key-themes">
+                    <div class="report-button-title">Key Themes</div>
+                    <div class="report-button-description">Thematic analysis and key topics from earnings calls</div>
+                </div>
+                <div class="report-button" data-report="wm-readthrough">
+                    <div class="report-button-title">WM Readthrough</div>
+                    <div class="report-button-description">Wealth Management insights across all US banks</div>
+                </div>
+                <div class="report-button" data-report="cm-readthrough">
+                    <div class="report-button-title">CM Readthrough</div>
+                    <div class="report-button-description">Capital Markets themes across all US banks</div>
+                </div>
+                <div class="report-button" data-report="quarterly-newsletter">
+                    <div class="report-button-title">IR Newsletter</div>
+                    <div class="report-button-description">Quarterly highlights across all global banks</div>
+                </div>
+                <div class="report-button" data-report="financial-comparison">
+                    <div class="report-button-title">Financial Comparison</div>
+                    <div class="report-button-description">Cross-bank financial metrics and benchmarking</div>
+                </div>
+                <div class="report-button" data-report="earnings-preview">
+                    <div class="report-button-title">Earnings Preview</div>
+                    <div class="report-button-description">Preview of upcoming earnings releases</div>
+                </div>
+                <div class="report-button" data-report="market-analysis">
+                    <div class="report-button-title">Market Analysis</div>
+                    <div class="report-button-description">Market trends and insights across sectors</div>
+                </div>
             </div>
         </div>
     </main>
@@ -1546,7 +1706,10 @@
             autoResizeTextarea() {
                 const textarea = this.messageInput;
                 textarea.style.height = 'auto';
-                textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+                const newHeight = Math.min(textarea.scrollHeight, 150);
+                textarea.style.height = newHeight + 'px';
+                // Only show scrollbar if content exceeds max height
+                textarea.style.overflowY = textarea.scrollHeight > 150 ? 'auto' : 'hidden';
             }
             
             async checkConnection() {
