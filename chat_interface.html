@@ -562,17 +562,19 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
-            background: var(--bg-primary);
+            background: #ffffff;
             border: 1px solid var(--border-color);
             border-radius: 12px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             max-height: 0;
             overflow: hidden;
             opacity: 0;
+            visibility: hidden;
             transition: all var(--transition-slow);
             width: 90vw;
             max-width: 1200px;
             z-index: 10000;
+            isolation: isolate;
         }
         
         .info-tab-drawer#databaseDrawer {
@@ -591,6 +593,7 @@
             max-height: 80vh;
             overflow-y: auto;
             opacity: 1;
+            visibility: visible;
             transform: translate(-50%, -50%) scale(1);
         }
         
@@ -601,11 +604,12 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.4);
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
             opacity: 0;
             pointer-events: none;
             transition: opacity var(--transition-base);
-            z-index: 9999;
+            z-index: 9998;
         }
         
         .drawer-backdrop.active {
@@ -1086,9 +1090,6 @@
         </div>
     </header>
     
-    <!-- Drawer Backdrop -->
-    <div class="drawer-backdrop" id="drawerBackdrop"></div>
-    
     <!-- Main Chat Container -->
     <main class="chat-container">
         <!-- Messages Area -->
@@ -1456,6 +1457,9 @@
             </div>
         </div>
     </main>
+    
+    <!-- Drawer Backdrop -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
     
     <!-- JavaScript -->
     <script>
