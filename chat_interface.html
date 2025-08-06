@@ -912,12 +912,14 @@
             color: var(--text-primary);
             max-height: 150px;
             line-height: 1.5;
-            overflow-y: auto;
+            overflow-y: hidden;
+            overflow-x: hidden;
         }
         
         .message-input:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(80, 70, 229, 0.1);
+            overflow-y: auto;
         }
         
         .message-input::placeholder {
@@ -1297,8 +1299,9 @@
                 this.updateDatabaseCount();
                 // Set initial connection status to connecting
                 this.statusText.textContent = 'Connecting...';
-                // Check connection after a short delay
-                setTimeout(() => this.checkConnection(), 500);
+                // Check connection immediately and periodically
+                this.checkConnection();
+                setInterval(() => this.checkConnection(), 5000);
             }
             
             setupEventListeners() {
@@ -1377,13 +1380,23 @@
                 });
                 
                 // Info tab buttons for drawer panels
-                document.getElementById('availabilityTabBtn').addEventListener('click', () => {
-                    this.toggleDrawer('availabilityDrawer');
-                });
+                const availBtn = document.getElementById('availabilityTabBtn');
+                if (availBtn) {
+                    availBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.toggleDrawer('availabilityDrawer');
+                    });
+                }
                 
-                document.getElementById('calendarTabBtn').addEventListener('click', () => {
-                    this.toggleDrawer('calendarDrawer');
-                });
+                const calBtn = document.getElementById('calendarTabBtn');
+                if (calBtn) {
+                    calBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.toggleDrawer('calendarDrawer');
+                    });
+                }
             }
             
             sendReportRequest(reportType) {
@@ -1392,10 +1405,14 @@
                     'key-themes': 'Generate Key Themes Report',
                     'wm-readthrough': 'Generate WM Readthrough Report',
                     'cm-readthrough': 'Generate CM Readthrough Report',
-                    'quarterly-newsletter': 'Generate Quarterly Newsletter Report'
+                    'quarterly-newsletter': 'Generate Quarterly Newsletter Report',
+                    'financial-comparison': 'Generate Financial Comparison Report',
+                    'earnings-preview': 'Generate Earnings Preview Report',
+                    'market-analysis': 'Generate Market Analysis Report'
                 };
                 
                 const message = reportMessages[reportType];
+                console.log('Report button clicked:', reportType, message);
                 if (message) {
                     // Set the message in the input field
                     this.messageInput.value = message;
@@ -1407,6 +1424,7 @@
             }
             
             toggleDrawer(drawerId) {
+                console.log('Toggling drawer:', drawerId);
                 const drawer = document.getElementById(drawerId);
                 const allDrawers = document.querySelectorAll('.info-tab-drawer');
                 
@@ -1420,6 +1438,7 @@
                 // Toggle the selected drawer
                 if (drawer) {
                     drawer.classList.toggle('open');
+                    console.log('Drawer open state:', drawer.classList.contains('open'));
                 }
             }
             
@@ -1432,12 +1451,14 @@
             async checkConnection() {
                 try {
                     const response = await fetch(`${this.apiUrl}/health`);
-                    if (response.ok) {
+                    const data = await response.json();
+                    if (response.ok && data.status === 'healthy') {
                         this.setConnectionStatus(true);
                     } else {
                         this.setConnectionStatus(false);
                     }
                 } catch (error) {
+                    console.error('Connection check error:', error);
                     this.setConnectionStatus(false);
                 }
             }
