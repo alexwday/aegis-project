@@ -875,11 +875,14 @@ def _model_generator(
         logger.info(f"Initial available databases: {list(available_databases.keys())}")
         if db_names is not None:
             logger.info(f"db_names filter provided: {db_names}")
+            # Filter databases but ALWAYS include report databases
+            # This ensures report buttons work regardless of filter selection
             available_databases = {
-                k: v for k, v in available_databases.items() if k in db_names
+                k: v for k, v in available_databases.items() 
+                if k in db_names or k.startswith('report_')
             }
             logger.info(
-                f"Filtered available_databases: {list(available_databases.keys())}"
+                f"Filtered available_databases (including reports): {list(available_databases.keys())}"
             )
         else:
             logger.info(
