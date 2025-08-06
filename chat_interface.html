@@ -1288,8 +1288,13 @@
                 this.connectionStatus = document.getElementById('connectionStatus');
                 this.statusText = document.getElementById('statusText');
                 this.databaseCount = document.getElementById('databaseCount');
-                this.filterToggle = document.getElementById('filterToggle');
-                this.databaseFilters = document.getElementById('databaseFilters');
+                // Tab buttons
+                this.databaseTabBtn = document.getElementById('databaseTabBtn');
+                this.availabilityTabBtn = document.getElementById('availabilityTabBtn');
+                this.calendarTabBtn = document.getElementById('calendarTabBtn');
+                this.databaseDrawer = document.getElementById('databaseDrawer');
+                this.availabilityDrawer = document.getElementById('availabilityDrawer');
+                this.calendarDrawer = document.getElementById('calendarDrawer');
                 
                 this.init();
             }
@@ -1348,12 +1353,15 @@
                     this.lastScrollPosition = container.scrollTop;
                 });
                 
-                // Database filter toggle
-                this.filterToggle.addEventListener('click', () => {
-                    this.databaseFilters.classList.toggle('visible');
-                    this.filterToggle.textContent = this.databaseFilters.classList.contains('visible') 
-                        ? 'Hide' : 'Configure';
-                });
+                // Database Sources tab button
+                if (this.databaseTabBtn) {
+                    this.databaseTabBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Database tab clicked');
+                        this.toggleDrawer('databaseDrawer');
+                    });
+                }
                 
                 // Select/Clear all buttons
                 document.getElementById('selectAllBtn').addEventListener('click', () => {
@@ -1379,36 +1387,38 @@
                     });
                 });
                 
-                // Info tab buttons for drawer panels
-                const availBtn = document.getElementById('availabilityTabBtn');
-                if (availBtn) {
-                    availBtn.addEventListener('click', (e) => {
+                // Data Availability tab button
+                if (this.availabilityTabBtn) {
+                    this.availabilityTabBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Availability tab clicked');
                         this.toggleDrawer('availabilityDrawer');
                     });
                 }
                 
-                const calBtn = document.getElementById('calendarTabBtn');
-                if (calBtn) {
-                    calBtn.addEventListener('click', (e) => {
+                // Release Calendar tab button
+                if (this.calendarTabBtn) {
+                    this.calendarTabBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('Calendar tab clicked');
                         this.toggleDrawer('calendarDrawer');
+                        this.initCalendar(); // Initialize calendar when opened
                     });
                 }
             }
             
             sendReportRequest(reportType) {
                 const reportMessages = {
-                    'transcript-summary': 'Generate Transcript Summary Report',
-                    'key-themes': 'Generate Key Themes Report',
-                    'wm-readthrough': 'Generate WM Readthrough Report',
-                    'cm-readthrough': 'Generate CM Readthrough Report',
-                    'quarterly-newsletter': 'Generate Quarterly Newsletter Report',
-                    'financial-comparison': 'Generate Financial Comparison Report',
-                    'earnings-preview': 'Generate Earnings Preview Report',
-                    'market-analysis': 'Generate Market Analysis Report'
+                    'transcript-summary': 'Generate a Transcript Summary Report for the latest available earnings calls',
+                    'key-themes': 'Generate a Key Themes Report analyzing major topics from recent earnings',
+                    'wm-readthrough': 'Generate a Wealth Management Readthrough Report',
+                    'cm-readthrough': 'Generate a Capital Markets Readthrough Report',
+                    'quarterly-newsletter': 'Generate the Quarterly IR Newsletter with highlights',
+                    'financial-comparison': 'Generate a Financial Comparison Report across banks',
+                    'earnings-preview': 'Generate an Earnings Preview Report for upcoming releases',
+                    'market-analysis': 'Generate a Market Analysis Report with trends and insights'
                 };
                 
                 const message = reportMessages[reportType];
@@ -1423,21 +1433,112 @@
                 }
             }
             
+            initCalendar() {
+                const calendarGrid = document.getElementById('calendarGrid');
+                if (!calendarGrid) return;
+                
+                // Sample calendar data
+                const currentDate = new Date();
+                const currentMonth = currentDate.getMonth();
+                const currentYear = currentDate.getFullYear();
+                
+                // Clear existing content
+                calendarGrid.innerHTML = '';
+                
+                // Add day headers
+                const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                dayHeaders.forEach(day => {
+                    const dayHeader = document.createElement('div');
+                    dayHeader.className = 'calendar-day header';
+                    dayHeader.textContent = day;
+                    calendarGrid.appendChild(dayHeader);
+                });
+                
+                // Get first day of month
+                const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                
+                // Add empty cells for days before month starts
+                for (let i = 0; i < firstDay; i++) {
+                    const emptyDay = document.createElement('div');
+                    emptyDay.className = 'calendar-day';
+                    calendarGrid.appendChild(emptyDay);
+                }
+                
+                // Sample earnings release dates
+                const earningsReleases = {
+                    15: [{ time: '8:00 AM', bank: 'RBC Q4 Earnings' }],
+                    22: [{ time: '9:00 AM', bank: 'TD Q4 Earnings' }],
+                    23: [{ time: '8:30 AM', bank: 'BMO Q4 Earnings' }],
+                    29: [{ time: '7:30 AM', bank: 'Scotia Q4 Earnings' }]
+                };
+                
+                // Add days of the month
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'calendar-day';
+                    
+                    const dayNumber = document.createElement('div');
+                    dayNumber.className = 'calendar-day-number';
+                    dayNumber.textContent = day;
+                    dayCell.appendChild(dayNumber);
+                    
+                    // Add earnings events if they exist for this day
+                    if (earningsReleases[day]) {
+                        earningsReleases[day].forEach(event => {
+                            const eventDiv = document.createElement('div');
+                            eventDiv.className = 'calendar-event';
+                            eventDiv.innerHTML = `
+                                <div class="calendar-event-time">${event.time}</div>
+                                <div class="calendar-event-bank">${event.bank}</div>
+                            `;
+                            dayCell.appendChild(eventDiv);
+                        });
+                    }
+                    
+                    calendarGrid.appendChild(dayCell);
+                }
+                
+                // Update month display
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                   'July', 'August', 'September', 'October', 'November', 'December'];
+                const monthDisplay = document.querySelector('.calendar-month');
+                if (monthDisplay) {
+                    monthDisplay.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                }
+            }
+            
             toggleDrawer(drawerId) {
                 console.log('Toggling drawer:', drawerId);
                 const drawer = document.getElementById(drawerId);
                 const allDrawers = document.querySelectorAll('.info-tab-drawer');
+                const allButtons = document.querySelectorAll('.info-tab-button');
                 
-                // Close all other drawers
+                // Get the button for this drawer
+                let targetButton = null;
+                if (drawerId === 'databaseDrawer') targetButton = this.databaseTabBtn;
+                else if (drawerId === 'availabilityDrawer') targetButton = this.availabilityTabBtn;
+                else if (drawerId === 'calendarDrawer') targetButton = this.calendarTabBtn;
+                
+                // Close all other drawers and deactivate buttons
                 allDrawers.forEach(d => {
                     if (d.id !== drawerId) {
                         d.classList.remove('open');
                     }
                 });
+                allButtons.forEach(btn => {
+                    if (btn !== targetButton) {
+                        btn.classList.remove('active');
+                    }
+                });
                 
                 // Toggle the selected drawer
                 if (drawer) {
+                    const isOpen = drawer.classList.contains('open');
                     drawer.classList.toggle('open');
+                    if (targetButton) {
+                        targetButton.classList.toggle('active', !isOpen);
+                    }
                     console.log('Drawer open state:', drawer.classList.contains('open'));
                 }
             }
@@ -1450,8 +1551,10 @@
             
             async checkConnection() {
                 try {
+                    console.log('Checking connection to:', `${this.apiUrl}/health`);
                     const response = await fetch(`${this.apiUrl}/health`);
                     const data = await response.json();
+                    console.log('Health check response:', data);
                     if (response.ok && data.status === 'healthy') {
                         this.setConnectionStatus(true);
                     } else {
