@@ -105,10 +105,11 @@ class DockerPostgresManager:
         # Create new container
         print(f"🚀 Creating new PostgreSQL container '{self.container_name}'...")
         
-        # Pull image if needed
-        print(f"📥 Pulling postgres:{self.postgres_version} image if needed...")
+        # Pull pgvector-enabled PostgreSQL image
+        image_name = f"pgvector/pgvector:pg{self.postgres_version}"
+        print(f"📥 Pulling {image_name} image (PostgreSQL with pgvector)...")
         subprocess.run(
-            ["docker", "pull", f"postgres:{self.postgres_version}"],
+            ["docker", "pull", image_name],
             stdout=subprocess.DEVNULL
         )
         
@@ -122,7 +123,7 @@ class DockerPostgresManager:
             "-p", f"{self.port}:5432",
             "-v", f"{self.data_dir.absolute()}:/var/lib/postgresql/data",
             "-d",  # Run in background
-            f"postgres:{self.postgres_version}"
+            image_name
         ]
         
         result = subprocess.run(cmd, capture_output=True, text=True)

@@ -1,6 +1,9 @@
 -- AEGIS Project Database Schema
 -- This file defines the core tables for the AEGIS system
 
+-- Enable pgvector extension for vector similarity search
+CREATE EXTENSION IF NOT EXISTS vector;
+
 -- Drop existing tables if they exist (for clean reinstall)
 DROP TABLE IF EXISTS conversations CASCADE;
 DROP TABLE IF EXISTS agents CASCADE;
@@ -60,12 +63,14 @@ CREATE TABLE documents (
 );
 
 -- Document embeddings table
+-- Supports both OpenAI text-embedding-3-small (1536) and text-embedding-3-large (3072)
 CREATE TABLE document_embeddings (
     id SERIAL PRIMARY KEY,
     document_id VARCHAR(255) REFERENCES documents(document_id),
     chunk_index INTEGER,
     chunk_text TEXT,
-    embedding VECTOR(1536),  -- Requires pgvector extension
+    embedding VECTOR(3072),  -- Max size for text-embedding-3-large
+    embedding_model VARCHAR(100),  -- Track which model was used
     metadata JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -77,6 +82,13 @@ CREATE INDEX idx_agent_responses_conversation ON agent_responses(conversation_id
 CREATE INDEX idx_agent_responses_agent ON agent_responses(agent_id);
 CREATE INDEX idx_documents_type ON documents(document_type);
 CREATE INDEX idx_document_embeddings_document ON document_embeddings(document_id);
+
+-- Create index for vector similarity search (using IVFFlat method)
+-- Note: For small datasets (<10k vectors), sequential scan might be faster
+-- For larger datasets, adjust 'lists' parameter (recommended: rows/1000)
+CREATE INDEX idx_document_embeddings_vector ON document_embeddings 
+USING ivfflat (embedding vector_cosine_ops) 
+WITH (lists = 100);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
