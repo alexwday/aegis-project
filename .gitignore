@@ -79,3 +79,15 @@ CLAUDE.md
 CLAUDE_TEMPLATE.md
 **/CLAUDE.md
 **/CLAUDE_TEMPLATE.md
+
+# Embedded PostgreSQL
+postgres-data/
+.pg_embedded/
+*.pid
+
+# But DO track SQL exports for sharing
+!data/sql/*.sql
+
+# Temporary imports
+data/sql/pending_import.sql
+data/sql/imported_*.sql
