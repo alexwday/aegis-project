@@ -1,24 +1,29 @@
 # Core dependencies
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
 python-dotenv>=1.0.0
-pydantic>=2.0.0
 
 # Database
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0
+pgvector>=0.2.0
 
 # AI/ML
 openai>=1.0.0
 
-# Utilities
-psutil>=5.9.0  # For process monitoring
+# Security & Auth
+cryptography>=41.0.0
 requests>=2.31.0
+
+# Utilities
+PyYAML>=6.0.0
 python-multipart>=0.0.6
+psutil>=5.9.0
 
-# Optional: For vector embeddings (if using pgvector)
-# pgvector>=0.2.0
-
-# Optional: For managing Docker containers from Python
-# docker>=6.0.0  # Only if you want to use testcontainers
-# testcontainers[postgres]>=3.7.0  # Alternative to manual Docker management
+# Development tools (optional)
+jupyter>=1.0.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=23.0.0
+mypy>=1.0.0

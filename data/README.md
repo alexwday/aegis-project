@@ -14,9 +14,9 @@ data/
 └── README.md
 ```
 
-## Quick Start - Three Options
+## Quick Start
 
-### Option 1: Docker (Recommended)
+### Using Docker (Recommended)
 
 ```bash
 # Install dependencies
@@ -28,46 +28,22 @@ python start_server_postgres.py
 
 **Alternative using docker-compose:**
 ```bash
-# Start just PostgreSQL
+# Start PostgreSQL only
 docker-compose up -d postgres
 
-# Or start both PostgreSQL and API
-docker-compose up -d
-```
-
-### Option 2: Local PostgreSQL Installation
-
-If you have PostgreSQL already installed:
-
-```bash
-# Start server using local PostgreSQL
-python start_server_local_postgres.py
-
-# With custom credentials
-python start_server_local_postgres.py --user myuser --password mypass
-```
-
-### Option 3: Manual Setup
-
-```bash
-# Start PostgreSQL however you prefer
-# Set environment variables
-export VECTOR_POSTGRES_DB_HOST=localhost
-export VECTOR_POSTGRES_DB_PORT=5432
-export VECTOR_POSTGRES_DB_NAME=aegis_dev
-export DB_USERNAME=aegis_user
-export DB_PASSWORD=aegis_dev_password
-
-# Start the original server
+# Then start the API server
 python start_server.py
 ```
 
-### 2. Database Management
+### Database Management
 
 #### Export Database
 ```bash
 # While server is running, in another terminal:
 python scripts/db_export.py
+
+# Or using the start script:
+python start_server_postgres.py --export
 ```
 
 #### Import Database
@@ -78,7 +54,12 @@ python scripts/db_import.py data/sql/export_latest.sql
 
 #### Reset Database
 ```bash
-python start_server_with_db.py --reset
+python start_server_postgres.py --reset
+```
+
+#### Stop PostgreSQL Container
+```bash
+python start_server_postgres.py --stop
 ```
 
 ## Sharing Your Project
@@ -92,7 +73,7 @@ python start_server_with_db.py --reset
 
 2. Zip the project:
    ```bash
-   zip -r aegis-project.zip . -x "postgres-data/*" ".pg_embedded/*" "venv/*" "*.pyc"
+   zip -r aegis-project.zip . -x "postgres-data/*" "venv/*" "*.pyc" "__pycache__/*"
    ```
 
 3. Send the zip file
@@ -103,21 +84,23 @@ python start_server_with_db.py --reset
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   # Or use the setup script:
+   ./setup.sh
    ```
 
 3. Start the server:
    ```bash
-   python start_server_with_db.py
+   python start_server_postgres.py
    ```
    
    The server will automatically:
-   - Download PostgreSQL if needed
+   - Start PostgreSQL in Docker
    - Create the database
-   - Import any SQL files found in `data/sql/`
+   - Import SQL files from `data/sql/`
 
 ## Connection Details
 
-When the server is running, these environment variables are set:
+When the server is running, these environment variables are automatically set:
 - `VECTOR_POSTGRES_DB_HOST`: localhost
 - `VECTOR_POSTGRES_DB_PORT`: 5432
 - `VECTOR_POSTGRES_DB_NAME`: aegis_dev
@@ -131,21 +114,31 @@ Your existing `db_config.py` will automatically use these.
 - **schema.sql**: Database structure (tables, indexes, triggers)
 - **sample_data.sql**: Example data for testing
 - **export_*.sql**: Your exported data (timestamped)
-- **pending_import.sql**: Place here for auto-import prompt
+- **export_latest.sql**: Most recent export (auto-created)
+- **pending_import.sql**: Place SQL here for import prompt on startup
 
 ## Troubleshooting
 
+### Docker Not Running
+Make sure Docker Desktop is installed and running.
+
 ### Port Already in Use
-If port 5432 is busy, use a different port:
+If port 5432 is busy:
 ```bash
-python start_server_with_db.py --port 5433
+python start_server_postgres.py --port 5433
 ```
 
 ### Database Won't Start
-Try resetting:
+Reset everything:
 ```bash
-python start_server_with_db.py --reset
+python start_server_postgres.py --reset
 ```
 
-### Can't Find pg_dump/psql
-The scripts will use the embedded PostgreSQL tools automatically. If issues persist, the tools are located in `.pg_embedded/bin/`
+### Container Still Running
+The PostgreSQL container keeps running after the server stops (for convenience).
+To stop it:
+```bash
+python start_server_postgres.py --stop
+# Or manually:
+docker stop aegis-postgres
+```
