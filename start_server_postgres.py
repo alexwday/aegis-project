@@ -193,12 +193,25 @@ class DockerPostgresManager:
         if not self.sql_dir.exists():
             print("⚠️  No SQL directory found, skipping initialization")
             return
-            
-        # Import schema
-        schema_file = self.sql_dir / "schema.sql"
-        if schema_file.exists():
-            print("📝 Importing schema...")
-            self._import_sql_file(schema_file)
+        
+        # First, test vector capabilities
+        test_file = self.sql_dir / "test_vector_capabilities.sql"
+        if test_file.exists():
+            print("🧪 Testing pgvector capabilities...")
+            self._import_sql_file(test_file)
+            self._show_vector_capabilities()
+        
+        # Import adaptive schema if it exists, otherwise use standard schema
+        adaptive_schema = self.sql_dir / "schema_adaptive.sql"
+        standard_schema = self.sql_dir / "schema.sql"
+        
+        if adaptive_schema.exists():
+            print("📝 Importing adaptive schema (adjusts to pgvector capabilities)...")
+            self._import_sql_file(adaptive_schema)
+            print("✅ Adaptive schema imported")
+        elif standard_schema.exists():
+            print("📝 Importing standard schema...")
+            self._import_sql_file(standard_schema)
             print("✅ Schema imported")
             
         # Import sample data
@@ -210,6 +223,35 @@ class DockerPostgresManager:
                 print(f"✅ {data_file} imported")
                 break
                 
+    def _show_vector_capabilities(self):
+        """Display the vector capabilities test results."""
+        import psycopg2
+        
+        try:
+            conn_string = f"postgresql://{self.user}:{self.password}@localhost:{self.port}/{self.database}"
+            conn = psycopg2.connect(conn_string)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT capability, supported, details
+                FROM vector_capabilities
+                WHERE capability IN ('vector_3072', 'halfvec_3072', 'vector_1536')
+                ORDER BY capability
+            """)
+            
+            results = cursor.fetchall()
+            if results:
+                print("\n📊 Vector Capabilities:")
+                for cap, supported, details in results:
+                    status = "✅" if supported else "❌"
+                    print(f"   {status} {cap}: {details}")
+                print()
+            
+            cursor.close()
+            conn.close()
+        except:
+            pass  # Silently fail if table doesn't exist
+    
     def _check_for_imports(self):
         """Check for pending SQL imports."""
         if not self.sql_dir.exists():

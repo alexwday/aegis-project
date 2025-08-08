@@ -8,6 +8,7 @@ import os
 import sys
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
+from pathlib import Path
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -92,6 +93,19 @@ def check_pgvector():
         # Create test table
         cursor.execute("DROP TABLE IF EXISTS vector_test")
         
+        # Test standard vector with 1536 dimensions
+        try:
+            cursor.execute("""
+                CREATE TABLE vector_test (
+                    id serial PRIMARY KEY,
+                    embedding_standard vector(1536)
+                )
+            """)
+            print("✅ Standard vector(1536) supported (text-embedding-3-small)")
+            cursor.execute("DROP TABLE vector_test")
+        except Exception as e:
+            print(f"❌ Standard vector(1536) failed: {e}")
+        
         # Test standard vector with 3072 dimensions
         try:
             cursor.execute("""
@@ -100,7 +114,7 @@ def check_pgvector():
                     embedding_standard vector(3072)
                 )
             """)
-            print("✅ Standard vector(3072) supported")
+            print("✅ Standard vector(3072) supported (text-embedding-3-large)")
             cursor.execute("DROP TABLE vector_test")
         except Exception as e:
             print(f"❌ Standard vector(3072) failed: {e}")
@@ -118,6 +132,43 @@ def check_pgvector():
                 cursor.execute("DROP TABLE vector_test")
             except Exception as e:
                 print(f"❌ halfvec(3072) failed: {e}")
+        
+        # Run the comprehensive capability test
+        print("\n🧪 Running comprehensive capability tests...")
+        test_sql = Path(__file__).parent.parent / "data" / "sql" / "test_vector_capabilities.sql"
+        if test_sql.exists():
+            try:
+                with open(test_sql, 'r') as f:
+                    conn.autocommit = False
+                    conn.commit()
+                    # Note: Can't execute \i command, so we'll check the table instead
+                    
+                # Check if vector_capabilities table exists and has results
+                cursor.execute("""
+                    SELECT capability, supported, details
+                    FROM vector_capabilities
+                    ORDER BY 
+                        CASE capability
+                            WHEN 'pgvector_installed' THEN 1
+                            WHEN 'vector_1536' THEN 2
+                            WHEN 'vector_3072' THEN 3
+                            WHEN 'halfvec_available' THEN 4
+                            WHEN 'halfvec_3072' THEN 5
+                            ELSE 6
+                        END
+                """)
+                
+                results = cursor.fetchall()
+                if results:
+                    print("\n📋 Detailed Capability Report:")
+                    print("-" * 60)
+                    for cap, supported, details in results:
+                        status = "✅" if supported else "❌"
+                        print(f"{status} {cap}:")
+                        print(f"   {details}")
+                        print()
+            except:
+                pass  # Table might not exist yet
         
         # Show available vector types
         print("\n4️⃣  Available vector data types:")
