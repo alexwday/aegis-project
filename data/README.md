@@ -14,23 +14,53 @@ data/
 └── README.md
 ```
 
-## Quick Start
+## Quick Start - Three Options
 
-### 1. Start Server with Embedded PostgreSQL
+### Option 1: Docker (Recommended)
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
-# Start server with database
-python start_server_with_db.py
+# Start server with PostgreSQL in Docker
+python start_server_postgres.py
 ```
 
-This will:
-- Download and start PostgreSQL locally (no installation needed)
-- Create the database if it doesn't exist
-- Import `schema.sql` and `sample_data.sql` on first run
-- Start the FastAPI server
+**Alternative using docker-compose:**
+```bash
+# Start just PostgreSQL
+docker-compose up -d postgres
+
+# Or start both PostgreSQL and API
+docker-compose up -d
+```
+
+### Option 2: Local PostgreSQL Installation
+
+If you have PostgreSQL already installed:
+
+```bash
+# Start server using local PostgreSQL
+python start_server_local_postgres.py
+
+# With custom credentials
+python start_server_local_postgres.py --user myuser --password mypass
+```
+
+### Option 3: Manual Setup
+
+```bash
+# Start PostgreSQL however you prefer
+# Set environment variables
+export VECTOR_POSTGRES_DB_HOST=localhost
+export VECTOR_POSTGRES_DB_PORT=5432
+export VECTOR_POSTGRES_DB_NAME=aegis_dev
+export DB_USERNAME=aegis_user
+export DB_PASSWORD=aegis_dev_password
+
+# Start the original server
+python start_server.py
+```
 
 ### 2. Database Management
 

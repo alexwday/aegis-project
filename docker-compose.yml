@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: aegis-postgres
+    environment:
+      POSTGRES_USER: aegis_user
+      POSTGRES_PASSWORD: aegis_dev_password
+      POSTGRES_DB: aegis_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./data/sql:/docker-entrypoint-initdb.d  # Auto-import SQL files on first run
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis_user -d aegis_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Run the FastAPI server in Docker too
+  # api:
+  #   build: .
+  #   container_name: aegis-api
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     VECTOR_POSTGRES_DB_HOST: postgres
+  #     VECTOR_POSTGRES_DB_PORT: 5432
+  #     VECTOR_POSTGRES_DB_NAME: aegis_dev
+  #     DB_USERNAME: aegis_user
+  #     DB_PASSWORD: aegis_dev_password
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services:/app/services
+  #   command: uvicorn services.src.api:app --host 0.0.0.0 --port 8000 --reload

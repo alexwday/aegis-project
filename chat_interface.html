@@ -256,6 +256,44 @@
             padding: var(--spacing-md) var(--spacing-lg);
             border-radius: 16px;
             box-shadow: var(--shadow-base);
+            position: relative;
+        }
+        
+        /* Email Button Styles */
+        .email-button {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0.7;
+        }
+        
+        .email-button:hover {
+            background: var(--primary-bg);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            opacity: 1;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .email-button:active {
+            transform: translateY(0);
+        }
+        
+        .email-button-icon {
+            font-size: 12px;
         }
         
         .message.user .message-content {
@@ -1163,7 +1201,7 @@
             <!-- Welcome Message -->
             <div class="message assistant">
                 <div class="message-avatar">AI</div>
-                <div class="message-content">
+                <div class="message-content" id="welcomeMessage">
                     <p>Hello! I'm AEGIS, your advanced financial intelligence assistant. I can help you analyze financial data, research market trends, and provide insights from our comprehensive database of financial information.</p>
                     <p>What would you like to explore today?</p>
                 </div>
@@ -1593,6 +1631,19 @@
                         this.closeAllDrawers();
                     }
                 });
+                
+                // Add email button to welcome message
+                const welcomeMessage = document.getElementById('welcomeMessage');
+                if (welcomeMessage) {
+                    const emailButton = document.createElement('button');
+                    emailButton.className = 'email-button';
+                    emailButton.innerHTML = `
+                        <span class="email-button-icon">✉️</span>
+                        <span>Send in Email</span>
+                    `;
+                    emailButton.onclick = () => this.sendToEmail(welcomeMessage);
+                    welcomeMessage.appendChild(emailButton);
+                }
             }
             
             closeAllDrawers() {
@@ -1954,6 +2005,18 @@
                     contentDiv.innerHTML = marked.parse(content);
                 }
                 
+                // Add email button for AI messages
+                if (role === 'assistant' && !isStreaming) {
+                    const emailButton = document.createElement('button');
+                    emailButton.className = 'email-button';
+                    emailButton.innerHTML = `
+                        <span class="email-button-icon">✉️</span>
+                        <span>Send in Email</span>
+                    `;
+                    emailButton.onclick = () => this.sendToEmail(contentDiv);
+                    contentDiv.appendChild(emailButton);
+                }
+                
                 messageDiv.appendChild(avatarDiv);
                 messageDiv.appendChild(contentDiv);
                 this.messagesArea.appendChild(messageDiv);
@@ -1961,6 +2024,79 @@
                 this.scrollToBottom();
                 
                 return contentDiv;
+            }
+            
+            sendToEmail(contentDiv) {
+                // Get the content excluding the email button
+                const clonedContent = contentDiv.cloneNode(true);
+                const emailButton = clonedContent.querySelector('.email-button');
+                if (emailButton) emailButton.remove();
+                
+                // Get text content (strip HTML for plain text version)
+                const plainText = clonedContent.innerText || clonedContent.textContent;
+                
+                // Get HTML content
+                const htmlContent = clonedContent.innerHTML;
+                
+                // Prepare email subject
+                const subject = 'AEGIS Financial Intelligence Report';
+                
+                // Check if content is too long (Outlook has URL length limits)
+                const maxLength = 2000; // Conservative limit for URL safety
+                let bodyContent = plainText;
+                let isTruncated = false;
+                
+                if (bodyContent.length > maxLength) {
+                    bodyContent = bodyContent.substring(0, maxLength) + '\n\n[Note: This response has been truncated for email. Please refer to the AEGIS interface for the complete response.]';
+                    isTruncated = true;
+                }
+                
+                // Format the email body
+                const emailBody = `${bodyContent}\n\n---\nGenerated by AEGIS Financial Intelligence Assistant\nTimestamp: ${new Date().toLocaleString()}`;
+                
+                // Create mailto link for Outlook
+                const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+                
+                // Try to open in Outlook/default email client
+                try {
+                    window.location.href = mailtoUrl;
+                    
+                    // Show notification if content was truncated
+                    if (isTruncated) {
+                        this.showNotification('Note: The response was truncated to fit email limits. Full content is available in the chat interface.');
+                    }
+                } catch (error) {
+                    console.error('Failed to open email client:', error);
+                    this.showNotification('Unable to open email client. Please copy the content manually.');
+                }
+            }
+            
+            showNotification(message) {
+                // Create a simple notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(--bg-primary);
+                    border: 1px solid var(--warning-color);
+                    color: var(--text-primary);
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: var(--shadow-lg);
+                    z-index: 10000;
+                    font-size: var(--font-size-sm);
+                    max-width: 400px;
+                    text-align: center;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
             }
             
             scrollToBottom() {
@@ -2267,6 +2403,16 @@
                     // Store clean message
                     const cleanResponse = fullResponse.replace(/\n\n(DEBUG_DATA|SUBAGENT_COMPLETE):.+$/gs, '');
                     this.messages.push({ role: 'assistant', content: cleanResponse });
+                    
+                    // Add email button after streaming completes
+                    const emailButton = document.createElement('button');
+                    emailButton.className = 'email-button';
+                    emailButton.innerHTML = `
+                        <span class="email-button-icon">✉️</span>
+                        <span>Send in Email</span>
+                    `;
+                    emailButton.onclick = () => this.sendToEmail(assistantContent);
+                    assistantContent.appendChild(emailButton);
                     
                 } catch (error) {
                     typingIndicator.remove();
